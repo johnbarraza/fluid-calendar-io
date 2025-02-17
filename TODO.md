@@ -1,4 +1,4 @@
-# Fluid Calendar Implementation Plan
+# FluidCalendar Implementation Plan
 
 ## Next Steps
 - [ ] Integrate google calendar

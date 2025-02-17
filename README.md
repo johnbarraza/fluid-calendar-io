@@ -1,12 +1,12 @@
-# Fluid Calendar
+# FluidCalendar
 
-An open-source alternative to Motion, designed for intelligent task scheduling and calendar management. Fluid Calendar helps you stay on top of your tasks with smart scheduling capabilities, calendar integration, and customizable workflows.
+An open-source alternative to Motion, designed for intelligent task scheduling and calendar management. FluidCalendar helps you stay on top of your tasks with smart scheduling capabilities, calendar integration, and customizable workflows.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## About
 
-Fluid Calendar is built for people who want full control over their scheduling workflow. It combines the power of automatic task scheduling with the flexibility of open-source software. Read more about the journey and motivation in [Part 1 of my blog series](https://medium.com/front-end-weekly/fluid-calendar-an-open-source-alternative-to-motion-part-1-7a5b52bf219d).
+FluidCalendar is built for people who want full control over their scheduling workflow. It combines the power of automatic task scheduling with the flexibility of open-source software. Read more about the journey and motivation in [Part 1 of my blog series](https://medium.com/front-end-weekly/fluid-calendar-an-open-source-alternative-to-motion-part-1-7a5b52bf219d).
 
 ![Snagit 2024 2025-02-16 12 33 23](https://github.com/user-attachments/assets/515381e9-b961-475d-a272-d454ecca59cb)
 

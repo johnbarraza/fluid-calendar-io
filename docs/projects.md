@@ -1,7 +1,7 @@
 # Project Management Implementation Plan
 
 ## Overview
-This document outlines the implementation plan for adding project management capabilities to Fluid Calendar's task system. Projects provide a way to organize related tasks together, while maintaining simplicity and flexibility in the system.
+This document outlines the implementation plan for adding project management capabilities to FluidCalendar's task system. Projects provide a way to organize related tasks together, while maintaining simplicity and flexibility in the system.
 
 ## Core Decisions
 

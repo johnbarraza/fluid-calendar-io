@@ -9,7 +9,7 @@ import { DndProvider } from "@/components/dnd/DndProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Fluid Calendar",
+  title: "FluidCalendar",
   description: "A modern calendar and task management application",
 };
 

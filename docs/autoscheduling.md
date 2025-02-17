@@ -1,7 +1,7 @@
 # Auto-Scheduling Implementation Plan
 
 ## Overview
-This document outlines the implementation plan for adding auto-scheduling capabilities to Fluid Calendar. The feature will intelligently schedule tasks based on calendar availability, task properties, and user preferences while maintaining flexibility and ease of use.
+This document outlines the implementation plan for adding auto-scheduling capabilities to FluidCalendar. The feature will intelligently schedule tasks based on calendar availability, task properties, and user preferences while maintaining flexibility and ease of use.
 
 ## Time Slot Management Details
 

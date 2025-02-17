@@ -1,7 +1,7 @@
 # Task Management Implementation Plan
 
 ## Overview
-This document outlines the implementation plan for adding task management capabilities to Fluid Calendar. The implementation focuses on creating a standalone task system that can later integrate with time blocking and auto-scheduling features. This is designed as a single-user application without authentication requirements.
+This document outlines the implementation plan for adding task management capabilities to FluidCalendar. The implementation focuses on creating a standalone task system that can later integrate with time blocking and auto-scheduling features. This is designed as a single-user application without authentication requirements.
 
 ## Core Principles
 - Simple to start, but extensible for future features
