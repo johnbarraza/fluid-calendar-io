@@ -98,7 +98,7 @@ Note: For production deployment, you'll need to:
 
 ## Installation
 
-### Option 1: Docker Image (Recommended)
+### Option 1: Docker Image (Recommended - NOT WORKING YET.  I have some build issues)
 
 The easiest way to run FluidCalendar is using our official Docker image:
 
