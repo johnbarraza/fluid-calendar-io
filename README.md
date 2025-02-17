@@ -43,6 +43,141 @@ Don't want to self-host? We're currently beta testing our hosted version at [Flu
 - Node.js (version specified in `.nvmrc`)
 - A Google Cloud Project (for Google Calendar integration)
 
+## Google Cloud Setup
+
+To enable Google Calendar integration, you'll need to set up a Google Cloud Project:
+
+1. Create a Project:
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Click "New Project" and follow the prompts
+   - Note your Project ID
+
+2. Enable Required APIs:
+   - In your project, go to "APIs & Services" > "Library"
+   - Search for and enable:
+     - Google Calendar API
+     - Google People API (for user profile information)
+
+3. Configure OAuth Consent Screen:
+   - Go to "APIs & Services" > "OAuth consent screen"
+   - Choose "External" user type
+   - Fill in the required information:
+     - App name: "FluidCalendar" (or your preferred name)
+     - User support email
+     - Developer contact information
+   - Add scopes:
+     - `./auth/calendar.events`
+     - `./auth/calendar.readonly`
+     - `./auth/userinfo.email`
+     - `./auth/userinfo.profile`
+   - Add test users if in testing mode
+
+4. Create OAuth 2.0 Credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Choose "Web application"
+   - Set Authorized JavaScript origins:
+     - `http://localhost:3000` (for development)
+     - Your production URL (if deployed)
+   - Set Authorized redirect URIs:
+     - `http://localhost:3000/api/auth/callback/google` (for development)
+     - `https://your-domain.com/api/auth/callback/google` (for production)
+   - Click "Create"
+   - Save the generated Client ID and Client Secret
+
+5. Update Environment Variables:
+   ```bash
+   GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+   GOOGLE_CLIENT_SECRET="your-client-secret"
+   ```
+
+Note: For production deployment, you'll need to:
+- Verify your domain ownership
+- Submit your application for verification if you plan to have more than 100 users
+- Add your production domain to the authorized origins and redirect URIs
+
+## Installation
+
+### Option 1: Local Development
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/fluid-calendar.git
+cd fluid-calendar
+```
+
+2. Setup the project (installs dependencies and sets up database):
+```bash
+npm run setup
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+#### Useful Local Development Commands:
+```bash
+# Start Prisma Studio (database GUI)
+npm run prisma:studio
+
+# Generate Prisma client
+npm run prisma:generate
+
+# Run database migrations
+npm run prisma:migrate
+
+# Clean the project (remove node_modules and .next)
+npm run clean
+```
+
+### Option 2: Docker Development
+
+We provide a Docker setup for easy development. This is the recommended way to get started.
+
+1. Prerequisites:
+   - Docker and Docker Compose installed on your machine
+   - Git for cloning the repository
+
+2. Clone and start the application:
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/fluid-calendar.git
+cd fluid-calendar
+
+# Copy environment file
+cp .env.example .env
+
+# Start the application with hot reloading
+npm run docker:dev
+```
+
+The application will be available at http://localhost:3000
+
+#### Docker Development Features:
+- 🔄 Hot reloading enabled
+- 💾 Persistent database storage
+- 🛠️ Automatic Prisma migrations
+- 🔒 Secure default configuration
+
+#### Useful Docker Commands:
+```bash
+# Start the application
+npm run docker:dev
+
+# Rebuild and start
+npm run docker:dev:build
+
+# Stop the application
+npm run docker:dev:down
+
+# View logs
+npm run docker:logs
+
+# Clean up volumes and containers
+npm run docker:clean
+```
+
 ## Environment Setup
 
 1. Copy `.env.example` to `.env`:
@@ -51,34 +186,11 @@ cp .env.example .env
 ```
 
 2. Configure the following environment variables:
-- `DATABASE_URL`: Your PostgreSQL connection string
+- `DATABASE_URL`: Your database connection string
 - `GOOGLE_CLIENT_ID`: From Google Cloud Console
 - `GOOGLE_CLIENT_SECRET`: From Google Cloud Console
 - `NEXTAUTH_URL`: Your application URL
 - `NEXTAUTH_SECRET`: Random string for session encryption
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/fluid-calendar.git
-cd fluid-calendar
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run database migrations:
-```bash
-npx prisma migrate dev
-```
-
-4. Start the development server:
-```bash
-npm run dev
-```
 
 ## Getting Started
 
