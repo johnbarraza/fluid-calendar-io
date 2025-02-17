@@ -98,7 +98,40 @@ Note: For production deployment, you'll need to:
 
 ## Installation
 
-### Option 1: Local Development
+### Option 1: Docker Image (Recommended)
+
+The easiest way to run FluidCalendar is using our official Docker image:
+
+```bash
+# Pull the latest image
+docker pull eibrahim/fluid-calendar:latest
+
+# Create a .env file
+cat > .env << EOL
+DATABASE_URL=file:/app/data/dev.db
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+EOL
+
+# Run the container
+docker run -d \
+  --name fluid-calendar \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  --env-file .env \
+  eibrahim/fluid-calendar:latest
+```
+
+Available tags:
+- `latest` - Latest stable release
+- `dev` - Development version
+- `v*.*.*` - Specific versions (e.g., v1.0.0)
+
+For production deployments, we recommend using specific version tags.
+
+### Option 2: Local Development
 
 1. Clone the repository:
 ```bash
@@ -131,7 +164,7 @@ npm run prisma:migrate
 npm run clean
 ```
 
-### Option 2: Docker Development
+### Option 3: Docker Development
 
 We provide a Docker setup for easy development. This is the recommended way to get started.
 
