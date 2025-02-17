@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       try {
         // Attempt to parse the RRule string to validate it
         RRule.fromString(recurrenceRule);
-      } catch (error) {
+      } catch {
         return new NextResponse("Invalid recurrence rule", { status: 400 });
       }
     }

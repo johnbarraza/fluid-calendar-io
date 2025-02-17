@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // Get a specific feed
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { events: true },
     });
 
@@ -30,11 +28,15 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 // Update a specific feed
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const updates = await request.json();
     const updated = await prisma.calendarFeed.update({
-      where: { id: params.id },
+      where: { id },
       data: updates,
     });
     return NextResponse.json(updated);
@@ -48,11 +50,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 // Delete a specific feed
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     // The feed's events will be automatically deleted due to the cascade delete in the schema
     await prisma.calendarFeed.delete({
-      where: { id: params.id },
+      where: { id },
     });
     return NextResponse.json({ success: true });
   } catch (error) {

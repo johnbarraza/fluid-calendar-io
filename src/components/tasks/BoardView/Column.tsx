@@ -9,7 +9,6 @@ interface ColumnProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
-  onInlineEdit: (task: Task) => void;
 }
 
 const statusColors = {
@@ -38,7 +37,6 @@ export function Column({
   tasks,
   onEdit,
   onDelete,
-  onInlineEdit,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
@@ -71,7 +69,6 @@ export function Column({
               task={task}
               onEdit={onEdit}
               onDelete={onDelete}
-              onInlineEdit={onInlineEdit}
             />
           ))}
         </div>

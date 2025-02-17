@@ -1,6 +1,6 @@
 "use client";
 
-import { Task, EnergyLevel, TimePreference } from "@/types/task";
+import { Task, TimePreference } from "@/types/task";
 import { useDraggable } from "@dnd-kit/core";
 import { HiPencil, HiTrash, HiClock, HiLockClosed } from "react-icons/hi";
 import { format, isToday, isTomorrow, isThisWeek, isThisYear } from "date-fns";
@@ -9,7 +9,6 @@ interface BoardTaskProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
-  onInlineEdit: (task: Task) => void;
 }
 
 const energyLevelColors = {
@@ -65,7 +64,6 @@ export function BoardTask({
   task,
   onEdit,
   onDelete,
-  onInlineEdit,
 }: BoardTaskProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({

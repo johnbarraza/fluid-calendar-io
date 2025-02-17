@@ -15,14 +15,16 @@ class Logger {
     );
   }
 
-  log(message: string, data?: any) {
-    if (process.env.NODE_ENV === "development" && process.env.LOG_LEVEL === "debug") {
+  log(message: string, data?: Record<string, unknown>) {
+    if (
+      process.env.NODE_ENV === "development" &&
+      process.env.LOG_LEVEL === "debug"
+    ) {
       const timestamp = new Date().toISOString();
       const logMessage = `[${timestamp}] ${message}${
         data ? "\n" + JSON.stringify(data, null, 2) : ""
       }\n`;
       fs.appendFileSync(this.logFile, logMessage);
-  
     }
   }
 }

@@ -201,6 +201,7 @@ function StatusFilter({
 interface EditableCellProps {
   task: Task;
   field: keyof Task;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   onSave: (task: Task) => void;
 }
@@ -488,7 +489,7 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
                 const utcDate = new Date(
                   Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
                 );
-                onSave({ ...task, [field]: utcDate.toISOString() });
+                onSave({ ...task, [field]: utcDate });
               } else {
                 onSave({ ...task, [field]: undefined });
               }
@@ -496,7 +497,7 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
             }}
             onClickOutside={() => setIsEditing(false)}
             open={isEditing}
-            onInputClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onInputClick={() => {}}
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             dateFormat="yyyy-MM-dd"
             isClearable
@@ -805,7 +806,7 @@ export function TaskList({
     setFilters,
     resetFilters,
   } = useTaskListViewSettings();
-  const { activeProject, projects } = useProjectStore();
+  const { activeProject } = useProjectStore();
 
   const handleSort = (column: typeof sortBy) => {
     if (sortBy === column) {

@@ -64,7 +64,7 @@ export interface UpdateTask
   tagIds?: string[];
 }
 
-export interface NewTag extends Omit<Tag, "id"> {}
+export type NewTag = Omit<Tag, "id">;
 
 export interface TaskFilters {
   status?: TaskStatus[];

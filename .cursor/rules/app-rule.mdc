@@ -172,7 +172,6 @@ generator client {
    /src
      /lib
        /calendar
-         parser.ts       # ICS parsing utilities
          sync.ts        # Feed synchronization
          events.ts      # Event management
          types.ts       # Type definitions

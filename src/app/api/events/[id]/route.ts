@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // Get a specific event
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const event = await prisma.calendarEvent.findUnique({
@@ -30,7 +27,10 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 // Update a specific event
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const updates = await request.json();
@@ -49,7 +49,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 // Delete a specific event
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     await prisma.calendarEvent.delete({

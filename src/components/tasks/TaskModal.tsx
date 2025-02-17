@@ -11,8 +11,7 @@ import {
   Tag,
 } from "@/types/task";
 import { useProjectStore } from "@/store/project";
-import { Project } from "@/types/project";
-import { RRule, Frequency } from "rrule";
+import { RRule } from "rrule";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 

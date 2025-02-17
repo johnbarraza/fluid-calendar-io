@@ -1,6 +1,5 @@
-import { PrismaClient, Task } from "@prisma/client";
+import { PrismaClient, Task, AutoScheduleSettings } from "@prisma/client";
 import { TimeSlotManagerImpl, TimeSlotManager } from "./TimeSlotManager";
-import { TaskAnalyzer } from "./TaskAnalyzer";
 import { CalendarServiceImpl } from "./CalendarServiceImpl";
 import { useSettingsStore } from "@/store/settings";
 import { addDays } from "date-fns";
@@ -11,13 +10,11 @@ const DEFAULT_TASK_DURATION = 30; // Default duration in minutes
 export class SchedulingService {
   private prisma: PrismaClient;
   private calendarService: CalendarServiceImpl;
-  private taskAnalyzer: TaskAnalyzer;
   private settings: AutoScheduleSettings | null;
 
   constructor(settings?: AutoScheduleSettings) {
     this.prisma = new PrismaClient();
     this.calendarService = new CalendarServiceImpl(this.prisma);
-    this.taskAnalyzer = new TaskAnalyzer();
     this.settings = settings || null;
   }
 
@@ -53,15 +50,14 @@ export class SchedulingService {
   }
 
   async scheduleMultipleTasks(tasks: Task[]): Promise<Task[]> {
-    logger.log(
-      "Starting to schedule multiple tasks",
-      tasks.map((t) => ({
+    logger.log("Starting to schedule multiple tasks", {
+      tasks: tasks.map((t) => ({
         id: t.id,
         title: t.title,
         duration: t.duration || DEFAULT_TASK_DURATION,
         dueDate: t.dueDate,
-      }))
-    );
+      })),
+    });
 
     // Clear existing schedules for non-locked tasks
     const tasksToSchedule = tasks.filter((t) => !t.scheduleLocked);
@@ -90,15 +86,14 @@ export class SchedulingService {
       if (!b.dueDate) return -1;
       return a.dueDate.getTime() - b.dueDate.getTime();
     });
-    logger.log(
-      "Sorted tasks by due date",
-      sortedTasks.map((t) => ({
+    logger.log("Sorted tasks by due date", {
+      tasks: sortedTasks.map((t) => ({
         id: t.id,
         title: t.title,
         dueDate: t.dueDate,
         duration: t.duration || DEFAULT_TASK_DURATION,
-      }))
-    );
+      })),
+    });
 
     const timeSlotManager = this.getTimeSlotManager();
     const updatedTasks: Task[] = [];

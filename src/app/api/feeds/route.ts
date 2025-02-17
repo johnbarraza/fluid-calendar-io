@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+interface CalendarFeedUpdate {
+  id: string;
+  enabled?: boolean;
+  color?: string | null;
+}
+
 // List all calendar feeds
 export async function GET() {
   try {
@@ -53,7 +59,7 @@ export async function PUT(request: Request) {
 
     // Use transaction to ensure all updates succeed or none do
     await prisma.$transaction(
-      feeds.map((feed: any) =>
+      feeds.map((feed: CalendarFeedUpdate) =>
         prisma.calendarFeed.update({
           where: { id: feed.id },
           data: feed,

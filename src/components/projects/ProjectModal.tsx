@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { IoClose } from "react-icons/io5";
-import { Project, NewProject, ProjectStatus } from "@/types/project";
+import { Project, ProjectStatus } from "@/types/project";
 import { useProjectStore } from "@/store/project";
 
 interface ProjectModalProps {

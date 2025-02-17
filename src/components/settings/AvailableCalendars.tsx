@@ -11,10 +11,9 @@ interface AvailableCalendar {
 
 interface Props {
   accountId: string;
-  accountEmail: string;
 }
 
-export function AvailableCalendars({ accountId, accountEmail }: Props) {
+export function AvailableCalendars({ accountId }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [calendars, setCalendars] = useState<AvailableCalendar[]>([]);
   const [addingCalendars, setAddingCalendars] = useState<Set<string>>(

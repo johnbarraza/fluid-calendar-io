@@ -5,14 +5,13 @@ import { useProjectStore } from "@/store/project";
 import { useTaskListViewSettings } from "@/store/taskListViewSettings";
 import { useMemo } from "react";
 import { Column } from "./Column";
-import { DndContext, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent} from "@dnd-kit/core";
 
 interface BoardViewProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
-  onInlineEdit: (task: Task) => void;
 }
 
 export function BoardView({
@@ -20,7 +19,6 @@ export function BoardView({
   onEdit,
   onDelete,
   onStatusChange,
-  onInlineEdit,
 }: BoardViewProps) {
   const { activeProject } = useProjectStore();
   const { energyLevel, timePreference, tagIds, search } =
@@ -107,7 +105,6 @@ export function BoardView({
               tasks={columns[status]}
               onEdit={onEdit}
               onDelete={onDelete}
-              onInlineEdit={onInlineEdit}
             />
           ))}
         </DndContext>

@@ -180,7 +180,6 @@ export default function TasksPage() {
               }}
               onDelete={handleDeleteTask}
               onStatusChange={handleStatusChange}
-              onInlineEdit={handleInlineEdit}
             />
           )}
         </div>

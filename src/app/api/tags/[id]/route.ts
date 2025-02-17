@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
-        id: params.id,
+        id,
       },
     });
 
@@ -25,12 +26,13 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
-        id: params.id,
+        id,
       },
     });
 
@@ -46,7 +48,7 @@ export async function PUT(
       const existingTag = await prisma.tag.findFirst({
         where: {
           name,
-          id: { not: params.id }, // Exclude current tag
+          id: { not: id }, // Exclude current tag
         },
       });
 
@@ -59,7 +61,7 @@ export async function PUT(
 
     const updatedTag = await prisma.tag.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         ...(name && { name }),
@@ -76,12 +78,13 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
-        id: params.id,
+        id,
       },
     });
 
@@ -91,7 +94,7 @@ export async function DELETE(
 
     await prisma.tag.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
 

@@ -10,12 +10,12 @@ interface UpdateRequest {
 // Update a Google Calendar feed
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id: id },
+      where: { id },
       include: { account: true },
     });
 
@@ -30,7 +30,7 @@ export async function PATCH(
 
     // Update only local properties
     const updatedFeed = await prisma.calendarFeed.update({
-      where: { id: id },
+      where: { id },
       data: {
         enabled: updates.enabled,
         color: updates.color,
@@ -56,12 +56,12 @@ export async function PATCH(
 // Delete a Google Calendar feed
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id: id },
+      where: { id },
       include: { account: true },
     });
 
@@ -74,7 +74,7 @@ export async function DELETE(
 
     // Delete the feed and all its events
     await prisma.calendarFeed.delete({
-      where: { id: id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

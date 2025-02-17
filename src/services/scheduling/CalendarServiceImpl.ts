@@ -1,7 +1,7 @@
-import { CalendarEvent, PrismaClient, Task } from "@prisma/client";
+import { CalendarEvent, PrismaClient } from "@prisma/client";
 import { TimeSlot, Conflict } from "@/types/scheduling";
 import { CalendarService } from "./CalendarService";
-import { isWithinInterval, areIntervalsOverlapping } from "date-fns";
+import { areIntervalsOverlapping } from "date-fns";
 import { logger } from "@/lib/logger";
 
 export class CalendarServiceImpl implements CalendarService {
@@ -29,16 +29,15 @@ export class CalendarServiceImpl implements CalendarService {
 
     logger.log(`[DEBUG] Found ${events.length} calendar events in range`);
     if (events.length > 0) {
-      logger.log(
-        "[DEBUG] Calendar events:",
-        events.map((e) => ({
+      logger.log("[DEBUG] Calendar events:", {
+        events: events.map((e) => ({
           id: e.id,
           title: e.title,
           start: e.start,
           end: e.end,
           feedId: e.feedId,
-        }))
-      );
+        })),
+      });
     }
 
     for (const event of events) {
@@ -84,15 +83,14 @@ export class CalendarServiceImpl implements CalendarService {
       `[DEBUG] Found ${scheduledTasks.length} scheduled tasks to check`
     );
     if (scheduledTasks.length > 0) {
-      logger.log(
-        "[DEBUG] Scheduled tasks:",
-        scheduledTasks.map((t) => ({
+      logger.log("[DEBUG] Scheduled tasks:", {
+        tasks: scheduledTasks.map((t) => ({
           id: t.id,
           title: t.title,
           start: t.scheduledStart,
           end: t.scheduledEnd,
-        }))
-      );
+        })),
+      });
     }
 
     for (const task of scheduledTasks) {
@@ -138,7 +136,9 @@ export class CalendarServiceImpl implements CalendarService {
       return [];
     }
 
-    logger.log("[DEBUG] Fetching events for calendars:", selectedCalendarIds);
+    logger.log("[DEBUG] Fetching events for calendars:", {
+      calendarIds: selectedCalendarIds,
+    });
     return this.prisma.calendarEvent.findMany({
       where: {
         feedId: {

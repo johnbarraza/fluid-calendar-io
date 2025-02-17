@@ -20,4 +20,4 @@ export interface NewProject {
   status?: ProjectStatus;
 }
 
-export interface UpdateProject extends Partial<NewProject> {}
+export type UpdateProject = Partial<NewProject>;

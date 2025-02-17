@@ -9,7 +9,6 @@ import {
   CalendarView,
   CalendarViewState,
 } from "@/types/calendar";
-import { parseICalFeed } from "@/lib/calendar/parser";
 import { CalendarType } from "@/lib/calendar/init";
 import { useTaskStore } from "@/store/task";
 import { useSettingsStore } from "@/store/settings";
@@ -548,34 +547,6 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         await scheduleAllTasks();
         return;
       }
-
-      // For iCal feeds, parse the feed
-      if (feed.url) {
-        const events = await parseICalFeed(feed.url, id);
-
-        // Update events in database
-        const response = await fetch(`/api/feeds/${id}/sync`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ events }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to sync feed with database");
-        }
-
-        // Update feed sync status
-        await get().updateFeed(id, {
-          lastSync: new Date(),
-          error: undefined,
-        });
-
-        // Reload events from database
-        await get().loadFromDatabase();
-        // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
-      }
     } catch (error) {
       console.error("Failed to sync feed:", error);
       // Update feed with error
@@ -736,18 +707,19 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
             id: `${task.id}`,
             feedId: "tasks",
             title: task.title,
-            description: task.description,
+            description: task.description || undefined,
             start: new Date(task.scheduledStart),
             end: new Date(task.scheduledEnd),
             isRecurring: false,
+            isMaster: false,
             allDay: false,
             color: task.tags[0]?.color || "#4f46e5",
             extendedProps: {
               isTask: true,
               taskId: task.id,
               status: task.status,
-              energyLevel: task.energyLevel,
-              preferredTime: task.preferredTime,
+              energyLevel: task.energyLevel?.toString() || undefined,
+              preferredTime: task.preferredTime?.toString(),
               tags: task.tags,
               isAutoScheduled: true,
               scheduleScore: task.scheduleScore,
@@ -770,20 +742,21 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
             id: `${task.id}`,
             feedId: "tasks",
             title: task.title,
-            description: task.description,
+            description: task.description || undefined,
             start: eventDate,
             end: task.duration
               ? new Date(eventDate.getTime() + task.duration * 60000)
               : new Date(eventDate.getTime() + 3600000),
             isRecurring: false,
+            isMaster: false,
             allDay: true,
             color: task.tags[0]?.color || "#4f46e5",
             extendedProps: {
               isTask: true,
               taskId: task.id,
               status: task.status,
-              energyLevel: task.energyLevel,
-              preferredTime: task.preferredTime,
+              energyLevel: task.energyLevel?.toString() || undefined,
+              preferredTime: task.preferredTime?.toString(),
               tags: task.tags,
               isAutoScheduled: false,
               dueDate: task.dueDate

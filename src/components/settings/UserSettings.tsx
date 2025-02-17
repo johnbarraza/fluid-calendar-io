@@ -1,6 +1,7 @@
 import { useSettingsStore } from "@/store/settings";
 import { SettingsSection, SettingRow } from "./SettingsSection";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import {
   ThemeMode,
   TimeFormat,
@@ -62,10 +63,12 @@ export function UserSettings() {
         <SettingRow label="Profile" description="Your account information">
           <div className="flex items-center space-x-3">
             {session.user.image && (
-              <img
+              <Image
                 src={session.user.image}
                 alt={session.user.name || ""}
-                className="h-10 w-10 rounded-full"
+                width={40}
+                height={40}
+                className="rounded-full"
               />
             )}
             <div>

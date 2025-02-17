@@ -6,7 +6,6 @@ import {
   isWithinInterval,
   setHours,
   setMinutes,
-  getHours,
   getDay,
   differenceInHours,
 } from "date-fns";
@@ -104,14 +103,13 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
 
     logger.log(`[DEBUG] Found ${availableSlots.length} available slots`);
     if (availableSlots.length > 0) {
-      logger.log(
-        "[DEBUG] Available slots:",
-        availableSlots.map((slot) => ({
+      logger.log("[DEBUG] Available slots:", {
+        slots: availableSlots.map((slot) => ({
           start: slot.start,
           end: slot.end,
           score: this.scoreSlot(slot),
-        }))
-      );
+        })),
+      });
     }
 
     // 4. Apply buffer times
@@ -130,9 +128,8 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       return false;
     }
 
-    // Check for calendar conflicts with a dummy task
-    const dummyTask = { id: "dummy" } as Task;
-    const conflicts = await this.findConflicts(slot, dummyTask);
+    // Check for calendar conflicts
+    const conflicts = await this.findCalendarConflicts(slot);
     return conflicts.length === 0;
   }
 
@@ -283,7 +280,7 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     );
   }
 
-  private async findConflicts(slot: TimeSlot, task: Task): Promise<Conflict[]> {
+  private async findCalendarConflicts(slot: TimeSlot): Promise<Conflict[]> {
     const selectedCalendars = parseSelectedCalendars(
       this.settings.selectedCalendars
     );
@@ -293,7 +290,9 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       return [];
     }
 
-    logger.log("[DEBUG] Checking conflicts with calendars:", selectedCalendars);
+    logger.log("[DEBUG] Checking conflicts with calendars:", {
+      calendarIds: selectedCalendars,
+    });
     return this.calendarService.findConflicts(slot, selectedCalendars);
   }
 
@@ -314,7 +313,7 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     });
 
     for (const slot of slots) {
-      const conflicts = await this.findConflicts(slot, task);
+      const conflicts = await this.findCalendarConflicts(slot);
 
       // Check for conflicts with other scheduled tasks
       const hasTaskConflict = scheduledTasks.some(
@@ -335,11 +334,11 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
           ...(hasTaskConflict
             ? [
                 {
-                  type: "task",
+                  type: "task" as const,
                   start: slot.start,
                   end: slot.end,
                   title: "Conflict with another scheduled task",
-                  source: { type: "task", id: "conflict" },
+                  source: { type: "task" as const, id: "conflict" },
                 },
               ]
             : []),
@@ -350,10 +349,17 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     return availableSlots;
   }
 
+  // TODO: Buffer time implementation needs improvement:
+  // 1. Currently only checks if buffers fit within work hours but doesn't prevent scheduling in buffer times
+  // 2. Should check for conflicts during buffer periods
+  // 3. Consider adjusting slot times to include the buffers
+  // 4. Could factor buffer availability into slot scoring
   private applyBufferTimes(slots: TimeSlot[]): TimeSlot[] {
     return slots.map((slot) => {
       const { beforeBuffer, afterBuffer } = this.calculateBufferTimes(slot);
-      slot.hasBufferTime = true;
+      // Only mark as having buffer time if both buffers are within work hours
+      slot.hasBufferTime =
+        beforeBuffer.isWithinWorkHours && afterBuffer.isWithinWorkHours;
       return slot;
     });
   }

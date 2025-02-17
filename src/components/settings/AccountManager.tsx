@@ -102,10 +102,7 @@ export function AccountManager() {
                   </div>
                 </div>
                 {showAvailableFor === account.id && (
-                  <AvailableCalendars
-                    accountId={account.id}
-                    accountEmail={account.email}
-                  />
+                  <AvailableCalendars accountId={account.id} />
                 )}
               </div>
             ))}
