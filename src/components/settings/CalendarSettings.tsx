@@ -1,10 +1,16 @@
 import { useSettingsStore } from "@/store/settings";
 import { useCalendarStore } from "@/store/calendar";
 import { SettingsSection, SettingRow } from "./SettingsSection";
+import { useEffect } from "react";
 
 export function CalendarSettings() {
   const { calendar, updateCalendarSettings } = useSettingsStore();
-  const { feeds } = useCalendarStore();
+  const { feeds, loadFromDatabase } = useCalendarStore();
+
+  // Load feeds when component mounts
+  useEffect(() => {
+    loadFromDatabase();
+  }, [loadFromDatabase]);
 
   const workingDays = [
     { value: 0, label: "Sunday" },
@@ -135,92 +141,6 @@ export function CalendarSettings() {
             </div>
           </div>
         </div>
-      </SettingRow>
-
-      <SettingRow
-        label="Event Defaults"
-        description="Set default values for new events"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Default Duration (minutes)
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="1440"
-              value={calendar.eventDefaults.defaultDuration}
-              onChange={(e) =>
-                updateCalendarSettings({
-                  eventDefaults: {
-                    ...calendar.eventDefaults,
-                    defaultDuration: Number(e.target.value),
-                  },
-                })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Default Color
-            </label>
-            <input
-              type="color"
-              value={calendar.eventDefaults.defaultColor}
-              onChange={(e) =>
-                updateCalendarSettings({
-                  eventDefaults: {
-                    ...calendar.eventDefaults,
-                    defaultColor: e.target.value,
-                  },
-                })
-              }
-              className="mt-1 h-8 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Default Reminder (minutes before)
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="10080"
-              value={calendar.eventDefaults.defaultReminder}
-              onChange={(e) =>
-                updateCalendarSettings({
-                  eventDefaults: {
-                    ...calendar.eventDefaults,
-                    defaultReminder: Number(e.target.value),
-                  },
-                })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
-        </div>
-      </SettingRow>
-
-      <SettingRow
-        label="Refresh Interval"
-        description="How often to check for calendar updates (in minutes)"
-      >
-        <input
-          type="number"
-          min="1"
-          max="60"
-          value={calendar.refreshInterval}
-          onChange={(e) =>
-            updateCalendarSettings({
-              refreshInterval: Number(e.target.value),
-            })
-          }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-        />
       </SettingRow>
     </SettingsSection>
   );

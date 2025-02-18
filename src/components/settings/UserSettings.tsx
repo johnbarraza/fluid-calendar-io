@@ -2,22 +2,11 @@ import { useSettingsStore } from "@/store/settings";
 import { SettingsSection, SettingRow } from "./SettingsSection";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import {
-  ThemeMode,
-  TimeFormat,
-  WeekStartDay,
-  CalendarView,
-} from "@/types/settings";
+import { TimeFormat, WeekStartDay } from "@/types/settings";
 
 export function UserSettings() {
   const { data: session } = useSession();
   const { user, updateUserSettings } = useSettingsStore();
-
-  const themes: { value: ThemeMode; label: string }[] = [
-    { value: "light", label: "Light" },
-    { value: "dark", label: "Dark" },
-    { value: "system", label: "System" },
-  ];
 
   const timeFormats: { value: TimeFormat; label: string }[] = [
     { value: "12h", label: "12-hour" },
@@ -27,13 +16,6 @@ export function UserSettings() {
   const weekStarts: { value: WeekStartDay; label: string }[] = [
     { value: "sunday", label: "Sunday" },
     { value: "monday", label: "Monday" },
-  ];
-
-  const views = [
-    { value: "day", label: "Day" },
-    { value: "week", label: "Week" },
-    { value: "month", label: "Month" },
-    { value: "agenda", label: "Agenda" },
   ];
 
   // Static list of common timezones
@@ -78,41 +60,6 @@ export function UserSettings() {
           </div>
         </SettingRow>
       )}
-
-      <SettingRow label="Theme" description="Choose your preferred color theme">
-        <select
-          value={user.theme}
-          onChange={(e) =>
-            updateUserSettings({ theme: e.target.value as ThemeMode })
-          }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-        >
-          {themes.map((theme) => (
-            <option key={theme.value} value={theme.value}>
-              {theme.label}
-            </option>
-          ))}
-        </select>
-      </SettingRow>
-
-      <SettingRow
-        label="Default View"
-        description="Choose your preferred calendar view"
-      >
-        <select
-          value={user.defaultView}
-          onChange={(e) =>
-            updateUserSettings({ defaultView: e.target.value as CalendarView })
-          }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-        >
-          {views.map((view) => (
-            <option key={view.value} value={view.value}>
-              {view.label}
-            </option>
-          ))}
-        </select>
-      </SettingRow>
 
       <SettingRow
         label="Time Format"

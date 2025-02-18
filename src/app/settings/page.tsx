@@ -3,9 +3,6 @@
 import { useState } from "react";
 import { UserSettings } from "@/components/settings/UserSettings";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
-import { NotificationSettings } from "@/components/settings/NotificationSettings";
-import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
-import { DataSettings } from "@/components/settings/DataSettings";
 import { Separator } from "@/components/ui/separator";
 import { AccountManager } from "@/components/settings/AccountManager";
 import { AutoScheduleSettings } from "@/components/settings/AutoScheduleSettings";
@@ -17,9 +14,6 @@ type SettingsTab =
   | "user"
   | "calendar"
   | "auto-schedule"
-  | "notifications"
-  | "integrations"
-  | "data"
   | "system";
 
 export default function SettingsPage() {
@@ -30,9 +24,6 @@ export default function SettingsPage() {
     { id: "user", label: "User" },
     { id: "calendar", label: "Calendar" },
     { id: "auto-schedule", label: "Auto-Schedule" },
-    { id: "notifications", label: "Notifications" },
-    { id: "integrations", label: "Integrations" },
-    { id: "data", label: "Data" },
     { id: "system", label: "System" },
   ] as const;
 
@@ -46,12 +37,7 @@ export default function SettingsPage() {
         return <CalendarSettings />;
       case "auto-schedule":
         return <AutoScheduleSettings />;
-      case "notifications":
-        return <NotificationSettings />;
-      case "integrations":
-        return <IntegrationSettings />;
-      case "data":
-        return <DataSettings />;
+
       case "system":
         return <SystemSettings />;
       default:
