@@ -23,6 +23,7 @@ interface SettingsStore extends Settings {
   updateAutoScheduleSettings: (
     settings: Partial<Settings["autoSchedule"]>
   ) => void;
+  updateSystemSettings: (settings: Partial<Settings["system"]>) => void;
   setAccounts: (accounts: ConnectedAccount[]) => void;
   removeAccount: (accountId: string) => Promise<void>;
   refreshAccounts: () => Promise<void>;
@@ -86,6 +87,9 @@ const defaultSettings: Settings & { accounts: ConnectedAccount[] } = {
     lowEnergyEnd: 17, // 5 PM
     groupByProject: false,
   },
+  system: {
+    logLevel: "none",
+  },
   accounts: [],
 };
 
@@ -116,6 +120,10 @@ export const useSettingsStore = create<SettingsStore>()(
       updateAutoScheduleSettings: (settings) =>
         set((state) => ({
           autoSchedule: { ...state.autoSchedule, ...settings },
+        })),
+      updateSystemSettings: (settings) =>
+        set((state) => ({
+          system: { ...state.system, ...settings },
         })),
       setAccounts: (accounts) =>
         set(() => ({

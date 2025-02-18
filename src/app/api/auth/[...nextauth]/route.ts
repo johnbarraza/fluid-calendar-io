@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { getGoogleCredentials } from "@/lib/auth";
 
 declare module "next-auth" {
   interface Session {
@@ -23,11 +24,12 @@ declare module "next-auth/jwt" {
   }
 }
 
+const credentials = await getGoogleCredentials();
 const handler = NextAuth({
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: credentials.clientId,
+      clientSecret: credentials.clientSecret,
       authorization: {
         params: {
           scope:
@@ -41,14 +43,7 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
-      // Initial sign in
       if (account && profile) {
-        console.log("Initial sign in, setting tokens:", {
-          hasAccessToken: !!account.access_token,
-          hasRefreshToken: !!account.refresh_token,
-          expiresAt: account.expires_at,
-          profile,
-        });
         return {
           ...token,
           accessToken: account.access_token,
@@ -59,12 +54,6 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      console.log("Creating session with tokens:", {
-        hasAccessToken: !!token.accessToken,
-        hasRefreshToken: !!token.refreshToken,
-        expiresAt: token.expiresAt,
-      });
-
       return {
         ...session,
         accessToken: token.accessToken,
@@ -80,7 +69,7 @@ const handler = NextAuth({
   debug: true,
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
 });
 

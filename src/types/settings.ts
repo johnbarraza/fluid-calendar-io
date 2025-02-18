@@ -67,6 +67,12 @@ export interface AutoScheduleSettings {
   groupByProject: boolean;
 }
 
+export interface SystemSettings {
+  googleClientId?: string;
+  googleClientSecret?: string;
+  logLevel: "none" | "debug";
+}
+
 export interface Settings {
   user: UserSettings;
   calendar: CalendarSettings;
@@ -74,4 +80,5 @@ export interface Settings {
   integrations: IntegrationSettings;
   data: DataSettings;
   autoSchedule: AutoScheduleSettings;
+  system: SystemSettings;
 }

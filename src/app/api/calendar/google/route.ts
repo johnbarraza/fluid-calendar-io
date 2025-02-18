@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { google, calendar_v3 } from "googleapis";
 import { TokenManager } from "@/lib/token-manager";
 import { getGoogleCalendarClient } from "@/lib/google-calendar";
+import { createGoogleOAuthClient } from "@/lib/google";
 import { GaxiosError } from "gaxios";
 
 // Helper function to process recurrence rules
@@ -53,11 +54,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "No code provided" }, { status: 400 });
     }
 
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID!,
-      process.env.GOOGLE_CLIENT_SECRET!,
-      `${process.env.NEXTAUTH_URL}/api/calendar/google`
-    );
+    const oauth2Client = await createGoogleOAuthClient({
+      redirectUrl: `${process.env.NEXTAUTH_URL}/api/calendar/google`,
+    });
 
     try {
       // Exchange code for tokens

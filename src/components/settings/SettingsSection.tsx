@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 interface SettingsSectionProps {
   title: string;
-  description?: string;
+  description: string;
   children: ReactNode;
 }
 
@@ -26,7 +26,7 @@ export function SettingsSection({
 
 interface SettingRowProps {
   label: string;
-  description?: string;
+  description: ReactNode;
   children: ReactNode;
 }
 
@@ -36,7 +36,7 @@ export function SettingRow({ label, description, children }: SettingRowProps) {
       <div className="w-full sm:w-1/3">
         <label className="text-sm font-medium text-gray-900">{label}</label>
         {description && (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+          <div className="mt-1 text-sm text-gray-500">{description}</div>
         )}
       </div>
       <div className="mt-2 sm:mt-0 sm:ml-4 sm:w-2/3">{children}</div>

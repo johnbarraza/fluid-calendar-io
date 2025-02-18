@@ -228,3 +228,12 @@ model AutoScheduleSettings {
 
   @@index([userId])
 }
+
+model SystemSettings {
+  id                 String   @id @default(cuid())
+  googleClientId     String?
+  googleClientSecret String?
+  logLevel           String   @default("none")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

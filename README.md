@@ -106,22 +106,64 @@ The easiest way to run FluidCalendar is using our official Docker image:
 # Pull the latest image
 docker pull eibrahim/fluid-calendar:latest
 
+# Create data directory for persistent storage
+mkdir -p data
+
 # Create a .env file
 cat > .env << EOL
 DATABASE_URL=file:/app/data/dev.db
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-key
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
 EOL
 
-# Run the container
+# Stop and remove existing container if it exists
+docker stop fluid-calendar || true
+docker rm fluid-calendar || true
+
+# Run database migrations
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  --env-file .env \
+  eibrahim/fluid-calendar:latest \
+  npx prisma migrate deploy
+
+# Run the application
 docker run -d \
   --name fluid-calendar \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
   --env-file .env \
   eibrahim/fluid-calendar:latest
+
+# View logs (optional)
+docker logs -f fluid-calendar
+```
+
+After starting the container, visit http://localhost:3000/settings and configure your Google credentials and logging preferences in the System Settings tab.
+
+#### Useful Docker Commands:
+```bash
+# Stop the container
+docker stop fluid-calendar
+
+# Start an existing container
+docker start fluid-calendar
+
+# Remove the container
+docker rm fluid-calendar
+
+# View logs
+docker logs -f fluid-calendar
+
+# Check container status
+docker ps -a | grep fluid-calendar
+
+# Reset database (if needed)
+rm -rf data/* && docker run --rm \
+  -v $(pwd)/data:/app/data \
+  --env-file .env \
+  eibrahim/fluid-calendar:latest \
+  npx prisma migrate deploy
 ```
 
 Available tags:
@@ -220,10 +262,15 @@ cp .env.example .env
 
 2. Configure the following environment variables:
 - `DATABASE_URL`: Your database connection string
-- `GOOGLE_CLIENT_ID`: From Google Cloud Console
-- `GOOGLE_CLIENT_SECRET`: From Google Cloud Console
 - `NEXTAUTH_URL`: Your application URL
 - `NEXTAUTH_SECRET`: Random string for session encryption
+
+3. Optional environment variables (can be configured in System Settings instead):
+- `GOOGLE_CLIENT_ID`: From Google Cloud Console
+- `GOOGLE_CLIENT_SECRET`: From Google Cloud Console
+- `LOG_LEVEL`: Logging level (none/debug)
+
+Note: Google credentials and logging settings can be managed through the UI in Settings > System. Environment variables will be used as fallback if system settings are not configured.
 
 ## Getting Started
 

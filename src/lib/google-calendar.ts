@@ -1,7 +1,7 @@
-import { google } from "googleapis";
+import { google, calendar_v3 } from "googleapis";
 import { useSettingsStore } from "@/store/settings";
-import { calendar_v3 } from "googleapis";
 import { TokenManager } from "./token-manager";
+import { createGoogleOAuthClient } from "./google";
 
 type GoogleEvent = calendar_v3.Schema$Event;
 
@@ -24,12 +24,9 @@ export async function getGoogleCalendarClient(accountId: string) {
     }
   }
 
-  // Create OAuth2 client
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID!,
-    process.env.GOOGLE_CLIENT_SECRET!,
-    `${process.env.NEXTAUTH_URL}/api/auth/callback/google`
-  );
+  const oauth2Client = await createGoogleOAuthClient({
+    redirectUrl: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
+  });
 
   // Set credentials
   oauth2Client.setCredentials({
@@ -312,7 +309,7 @@ export async function getGoogleEvent(
     // Get the event
     const eventResponse = await googleCalendarClient.events.get({
       calendarId,
-      eventId
+      eventId,
     });
     const event = eventResponse.data;
     console.log("Got event:", {

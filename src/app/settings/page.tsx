@@ -9,6 +9,7 @@ import { DataSettings } from "@/components/settings/DataSettings";
 import { Separator } from "@/components/ui/separator";
 import { AccountManager } from "@/components/settings/AccountManager";
 import { AutoScheduleSettings } from "@/components/settings/AutoScheduleSettings";
+import { SystemSettings } from "@/components/settings/SystemSettings";
 import { cn } from "@/lib/utils";
 
 type SettingsTab =
@@ -18,7 +19,8 @@ type SettingsTab =
   | "auto-schedule"
   | "notifications"
   | "integrations"
-  | "data";
+  | "data"
+  | "system";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("accounts");
@@ -31,6 +33,7 @@ export default function SettingsPage() {
     { id: "notifications", label: "Notifications" },
     { id: "integrations", label: "Integrations" },
     { id: "data", label: "Data" },
+    { id: "system", label: "System" },
   ] as const;
 
   const renderContent = () => {
@@ -49,6 +52,8 @@ export default function SettingsPage() {
         return <IntegrationSettings />;
       case "data":
         return <DataSettings />;
+      case "system":
+        return <SystemSettings />;
       default:
         return null;
     }
