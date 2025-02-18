@@ -70,7 +70,7 @@ export function AccountManager() {
           )}
 
           <div className="flex gap-2">
-            <Button onClick={handleConnect} disabled={showCredentialsWarning}>
+            <Button onClick={() => handleConnect("GOOGLE")} disabled={showCredentialsWarning}>
               Connect Google Calendar
             </Button>
             <Button
