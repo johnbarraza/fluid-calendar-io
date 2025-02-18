@@ -110,7 +110,9 @@ export function SystemSettings() {
       >
         <select
           value={system.logLevel || "none"}
-          onChange={(e) => handleUpdate({ logLevel: e.target.value })}
+          onChange={(e) =>
+            handleUpdate({ logLevel: e.target.value as "none" | "debug" })
+          }
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         >
           <option value="none">None</option>
