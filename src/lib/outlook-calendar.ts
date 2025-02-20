@@ -6,7 +6,6 @@ import { TokenManager } from "./token-manager";
 import { logger } from "./logger";
 import { RRule, Frequency } from "rrule";
 import { useSettingsStore } from "@/store/settings";
-import { formatDateToLocal } from "@/lib/date-utils";
 
 export interface MSGraphEvent {
   id: string;
