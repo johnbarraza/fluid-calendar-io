@@ -8,6 +8,8 @@ import { useCalendarStore } from "@/store/calendar";
 import { useSettingsStore } from "@/store/settings";
 import { IoClose } from "react-icons/io5";
 import { cn } from "@/lib/utils";
+import { formatToLocalISOString } from "@/lib/date-utils";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface EventModalProps {
   isOpen: boolean;
@@ -28,14 +30,15 @@ const FREQUENCIES = {
 
 type Frequency = (typeof FREQUENCIES)[keyof typeof FREQUENCIES];
 
+// RRule weekday codes
 const WEEKDAYS = {
+  SU: "Sunday",
   MO: "Monday",
   TU: "Tuesday",
   WE: "Wednesday",
   TH: "Thursday",
   FR: "Friday",
   SA: "Saturday",
-  SU: "Sunday",
 } as const;
 
 // Helper function to parse recurrence rule
@@ -88,14 +91,14 @@ function buildRecurrenceRule(freq: string, interval: number, byDay: string[]) {
 
   // Add BYDAY for weekly recurrence
   if (freq === FREQUENCIES.WEEKLY && byDay.length > 0) {
+    // byDay should already be in RRule format (MO, TU, etc.)
+    console.log("Building RRule with weekdays:", byDay);
     parts.push(`BYDAY=${byDay.join(",")}`);
   }
 
-  // Return empty string if no valid parts
-  if (parts.length === 0) return "";
-
-  // Don't add RRULE: prefix - it will be added in createGoogleEvent
-  return parts.join(";");
+  const rule = parts.join(";");
+  console.log("Built RRule:", rule);
+  return rule;
 }
 
 export function EventModal({
@@ -138,6 +141,7 @@ export function EventModal({
   const [recurrenceFreq, setRecurrenceFreq] = useState("");
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [recurrenceByDay, setRecurrenceByDay] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -195,43 +199,38 @@ export function EventModal({
     }
   }, [isOpen, event?.isRecurring, editMode, showRecurrenceDialog]);
 
-  const formatToLocalISOString = (date: Date) => {
-    const tzOffset = date.getTimezoneOffset() * 60000; // offset in milliseconds
-    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const feed = feeds.find((f) => f.id === selectedFeedId);
-    if (!feed) {
-      console.error("Selected calendar not found");
-      return;
-    }
-
-    const eventData: Omit<CalendarEvent, "id"> = {
-      title,
-      description,
-      location,
-      start: startDate,
-      end: endDate,
-      feedId: selectedFeedId,
-      allDay: isAllDay,
-      isRecurring,
-      recurrenceRule: isRecurring
-        ? buildRecurrenceRule(
-            recurrenceFreq,
-            recurrenceInterval,
-            recurrenceByDay
-          )
-        : undefined,
-      isMaster: false,
-    };
-
+    setIsSubmitting(true);
     try {
+      const feed = feeds.find((f) => f.id === selectedFeedId);
+      if (!feed) {
+        console.error("Selected calendar not found");
+        return;
+      }
+
+      const eventData: Omit<CalendarEvent, "id"> = {
+        title,
+        description,
+        location,
+        start: startDate,
+        end: endDate,
+        feedId: selectedFeedId,
+        allDay: isAllDay,
+        isRecurring,
+        recurrenceRule: isRecurring
+          ? buildRecurrenceRule(
+              recurrenceFreq,
+              recurrenceInterval,
+              recurrenceByDay
+            )
+          : undefined,
+        isMaster: false,
+      };
+
       if (event?.id) {
         // For existing events
-        if (feed.type === "GOOGLE" && !event.googleEventId) {
+        if (feed.type === "GOOGLE" && !event.externalEventId) {
           throw new Error("Cannot edit this Google Calendar event");
         }
         await updateEvent(event.id, eventData, editMode);
@@ -245,6 +244,8 @@ export function EventModal({
     } catch (error) {
       console.error("Failed to save event:", error);
       alert(error instanceof Error ? error.message : "Failed to save event");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -252,12 +253,15 @@ export function EventModal({
     if (!event?.id) return;
 
     try {
+      setIsSubmitting(true);
       await removeEvent(event.id, editMode);
       resetState();
       onClose();
     } catch (error) {
       console.error("Failed to delete event:", error);
       alert(error instanceof Error ? error.message : "Failed to delete event");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -365,6 +369,7 @@ export function EventModal({
             className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg z-[10000]"
             data-testid="event-modal"
           >
+            {isSubmitting && <LoadingOverlay />}
             <div className="flex items-center justify-between mb-4">
               <Dialog.Title className="text-lg font-semibold">
                 {event?.id ? "Edit Event" : "New Event"}
@@ -547,12 +552,24 @@ export function EventModal({
                       setIsRecurring(e.target.checked);
                       if (e.target.checked && !recurrenceFreq) {
                         setRecurrenceFreq(FREQUENCIES.WEEKLY);
-                        setRecurrenceByDay([
-                          new Date()
-                            .toLocaleString("en-US", { weekday: "short" })
-                            .toUpperCase()
-                            .slice(0, 2),
-                        ]);
+                        // Get the current weekday in RRule format (MO, TU, etc.)
+                        const weekdayNum = startDate.getDay(); // Use startDate instead of current date
+                        const weekdays = [
+                          "SU",
+                          "MO",
+                          "TU",
+                          "WE",
+                          "TH",
+                          "FR",
+                          "SA",
+                        ];
+                        const weekday = weekdays[weekdayNum];
+                        console.log("Setting initial weekday from startDate:", {
+                          weekdayNum,
+                          weekday,
+                          startDate: startDate.toISOString(),
+                        });
+                        setRecurrenceByDay([weekday]);
                       }
                     }}
                     data-testid="recurring-event-checkbox"

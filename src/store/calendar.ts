@@ -11,7 +11,6 @@ import {
 } from "@/types/calendar";
 import { CalendarType } from "@/lib/calendar/init";
 import { useTaskStore } from "@/store/task";
-import { useSettingsStore } from "@/store/settings";
 
 // Separate store for view preferences that will be persisted in localStorage
 interface ViewStore extends CalendarViewState {
@@ -95,6 +94,8 @@ interface CalendarStore extends CalendarState {
   // New task-related methods
   getTasksAsEvents: (start: Date, end: Date) => CalendarEvent[];
   getAllCalendarItems: (start: Date, end: Date) => CalendarEvent[];
+
+  syncCalendar: (feedId: string) => Promise<void>;
 }
 
 export const useCalendarStore = create<CalendarStore>()((set, get) => ({
@@ -107,11 +108,14 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
   selectedView: "week",
 
   // Helper function to expand recurring events
-  getExpandedEvents: (start: Date, end: Date) => {
+  getExpandedEvents: (
+    start: Date,
+    end: Date,
+    expandInstances: boolean = false
+  ) => {
     const { events } = get();
     const expandedEvents: CalendarEvent[] = [];
-    console.log("getExpandedEvents called with:", { start, end });
-    console.log("Total events in store:", events.length);
+    // console.log("Total events in store:", events.length);
 
     events.forEach((event) => {
       // Convert event dates to Date objects if they're not already
@@ -134,7 +138,7 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
       }
 
       // For master events, expand the recurrence
-      if (event.isMaster && event.recurrenceRule) {
+      if (expandInstances && event.isMaster && event.recurrenceRule) {
         try {
           // Parse the recurrence rule
           const rule = RRule.fromString(event.recurrenceRule);
@@ -170,6 +174,7 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
           });
         } catch (error) {
           console.error("Failed to parse recurrence rule:", error);
+          console.log("recurrenceRule:", event.recurrenceRule);
           // If we can't parse the rule, just show the original event
           if (eventStart <= end && eventEnd >= start) {
             expandedEvents.push({
@@ -182,7 +187,7 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
       }
     });
 
-    console.log("Returning expanded events:", expandedEvents.length);
+    // console.log("Returning expanded events:", expandedEvents.length);
     return expandedEvents;
   },
 
@@ -405,6 +410,27 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         return;
       }
 
+      // For Outlook Calendar feeds, use the Outlook Calendar API
+      if (feed.type === "OUTLOOK") {
+        const response = await fetch("/api/calendar/outlook/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newEvent),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to add event to Outlook Calendar");
+        }
+
+        // Reload from database to get the latest state
+        await get().loadFromDatabase();
+
+        // Trigger auto-scheduling after event is created
+        const { scheduleAllTasks } = useTaskStore.getState();
+        await scheduleAllTasks();
+        return;
+      }
+
       // For other calendars, use the existing API
       const response = await fetch("/api/events", {
         method: "POST",
@@ -436,7 +462,7 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
       const feed = get().feeds.find((f) => f.id === event.feedId);
       if (!feed) return;
 
-      console.log("Updating event:", { id, updates, mode });
+      // console.log("Updating event:", { id, updates, mode });
       // For Google Calendar feeds, use the Google Calendar API
       if (feed.type === "GOOGLE") {
         const response = await fetch(`/api/calendar/google/events`, {
@@ -447,6 +473,26 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
 
         if (!response.ok) {
           throw new Error("Failed to update event in Google Calendar");
+        }
+
+        // Reload from database to get the latest state
+        await get().loadFromDatabase();
+        // Trigger auto-scheduling after event is created
+        const { scheduleAllTasks } = useTaskStore.getState();
+        await scheduleAllTasks();
+        return;
+      }
+
+      // For Outlook Calendar feeds, use the Outlook Calendar API
+      if (feed.type === "OUTLOOK") {
+        const response = await fetch(`/api/calendar/outlook/events`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId: id, mode, ...updates }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update event in Outlook Calendar");
         }
 
         // Reload from database to get the latest state
@@ -498,6 +544,17 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         if (!response.ok) {
           throw new Error("Failed to delete event from Google Calendar");
         }
+      } else if (feed.type === "OUTLOOK") {
+        // For Outlook Calendar feeds, use the Outlook Calendar API
+        const response = await fetch(`/api/calendar/outlook/events`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId: id, mode }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete event from Outlook Calendar");
+        }
       } else {
         // For other calendars, use the existing API
         const response = await fetch(`/api/events/${id}`, {
@@ -539,14 +596,23 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         if (!response.ok) {
           throw new Error("Failed to sync Google Calendar");
         }
+      } else if (feed.type === "OUTLOOK") {
+        const response = await fetch("/api/calendar/outlook/sync", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feedId: id }),
+        });
 
-        // Reload events from database
-        await get().loadFromDatabase();
-        // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
-        return;
+        if (!response.ok) {
+          throw new Error("Failed to sync Outlook Calendar");
+        }
       }
+
+      // Reload events from database
+      await get().loadFromDatabase();
+      // Trigger auto-scheduling after event is created
+      const { scheduleAllTasks } = useTaskStore.getState();
+      await scheduleAllTasks();
     } catch (error) {
       console.error("Failed to sync feed:", error);
       // Update feed with error
@@ -570,31 +636,30 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
   // Data loading
   loadFromDatabase: async () => {
     try {
-      console.log("Starting database load...");
       set({ isLoading: true, error: undefined });
 
       // Load feeds
-      console.log("Fetching feeds...");
+      // console.log("Fetching feeds...");
       const feedsResponse = await fetch("/api/feeds");
       if (!feedsResponse.ok) {
         throw new Error("Failed to load feeds from database");
       }
       const feeds = await feedsResponse.json();
-      console.log("Loaded feeds:", feeds);
+      // console.log("Loaded feeds:", feeds);
 
       // Load events
-      console.log("Fetching events...");
+      // console.log("Fetching events...");
       const eventsResponse = await fetch("/api/events");
       if (!eventsResponse.ok) {
         throw new Error("Failed to load events from database");
       }
       const events = await eventsResponse.json();
-      console.log("Loaded events:", events);
+      // console.log("Loaded events:", events);
 
-      console.log("Setting state with loaded data:", {
-        feeds: feeds.length,
-        events: events.length,
-      });
+      // console.log("Setting state with loaded data:", {
+      //   feeds: feeds.length,
+      //   events: events.length,
+      // });
       set({ feeds, events });
     } catch (error) {
       console.error("Failed to load data from database:", error);
@@ -642,8 +707,20 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
   syncCalendar: async (feedId: string) => {
     try {
       set({ isLoading: true, error: undefined });
-      const response = await fetch(`/api/calendar/google/${feedId}`, {
+
+      // Get the feed to determine its type
+      const feed = get().feeds.find((f) => f.id === feedId);
+      if (!feed) throw new Error("Calendar not found");
+
+      const endpoint =
+        feed.type === "GOOGLE"
+          ? `/api/calendar/google/${feedId}`
+          : `/api/calendar/outlook/sync`;
+
+      const response = await fetch(endpoint, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedId }),
       });
 
       if (!response.ok) {
@@ -663,18 +740,18 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
   // Convert tasks to calendar events
   getTasksAsEvents: (start: Date, end: Date) => {
     const tasks = useTaskStore.getState().tasks;
-    const userTimeZone = useSettingsStore.getState().user.timeZone;
+    // const userTimeZone = useSettingsStore.getState().user.timeZone;
 
-    console.log("Converting tasks to events:", {
-      totalTasks: tasks.length,
-      tasksWithDueDate: tasks.filter((task) => task.dueDate).length,
-      tasksAutoScheduled: tasks.filter(
-        (task) =>
-          task.isAutoScheduled && task.scheduledStart && task.scheduledEnd
-      ).length,
-      dateRange: { start: start.toISOString(), end: end.toISOString() },
-      userTimeZone,
-    });
+    // console.log("Converting tasks to events:", {
+    //   totalTasks: tasks.length,
+    //   tasksWithDueDate: tasks.filter((task) => task.dueDate).length,
+    //   tasksAutoScheduled: tasks.filter(
+    //     (task) =>
+    //       task.isAutoScheduled && task.scheduledStart && task.scheduledEnd
+    //   ).length,
+    //   dateRange: { start: start.toISOString(), end: end.toISOString() },
+    //   userTimeZone,
+    // });
 
     // Create date boundaries in user's timezone
     const startDay = new Date(start);
@@ -710,7 +787,7 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
             description: task.description || undefined,
             start: new Date(task.scheduledStart),
             end: new Date(task.scheduledEnd),
-            isRecurring: false,
+            isRecurring: task.isRecurring,
             isMaster: false,
             allDay: false,
             color: task.tags[0]?.color || "#4f46e5",
@@ -767,13 +844,13 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         }
       });
 
-    console.log("Converted tasks to events:", events.length);
+    // console.log("Converted tasks to events:", events.length);
     return events;
   },
 
   // Get both events and tasks for the calendar
   getAllCalendarItems: (start: Date, end: Date) => {
-    console.log("Getting all calendar items:", { start, end });
+    // console.log("Getting all calendar items:", { start, end });
     const events = get().getExpandedEvents(start, end);
     const taskEvents = get().getTasksAsEvents(start, end);
     return [...events, ...taskEvents];
