@@ -40,9 +40,9 @@ export async function getOutlookCredentials() {
   }
 
   // Fallback to environment variables
-  const clientId = process.env.AZURE_AD_CLIENT_ID;
-  const clientSecret = process.env.AZURE_AD_CLIENT_SECRET;
-  const tenantId = process.env.AZURE_AD_TENANT_ID;
+  const clientId = process.env.AZURE_AD_CLIENT_ID || "";
+  const clientSecret = process.env.AZURE_AD_CLIENT_SECRET || "";
+  const tenantId = process.env.AZURE_AD_TENANT_ID || "";
 
   return {
     clientId,

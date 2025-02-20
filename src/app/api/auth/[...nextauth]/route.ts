@@ -45,9 +45,9 @@ const handler = NextAuth({
       },
     }),
     AzureADProvider({
-      clientId: outlookCredentials.clientId || "",
-      clientSecret: outlookCredentials.clientSecret || "",
-      tenantId: outlookCredentials.tenantId || "",
+      clientId: outlookCredentials.clientId,
+      clientSecret: outlookCredentials.clientSecret,
+      tenantId: outlookCredentials.tenantId,
       authorization: {
         params: {
           scope: MICROSOFT_GRAPH_SCOPES.join(" "),
