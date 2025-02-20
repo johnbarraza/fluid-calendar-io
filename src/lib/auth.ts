@@ -44,15 +44,9 @@ export async function getOutlookCredentials() {
   const clientSecret = process.env.AZURE_AD_CLIENT_SECRET;
   const tenantId = process.env.AZURE_AD_TENANT_ID;
 
-  if (!clientId || !clientSecret) {
-    throw new Error(
-      "Missing Outlook credentials. Please add credentials in System Settings or in .env file"
-    );
-  }
-
   return {
     clientId,
     clientSecret,
-    tenantId: tenantId || "common",
+    tenantId: tenantId,
   };
 }
