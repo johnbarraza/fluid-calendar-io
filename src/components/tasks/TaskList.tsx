@@ -1,11 +1,19 @@
 import { useMemo, useState, useRef, useEffect } from "react";
-import { Task, TaskStatus, EnergyLevel, TimePreference } from "@/types/task";
+import {
+  Task,
+  TaskStatus,
+  EnergyLevel,
+  TimePreference,
+  Priority,
+} from "@/types/task";
 import {
   format,
   isToday,
   isTomorrow,
   isThisWeek,
   isThisYear,
+  newDate,
+  newDateFromYMD,
 } from "@/lib/date-utils";
 import {
   HiChevronUp,
@@ -51,6 +59,13 @@ const timePreferenceColors = {
   [TimePreference.MORNING]: "bg-sky-100 text-sky-800",
   [TimePreference.AFTERNOON]: "bg-amber-100 text-amber-800",
   [TimePreference.EVENING]: "bg-indigo-100 text-indigo-800",
+};
+
+const priorityColors = {
+  [Priority.HIGH]: "bg-red-100 text-red-800",
+  [Priority.MEDIUM]: "bg-orange-100 text-orange-800",
+  [Priority.LOW]: "bg-blue-100 text-blue-800",
+  [Priority.NONE]: "bg-gray-100 text-gray-800",
 };
 
 interface TaskListProps {
@@ -223,7 +238,6 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
   }, [value]);
 
   useEffect(() => {
-    console.log("EditableCell mounted:", { field, value });
     if (isEditing) {
       const handleClickOutside = (event: MouseEvent) => {
         if (
@@ -232,6 +246,7 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
           // Don't handle click-outside for dropdowns
           field !== "energyLevel" &&
           field !== "preferredTime" &&
+          field !== "priority" &&
           field !== "projectId"
         ) {
           setEditValue(value);
@@ -331,6 +346,16 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
           >
             {value ? formatEnumValue(value) : "Set time"}
           </span>
+        ) : field === "priority" ? (
+          <span
+            className={`px-2 py-1 text-xs rounded-full ${
+              value
+                ? priorityColors[value as Priority]
+                : "text-gray-400 border border-gray-200"
+            }`}
+          >
+            {value ? formatEnumValue(value) : "Set priority"}
+          </span>
         ) : field === "duration" ? (
           <span
             className={`text-sm ${value ? "text-gray-500" : "text-gray-400"}`}
@@ -341,7 +366,7 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
           <span
             className={`text-sm group flex items-center gap-1 ${
               value
-                ? formatContextualDate(new Date(value)).isOverdue
+                ? formatContextualDate(newDate(value)).isOverdue
                   ? "text-red-600"
                   : "text-gray-500"
                 : "text-gray-400"
@@ -349,8 +374,8 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
           >
             {value ? (
               <>
-                {formatContextualDate(new Date(value)).text}
-                {formatContextualDate(new Date(value)).isOverdue && (
+                {formatContextualDate(newDate(value)).text}
+                {formatContextualDate(newDate(value)).isOverdue && (
                   <HiExclamation className="h-4 w-4 text-red-600" />
                 )}
               </>
@@ -461,6 +486,38 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
+      ) : field === "priority" ? (
+        <DropdownMenu.Root open={isEditing} onOpenChange={setIsEditing}>
+          <DropdownMenu.Trigger className="block rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm min-w-[140px] px-3 py-1.5 text-left">
+            {editValue ? formatEnumValue(editValue) : "No Priority"}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="bg-white rounded-lg shadow-lg py-1 min-w-[140px] z-50">
+              <DropdownMenu.Item
+                className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                  setEditValue(null);
+                  onSave({ ...task, [field]: null });
+                  setIsEditing(false);
+                }}
+              >
+                No Priority
+              </DropdownMenu.Item>
+              {Object.values(Priority).map((priority) => (
+                <DropdownMenu.Item
+                  key={priority}
+                  className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    onSave({ ...task, [field]: priority });
+                    setIsEditing(false);
+                  }}
+                >
+                  {formatEnumValue(priority)}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       ) : field === "duration" ? (
         <div className="flex items-center gap-1">
           <input
@@ -482,17 +539,17 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
           <DatePicker
             selected={
               editValue
-                ? new Date(
-                    new Date(editValue).getUTCFullYear(),
-                    new Date(editValue).getUTCMonth(),
-                    new Date(editValue).getUTCDate()
+                ? newDateFromYMD(
+                  newDate(editValue).getUTCFullYear(),
+                  newDate(editValue).getUTCMonth(),
+                  newDate(editValue).getUTCDate()
                   )
                 : null
             }
             onChange={(date) => {
               if (date) {
                 // Create a UTC date at midnight
-                const utcDate = new Date(
+                const utcDate = newDate(
                   Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
                 );
                 onSave({ ...task, [field]: utcDate });
@@ -585,12 +642,12 @@ function EditableCell({ task, field, value, onSave }: EditableCellProps) {
 const formatContextualDate = (date: Date) => {
   // For UTC midnight dates (e.g. 2025-03-10T00:00:00.000Z),
   // just use the date components to create a local date
-  const localDate = new Date(
+  const localDate = newDateFromYMD(
     date.getUTCFullYear(),
     date.getUTCMonth(),
     date.getUTCDate()
   );
-  const now = new Date();
+  const now = newDate();
   now.setHours(0, 0, 0, 0);
 
   const isOverdue = localDate < now;
@@ -696,6 +753,14 @@ function TaskRow({
       <td className="px-3 py-2 whitespace-nowrap">
         <EditableCell
           task={task}
+          field="priority"
+          value={task.priority}
+          onSave={onInlineEdit}
+        />
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap">
+        <EditableCell
+          task={task}
           field="energyLevel"
           value={task.energyLevel}
           onSave={onInlineEdit}
@@ -749,8 +814,8 @@ function TaskRow({
               )}
               {task.scheduledStart && task.scheduledEnd && (
                 <span className="text-sm text-blue-600">
-                  {format(new Date(task.scheduledStart), "p")} -{" "}
-                  {format(new Date(task.scheduledEnd), "p")}
+                  {format(newDate(task.scheduledStart), "p")} -{" "}
+                  {format(newDate(task.scheduledEnd), "p")}
                   {task.scheduleScore && (
                     <span className="ml-1 text-blue-500">
                       ({Math.round(task.scheduleScore * 100)}%)
@@ -893,7 +958,7 @@ export function TaskList({
           if (!b.dueDate) return -1;
           return (
             direction *
-            (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            (newDate(a.dueDate).getTime() - newDate(b.dueDate).getTime())
           );
         case "status":
           return direction * a.status.localeCompare(b.status);
@@ -904,7 +969,7 @@ export function TaskList({
         default:
           return (
             direction *
-            (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            (newDate(b.createdAt).getTime() - newDate(a.createdAt).getTime())
           );
       }
     });
@@ -1009,6 +1074,12 @@ export function TaskList({
                   direction={sortDirection}
                   onSort={handleSort}
                 />
+                <th
+                  scope="col"
+                  className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32"
+                >
+                  Priority
+                </th>
                 <th
                   scope="col"
                   className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32"

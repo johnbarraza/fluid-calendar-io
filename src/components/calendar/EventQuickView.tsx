@@ -1,7 +1,8 @@
 import * as Popover from "@radix-ui/react-popover";
 import { CalendarEvent, AttendeeStatus } from "@/types/calendar";
-import { Task, TaskStatus } from "@/types/task";
-import { format } from "@/lib/date-utils";
+import { Task, TaskStatus, Priority } from "@/types/task";
+import { format, newDate } from "@/lib/date-utils";
+import { isTaskOverdue } from "@/lib/task-utils";
 import {
   IoTimeOutline,
   IoLocationOutline,
@@ -10,6 +11,7 @@ import {
   IoCalendarOutline,
   IoLockClosedOutline,
   IoFolderOutline,
+  IoFlagOutline,
 } from "react-icons/io5";
 import { HiPencil, HiTrash } from "react-icons/hi";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,14 @@ interface EventQuickViewProps {
   position: { x: number; y: number };
   isTask: boolean;
 }
+
+//TODO: move to utils
+const priorityColors = {
+  [Priority.HIGH]: "text-red-600",
+  [Priority.MEDIUM]: "text-orange-600",
+  [Priority.LOW]: "text-blue-600",
+  [Priority.NONE]: "text-gray-600",
+};
 
 export function EventQuickView({
   isOpen,
@@ -64,6 +74,8 @@ export function EventQuickView({
   const eventItem = !isTask
     ? (item as CalendarEvent & { attendees?: Attendee[] })
     : null;
+
+  const isOverdue = taskItem && isTaskOverdue(taskItem);
 
   return (
     <Popover.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -131,9 +143,9 @@ export function EventQuickView({
                 <div className="flex items-center gap-2">
                   <IoTimeOutline className="h-4 w-4 flex-shrink-0" />
                   <span>
-                    {format(new Date(eventItem.start), "PPp")} -{" "}
+                    {format(newDate(eventItem.start), "PPp")} -{" "}
                     {format(
-                      new Date(eventItem.end),
+                      newDate(eventItem.end),
                       eventItem.allDay ? "PP" : "p"
                     )}
                   </span>
@@ -183,8 +195,11 @@ export function EventQuickView({
                   <div className="flex items-center gap-2">
                     <IoTimeOutline className="h-4 w-4 flex-shrink-0" />
                     {taskItem.dueDate ? (
-                      <span>
-                        Due {format(new Date(taskItem.dueDate), "PPp")}
+                      <span
+                        className={cn(isOverdue && "text-red-600 font-medium")}
+                      >
+                        Due {format(newDate(taskItem.dueDate), "PPp")}
+                        {isOverdue && " (OVERDUE)"}
                       </span>
                     ) : (
                       <span>No due date</span>
@@ -204,6 +219,22 @@ export function EventQuickView({
                   </span>
                 </div>
 
+                {taskItem.priority && (
+                  <div className="flex items-center gap-2">
+                    <IoFlagOutline className="h-4 w-4 flex-shrink-0" />
+                    <span
+                      className={cn(
+                        "text-sm",
+                        priorityColors[taskItem.priority]
+                      )}
+                    >
+                      {taskItem.priority.charAt(0).toUpperCase() +
+                        taskItem.priority.slice(1)}{" "}
+                      Priority
+                    </span>
+                  </div>
+                )}
+
                 {taskItem.isAutoScheduled &&
                   taskItem.scheduledStart &&
                   taskItem.scheduledEnd && (
@@ -212,8 +243,8 @@ export function EventQuickView({
                       <div className="flex-1">
                         <div>
                           Scheduled:{" "}
-                          {format(new Date(taskItem.scheduledStart), "PPp")} -{" "}
-                          {format(new Date(taskItem.scheduledEnd), "p")}
+                          {format(newDate(taskItem.scheduledStart), "PPp")} -{" "}
+                          {format(newDate(taskItem.scheduledEnd), "p")}
                         </div>
                         {taskItem.scheduleScore !== undefined && (
                           <div className="text-xs text-gray-500">

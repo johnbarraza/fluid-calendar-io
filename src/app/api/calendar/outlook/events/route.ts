@@ -6,13 +6,14 @@ import {
   deleteOutlookEvent,
 } from "@/lib/outlook-calendar";
 import { logger } from "@/lib/logger";
-import { getOutlookCalendarClient } from "@/lib/outlook-calendar";
+import { getOutlookClient } from "@/lib/outlook-calendar";
 import { syncOutlookCalendar } from "@/lib/outlook-sync";
 import {
   deleteCalendarEvent,
   getEvent,
   validateEvent,
 } from "@/lib/calendar-db";
+import { newDate } from "@/lib/date-utils";
 
 // Helper function to write event to database
 
@@ -39,8 +40,8 @@ export async function POST(request: Request) {
       title: eventData.title,
       description: eventData.description,
       location: eventData.location,
-      start: new Date(eventData.start),
-      end: new Date(eventData.end),
+      start: newDate(eventData.start),
+      end: newDate(eventData.end),
       allDay: eventData.allDay,
       isRecurring: eventData.isRecurring,
       recurrenceRule: eventData.recurrenceRule,
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     // Get the Outlook client and sync the calendar
-    const client = await getOutlookCalendarClient(feed.accountId);
+    const client = await getOutlookClient(feed.accountId);
     await syncOutlookCalendar(
       client,
       { id: feed.id, url: feed.url },
@@ -103,8 +104,8 @@ export async function PUT(request: Request) {
       {
         ...updates,
         mode,
-        start: updates.start ? new Date(updates.start) : undefined,
-        end: updates.end ? new Date(updates.end) : undefined,
+        start: updates.start ? newDate(updates.start) : undefined,
+        end: updates.end ? newDate(updates.end) : undefined,
       }
     );
 
@@ -123,9 +124,7 @@ export async function PUT(request: Request) {
     });
 
     // Get the updated event and its instances
-    const client = await getOutlookCalendarClient(
-      validatedEvent.feed.accountId
-    );
+    const client = await getOutlookClient(validatedEvent.feed.accountId);
     await syncOutlookCalendar(
       client,
       { id: validatedEvent.feed.id, url: validatedEvent.feed.url },

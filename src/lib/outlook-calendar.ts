@@ -6,6 +6,7 @@ import { TokenManager } from "./token-manager";
 import { logger } from "./logger";
 import { RRule, Frequency } from "rrule";
 import { useSettingsStore } from "@/store/settings";
+import { newDate, newDateFromYMD } from "./date-utils";
 
 export interface MSGraphEvent {
   id: string;
@@ -76,7 +77,7 @@ export class OutlookCalendarService {
       authProvider: async (done) => {
         try {
           // Check if token needs refresh
-          if (new Date(this.account.expiresAt) <= new Date()) {
+          if (newDate(this.account.expiresAt) <= newDate()) {
             await this.refreshToken();
           }
           done(null, this.account.accessToken);
@@ -166,8 +167,8 @@ export class OutlookCalendarService {
         queryParams.push(`$deltatoken=${options.syncToken}`);
       } else {
         // For initial sync, use a much wider time range to get all events
-        const defaultStartTime = new Date(new Date().getFullYear() - 5, 0, 1); // 5 years ago
-        const defaultEndTime = new Date(new Date().getFullYear() + 3, 11, 31); // 3 years ahead
+        const defaultStartTime = newDateFromYMD(newDate().getFullYear() - 5, 0, 1); // 5 years ago
+        const defaultEndTime = newDateFromYMD(newDate().getFullYear() + 3, 11, 31); // 3 years ahead
 
         const filterParts: string[] = [
           `start/dateTime ge '${defaultStartTime.toISOString()}'`,
@@ -179,13 +180,13 @@ export class OutlookCalendarService {
       // Add $expand to get recurring event instances with the same time window
       queryParams.push(
         "$expand=instances($filter=" +
-          `start/dateTime ge '${new Date(
-            new Date().getFullYear() - 5,
+          `start/dateTime ge '${newDateFromYMD(
+            newDate().getFullYear() - 5,
             0,
             1
           ).toISOString()}' and ` +
-          `end/dateTime le '${new Date(
-            new Date().getFullYear() + 3,
+          `end/dateTime le '${newDateFromYMD(
+            newDate().getFullYear() + 3,
             11,
             31
           ).toISOString()}')`
@@ -286,7 +287,7 @@ export class OutlookCalendarService {
   }
 }
 
-export async function getOutlookCalendarClient(accountId: string) {
+export async function getOutlookClient(accountId: string) {
   const tokenManager = TokenManager.getInstance();
 
   // Get tokens for the account
@@ -312,7 +313,7 @@ export async function getOutlookCalendarClient(accountId: string) {
 }
 
 export async function listOutlookCalendars(accountId: string) {
-  const client = await getOutlookCalendarClient(accountId);
+  const client = await getOutlookClient(accountId);
   try {
     const response = await client.api("/me/calendars").get();
     return response.value;
@@ -336,7 +337,7 @@ export async function createOutlookEvent(
     recurrenceRule?: string;
   }
 ) {
-  const client = await getOutlookCalendarClient(accountId);
+  const client = await getOutlookClient(accountId);
   const timeZone = useSettingsStore.getState().user.timeZone;
 
   // Convert RRule to Outlook recurrence pattern if present
@@ -383,7 +384,7 @@ export async function getOutlookEvent(
   calendarId: string,
   eventId: string
 ) {
-  const client = await getOutlookCalendarClient(accountId);
+  const client = await getOutlookClient(accountId);
 
   try {
     const event = await client
@@ -410,9 +411,9 @@ export async function getOutlookEvent(
       const response = await client
         .api(`/me/calendars/${calendarId}/events/${masterEvent.id}/instances`)
         .query({
-          startDateTime: new Date(new Date().getFullYear(), 0, 1).toISOString(),
-          endDateTime: new Date(
-            new Date().getFullYear() + 1,
+          startDateTime: newDateFromYMD(newDate().getFullYear(), 0, 1).toISOString(),
+          endDateTime: newDateFromYMD(
+            newDate().getFullYear() + 1,
             0,
             1
           ).toISOString(),
@@ -448,7 +449,7 @@ export async function updateOutlookEvent(
     mode?: "single" | "series";
   }
 ) {
-  const client = await getOutlookCalendarClient(accountId);
+  const client = await getOutlookClient(accountId);
   const timeZone = useSettingsStore.getState().user.timeZone;
 
   try {
@@ -510,7 +511,7 @@ export async function deleteOutlookEvent(
   eventId: string,
   mode: "single" | "series" = "single"
 ) {
-  const client = await getOutlookCalendarClient(accountId);
+  const client = await getOutlookClient(accountId);
 
   try {
     // Get the event to check if it's part of a series
