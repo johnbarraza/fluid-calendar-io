@@ -16,7 +16,6 @@ import { CalendarService } from "./CalendarService";
 import { SlotScorer } from "./SlotScorer";
 import { Task, PrismaClient } from "@prisma/client";
 import { useSettingsStore } from "@/store/settings";
-import { logger } from "@/lib/logger";
 
 const DEFAULT_TASK_DURATION = 30;
 
@@ -80,56 +79,21 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       endDate
     );
 
-    // logger.log("[DEBUG] Initial potential slots", {
-    //   taskId: task.id,
-    //   taskTitle: task.title,
-    //   firstSlot: potentialSlots[0]?.start,
-    //   totalSlots: potentialSlots.length,
-    // });
 
     // 2. Filter by work hours
     const workHourSlots = this.filterByWorkHours(potentialSlots);
 
-    // logger.log("[DEBUG] After work hours filter", {
-    //   taskId: task.id,
-    //   taskTitle: task.title,
-    //   firstSlot: workHourSlots[0]?.start,
-    //   totalSlots: workHourSlots.length,
-    // });
-
     // 3. Check calendar conflicts
     const availableSlots = await this.removeConflicts(workHourSlots, task);
 
-    // logger.log("[DEBUG] After conflict removal", {
-    //   taskId: task.id,
-    //   taskTitle: task.title,
-    //   firstSlot: availableSlots[0]?.start,
-    //   totalSlots: availableSlots.length,
-    // });
-
     // 4. Apply buffer times
     const slotsWithBuffer = this.applyBufferTimes(availableSlots);
-
-    // logger.log("[DEBUG] After buffer application", {
-    //   taskId: task.id,
-    //   taskTitle: task.title,
-    //   firstSlot: slotsWithBuffer[0]?.start,
-    //   totalSlots: slotsWithBuffer.length,
-    // });
 
     // 5. Score slots
     const scoredSlots = this.scoreSlots(slotsWithBuffer, task);
 
     // 6. Sort by score
     const sortedSlots = this.sortByScore(scoredSlots);
-
-    // logger.log("[DEBUG] Final sorted slots", {
-    //   taskId: task.id,
-    //   taskTitle: task.title,
-    //   firstSlot: sortedSlots[0]?.start,
-    //   firstSlotScore: sortedSlots[0]?.score,
-    //   totalSlots: sortedSlots.length,
-    // });
 
     return sortedSlots;
   }
@@ -253,12 +217,6 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       );
     }
 
-    // logger.log("[DEBUG] Starting slot generation", {
-    //   startTime: localCurrentStart.toISOString(),
-    //   duration,
-    //   timeZone: this.timeZone,
-    // });
-
     localCurrentStart = roundDateUp(localCurrentStart);
     localEndDate = roundDateUp(localEndDate);
     // Generate slots advancing by task duration
@@ -277,16 +235,6 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       slots.push(slot);
       localCurrentStart = addMinutes(localCurrentStart, duration);
     }
-
-    // logger.log("[DEBUG] Generated potential slots", {
-    //   firstSlot: slots[0]?.start,
-    //   lastSlot: slots[slots.length - 1]?.start,
-    //   totalSlots: slots.length,
-    //   startDate,
-    //   endDate,
-    //   firstDayStart: localCurrentStart,
-    //   timeZone: this.timeZone,
-    // });
 
     return slots;
   }
@@ -307,40 +255,12 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
         startHour >= this.settings.workHourStart &&
         endHour <= this.settings.workHourEnd &&
         startHour < this.settings.workHourEnd; // Ensure start is before work hours end
-
-      if (!isWorkDay || !isWithinWorkHours) {
-        // logger.log("[DEBUG] Filtered out slot:", {
-        //   start: localStart.toISOString(),
-        //   end: localEnd.toISOString(),
-        //   reason: !isWorkDay ? "not work day" : "outside work hours",
-        //   dayOfWeek,
-        //   startHour,
-        //   endHour,
-        //   workHourStart: this.settings.workHourStart,
-        //   workHourEnd: this.settings.workHourEnd,
-        //   isWorkDay,
-        //   isWithinWorkHours,
-        //   startHourCheck: startHour >= this.settings.workHourStart,
-        //   endHourCheck: endHour <= this.settings.workHourEnd,
-        //   startBeforeEndCheck: startHour < this.settings.workHourEnd,
-        // });
-      }
-
       const result = isWorkDay && isWithinWorkHours;
       if (result) {
         slot.isWithinWorkHours = true;
       }
       return result;
     });
-
-    // logger.log("[DEBUG] Work hours filter details", {
-    //   inputSlots: slots.length,
-    //   outputSlots: filteredSlots.length,
-    //   firstInputSlot: slots[0]?.start,
-    //   firstOutputSlot: filteredSlots[0]?.start,
-    //   workHourStart: this.settings.workHourStart,
-    //   workHourEnd: this.settings.workHourEnd,
-    // });
 
     return filteredSlots;
   }
@@ -429,11 +349,6 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
 
   private scoreSlot(slot: TimeSlot): number {
     const score = this.calculateBaseScore(slot);
-    // logger.log("[DEBUG] Scored slot:", {
-    //   start: slot.start,
-    //   end: slot.end,
-    //   score,
-    // });
     return score;
   }
 

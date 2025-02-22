@@ -6,19 +6,13 @@ import { addDays, newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 
 const DEFAULT_TASK_DURATION = 30; // Default duration in minutes
-const BATCH_SIZE = 8; // Process 8 tasks at a time
 
 interface PerformanceMetrics {
   operation: string;
   startTime: number;
   endTime?: number;
   duration?: number;
-  metadata?: Record<string, any>;
-}
-
-interface TaskScore {
-  taskId: string;
-  score: number;
+  metadata?: Record<string, string | number | Date | boolean>;
 }
 
 export class SchedulingService {
@@ -35,7 +29,7 @@ export class SchedulingService {
 
   private startMetric(
     operation: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, string | number | Date | boolean>
   ): number {
     const startTime = performance.now();
     this.metrics.push({ operation, startTime, metadata });
@@ -121,22 +115,8 @@ export class SchedulingService {
       totalTasks: tasks.length,
     });
 
-    // logger.log("[DEBUG] Starting to schedule multiple tasks", {
-    //   tasks: tasks.map((t) => ({
-    //     id: t.id,
-    //     title: t.title,
-    //     duration: t.duration || DEFAULT_TASK_DURATION,
-    //     dueDate: t.dueDate,
-    //   })),
-    // });
-
     // Clear existing schedules for non-locked tasks
     const tasksToSchedule = tasks.filter((t) => !t.scheduleLocked);
-    // logger.log(
-    //   `[DEBUG] ${tasksToSchedule.length} tasks to schedule (excluding locked tasks)`
-    // );
-
-    // logger.log("[DEBUG] Cleared existing schedules for non-locked tasks");
 
     // Get initial scores for all tasks
     const timeSlotManager = this.getTimeSlotManager();
@@ -192,24 +172,12 @@ export class SchedulingService {
     this.endMetric("calculateInitialScores", scoringStart);
 
     // Sort tasks by their best possible score
-    const sortStart = this.startMetric("sortTasks");
+    this.startMetric("sortTasks");
     const sortedTasks = [...tasksToSchedule].sort((a, b) => {
       const aScore = initialScores.get(a.id) || 0;
       const bScore = initialScores.get(b.id) || 0;
       return bScore - aScore; // Higher scores first
     });
-
-    // logger.log("[DEBUG] Sorted tasks by score", {
-    //   tasks: sortedTasks.map((t) => ({
-    //     id: t.id,
-    //     title: t.title,
-    //     priority: t.priority,
-    //     score: initialScores.get(t.id),
-    //     window:
-    //       windows.find((w) => w.days <= (initialScores.get(t.id) || 0) * 7)
-    //         ?.label || "none",
-    //   })),
-    // });
 
     const schedulingStart = this.startMetric("scheduleTasks", {
       tasksToSchedule: sortedTasks.length,
@@ -229,31 +197,12 @@ export class SchedulingService {
         duration: task.duration || DEFAULT_TASK_DURATION,
       };
 
-      // logger.log("[DEBUG] Attempting to schedule task", {
-      //   id: taskWithDuration.id,
-      //   title: taskWithDuration.title,
-      //   duration: taskWithDuration.duration,
-      // });
-
       const scheduledTask = await this.scheduleTask(
         taskWithDuration,
         timeSlotManager
       );
       if (scheduledTask) {
-        // logger.log("[DEBUG] Successfully scheduled task", {
-        //   id: scheduledTask.id,
-        //   title: scheduledTask.title,
-        //   start: scheduledTask.scheduledStart,
-        //   end: scheduledTask.scheduledEnd,
-        //   duration: scheduledTask.duration,
-        // });
         updatedTasks.push(scheduledTask);
-      } else {
-        // logger.log("[DEBUG] Failed to schedule task", {
-        //   id: task.id,
-        //   title: task.title,
-        //   duration: taskWithDuration.duration,
-        // });
       }
 
       this.endMetric("scheduleIndividualTask", taskStart);
@@ -274,13 +223,6 @@ export class SchedulingService {
 
     this.endMetric("scheduleMultipleTasks", overallStart);
     this.logMetrics();
-
-    // logger.log("[DEBUG] Scheduling complete. Results", {
-    //   totalTasks: tasks.length,
-    //   scheduledTasks: updatedTasks.length,
-    //   failedTasks: tasksToSchedule.length - updatedTasks.length,
-    //   lockedTasks: tasks.length - tasksToSchedule.length,
-    // });
 
     return allTasks;
   }
@@ -315,16 +257,7 @@ export class SchedulingService {
       );
 
       if (availableSlots.length > 0) {
-        // logger.log(
-        //   `[DEBUG] Found ${availableSlots.length} available slots in ${window.label} window`
-        // );
         const bestSlot = availableSlots[0]; // Already sorted by score
-
-        // logger.log("[DEBUG] Selected best slot", {
-        //   start: bestSlot.start,
-        //   end: bestSlot.end,
-        //   duration: task.duration || DEFAULT_TASK_DURATION,
-        // });
 
         const updateStart = this.startMetric("updateTask", {
           taskId: task.id,
@@ -354,12 +287,6 @@ export class SchedulingService {
 
       this.endMetric("tryWindow", windowStart);
     }
-
-    // logger.log("[DEBUG] Failed to find any available slots for task", {
-    //   id: task.id,
-    //   title: task.title,
-    //   duration: task.duration || DEFAULT_TASK_DURATION,
-    // });
 
     this.endMetric("scheduleTask", taskStart);
     return null;
