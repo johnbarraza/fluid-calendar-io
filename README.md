@@ -58,7 +58,7 @@ Don't want to self-host? We're currently beta testing our hosted version at [Flu
 
 ## Google Cloud Setup
 
-To enable Google Calendar integration, you'll need to set up a Google Cloud Project:
+To enable Google Calendar integration:
 
 1. Create a Project:
    - Go to [Google Cloud Console](https://console.cloud.google.com)
@@ -98,16 +98,78 @@ To enable Google Calendar integration, you'll need to set up a Google Cloud Proj
    - Click "Create"
    - Save the generated Client ID and Client Secret
 
-5. Update Environment Variables:
-   ```bash
-   GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
-   GOOGLE_CLIENT_SECRET="your-client-secret"
-   ```
+5. Configure Credentials:
+   - Go to FluidCalendar Settings > System
+   - Enter your Google Client ID and Client Secret in the Google Calendar Integration section
+   - Or set environment variables as fallback:
+     ```bash
+     GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+     GOOGLE_CLIENT_SECRET="your-client-secret"
+     ```
 
 Note: For production deployment, you'll need to:
 - Verify your domain ownership
 - Submit your application for verification if you plan to have more than 100 users
 - Add your production domain to the authorized origins and redirect URIs
+
+## Microsoft Outlook Setup
+
+To enable Outlook Calendar integration:
+
+1. Create an Azure AD Application:
+   - Go to [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+   - Click "New registration"
+   - Name your application (e.g., "FluidCalendar")
+   - Under "Supported account types", select "Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)"
+   - Click "Register"
+
+2. Configure Platform Settings:
+   - In your registered app, go to "Authentication"
+   - Click "Add a platform"
+   - Choose "Web"
+   - Add Redirect URIs:
+     - `http://localhost:3000/api/auth/callback/azure-ad` (for development)
+     - `https://your-domain.com/api/auth/callback/azure-ad` (for production)
+   - Under "Implicit grant", check "Access tokens" and "ID tokens"
+   - Click "Configure"
+
+3. Add API Permissions:
+   - Go to "API permissions"
+   - Click "Add a permission"
+   - Choose "Microsoft Graph"
+   - Select "Delegated permissions"
+   - Add the following permissions:
+     - `Calendars.ReadWrite`
+     - `Tasks.ReadWrite`
+     - `User.Read`
+     - `offline_access`
+   - Click "Add permissions"
+   - Click "Grant admin consent" (if you're an admin)
+
+4. Create Client Secret:
+   - Go to "Certificates & secrets"
+   - Click "New client secret"
+   - Add a description and choose expiry
+   - Click "Add"
+   - Copy the generated secret value immediately (you won't be able to see it again)
+
+5. Configure Credentials:
+   - Go to FluidCalendar Settings > System
+   - Enter your Outlook credentials in the Outlook Calendar Integration section:
+     - Client ID (Application ID)
+     - Client Secret
+     - Tenant ID (Optional - leave empty to allow any Microsoft account)
+   - Or set environment variables as fallback:
+     ```bash
+     AZURE_AD_CLIENT_ID="your-client-id"
+     AZURE_AD_CLIENT_SECRET="your-client-secret"
+     AZURE_AD_TENANT_ID="your-tenant-id-or-common"
+     ```
+
+Note: For production deployment:
+- Update the redirect URIs to include your production domain
+- Ensure all required permissions are granted
+- Consider implementing additional security measures based on your needs
 
 ## Installation
 
