@@ -214,6 +214,16 @@ export function OutlookTaskImportModal({
                         const newSelected = new Set(selectedLists);
                         if (e.target.checked) {
                           newSelected.add(list.id);
+                          // Initialize default mapping when list is selected
+                          if (!projectMappings[list.id]) {
+                            setProjectMappings({
+                              ...projectMappings,
+                              [list.id]: {
+                                projectId: "",
+                                isAutoScheduled: true,
+                              },
+                            });
+                          }
                         } else {
                           newSelected.delete(list.id);
                         }
