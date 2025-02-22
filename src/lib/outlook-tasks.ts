@@ -79,9 +79,7 @@ export class OutlookTasksService {
 
   async getTaskLists(): Promise<OutlookTaskList[]> {
     try {
-      logger.log("[DEBUG] Fetching Outlook task lists");
       const response = await this.client.api("/me/todo/lists").get();
-      logger.log("[DEBUG] Outlook task lists response", { response });
       if (!response.value || !Array.isArray(response.value)) {
         logger.log("[ERROR] Invalid response format from Outlook API", {
           response,

@@ -48,7 +48,6 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
   ) {
     this.slotScorer = new SlotScorer(settings);
     this.timeZone = useSettingsStore.getState().user.timeZone;
-    logger.log("[DEBUG] TimeSlotManager constructor");
   }
 
   async updateScheduledTasks(): Promise<void> {
@@ -81,42 +80,42 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       endDate
     );
 
-    logger.log("[DEBUG] Initial potential slots", {
-      taskId: task.id,
-      taskTitle: task.title,
-      firstSlot: potentialSlots[0]?.start,
-      totalSlots: potentialSlots.length,
-    });
+    // logger.log("[DEBUG] Initial potential slots", {
+    //   taskId: task.id,
+    //   taskTitle: task.title,
+    //   firstSlot: potentialSlots[0]?.start,
+    //   totalSlots: potentialSlots.length,
+    // });
 
     // 2. Filter by work hours
     const workHourSlots = this.filterByWorkHours(potentialSlots);
 
-    logger.log("[DEBUG] After work hours filter", {
-      taskId: task.id,
-      taskTitle: task.title,
-      firstSlot: workHourSlots[0]?.start,
-      totalSlots: workHourSlots.length,
-    });
+    // logger.log("[DEBUG] After work hours filter", {
+    //   taskId: task.id,
+    //   taskTitle: task.title,
+    //   firstSlot: workHourSlots[0]?.start,
+    //   totalSlots: workHourSlots.length,
+    // });
 
     // 3. Check calendar conflicts
     const availableSlots = await this.removeConflicts(workHourSlots, task);
 
-    logger.log("[DEBUG] After conflict removal", {
-      taskId: task.id,
-      taskTitle: task.title,
-      firstSlot: availableSlots[0]?.start,
-      totalSlots: availableSlots.length,
-    });
+    // logger.log("[DEBUG] After conflict removal", {
+    //   taskId: task.id,
+    //   taskTitle: task.title,
+    //   firstSlot: availableSlots[0]?.start,
+    //   totalSlots: availableSlots.length,
+    // });
 
     // 4. Apply buffer times
     const slotsWithBuffer = this.applyBufferTimes(availableSlots);
 
-    logger.log("[DEBUG] After buffer application", {
-      taskId: task.id,
-      taskTitle: task.title,
-      firstSlot: slotsWithBuffer[0]?.start,
-      totalSlots: slotsWithBuffer.length,
-    });
+    // logger.log("[DEBUG] After buffer application", {
+    //   taskId: task.id,
+    //   taskTitle: task.title,
+    //   firstSlot: slotsWithBuffer[0]?.start,
+    //   totalSlots: slotsWithBuffer.length,
+    // });
 
     // 5. Score slots
     const scoredSlots = this.scoreSlots(slotsWithBuffer, task);
@@ -124,13 +123,13 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     // 6. Sort by score
     const sortedSlots = this.sortByScore(scoredSlots);
 
-    logger.log("[DEBUG] Final sorted slots", {
-      taskId: task.id,
-      taskTitle: task.title,
-      firstSlot: sortedSlots[0]?.start,
-      firstSlotScore: sortedSlots[0]?.score,
-      totalSlots: sortedSlots.length,
-    });
+    // logger.log("[DEBUG] Final sorted slots", {
+    //   taskId: task.id,
+    //   taskTitle: task.title,
+    //   firstSlot: sortedSlots[0]?.start,
+    //   firstSlotScore: sortedSlots[0]?.score,
+    //   totalSlots: sortedSlots.length,
+    // });
 
     return sortedSlots;
   }
@@ -254,11 +253,11 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       );
     }
 
-    logger.log("[DEBUG] Starting slot generation", {
-      startTime: localCurrentStart.toISOString(),
-      duration,
-      timeZone: this.timeZone,
-    });
+    // logger.log("[DEBUG] Starting slot generation", {
+    //   startTime: localCurrentStart.toISOString(),
+    //   duration,
+    //   timeZone: this.timeZone,
+    // });
 
     localCurrentStart = roundDateUp(localCurrentStart);
     localEndDate = roundDateUp(localEndDate);
@@ -279,15 +278,15 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       localCurrentStart = addMinutes(localCurrentStart, duration);
     }
 
-    logger.log("[DEBUG] Generated potential slots", {
-      firstSlot: slots[0]?.start,
-      lastSlot: slots[slots.length - 1]?.start,
-      totalSlots: slots.length,
-      startDate,
-      endDate,
-      firstDayStart: localCurrentStart,
-      timeZone: this.timeZone,
-    });
+    // logger.log("[DEBUG] Generated potential slots", {
+    //   firstSlot: slots[0]?.start,
+    //   lastSlot: slots[slots.length - 1]?.start,
+    //   totalSlots: slots.length,
+    //   startDate,
+    //   endDate,
+    //   firstDayStart: localCurrentStart,
+    //   timeZone: this.timeZone,
+    // });
 
     return slots;
   }
@@ -310,21 +309,21 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
         startHour < this.settings.workHourEnd; // Ensure start is before work hours end
 
       if (!isWorkDay || !isWithinWorkHours) {
-        logger.log("[DEBUG] Filtered out slot:", {
-          start: localStart.toISOString(),
-          end: localEnd.toISOString(),
-          reason: !isWorkDay ? "not work day" : "outside work hours",
-          dayOfWeek,
-          startHour,
-          endHour,
-          workHourStart: this.settings.workHourStart,
-          workHourEnd: this.settings.workHourEnd,
-          isWorkDay,
-          isWithinWorkHours,
-          startHourCheck: startHour >= this.settings.workHourStart,
-          endHourCheck: endHour <= this.settings.workHourEnd,
-          startBeforeEndCheck: startHour < this.settings.workHourEnd,
-        });
+        // logger.log("[DEBUG] Filtered out slot:", {
+        //   start: localStart.toISOString(),
+        //   end: localEnd.toISOString(),
+        //   reason: !isWorkDay ? "not work day" : "outside work hours",
+        //   dayOfWeek,
+        //   startHour,
+        //   endHour,
+        //   workHourStart: this.settings.workHourStart,
+        //   workHourEnd: this.settings.workHourEnd,
+        //   isWorkDay,
+        //   isWithinWorkHours,
+        //   startHourCheck: startHour >= this.settings.workHourStart,
+        //   endHourCheck: endHour <= this.settings.workHourEnd,
+        //   startBeforeEndCheck: startHour < this.settings.workHourEnd,
+        // });
       }
 
       const result = isWorkDay && isWithinWorkHours;
@@ -334,14 +333,14 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
       return result;
     });
 
-    logger.log("[DEBUG] Work hours filter details", {
-      inputSlots: slots.length,
-      outputSlots: filteredSlots.length,
-      firstInputSlot: slots[0]?.start,
-      firstOutputSlot: filteredSlots[0]?.start,
-      workHourStart: this.settings.workHourStart,
-      workHourEnd: this.settings.workHourEnd,
-    });
+    // logger.log("[DEBUG] Work hours filter details", {
+    //   inputSlots: slots.length,
+    //   outputSlots: filteredSlots.length,
+    //   firstInputSlot: slots[0]?.start,
+    //   firstOutputSlot: filteredSlots[0]?.start,
+    //   workHourStart: this.settings.workHourStart,
+    //   workHourEnd: this.settings.workHourEnd,
+    // });
 
     return filteredSlots;
   }
@@ -373,13 +372,9 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     );
     // Only check for conflicts if calendars are selected
     if (selectedCalendars.length === 0) {
-      // logger.log("[DEBUG] No calendars selected for conflict checking");
       return [];
     }
 
-    // logger.log("[DEBUG] Checking conflicts with calendars:", {
-    //   calendarIds: selectedCalendars,
-    // });
     return this.calendarService.findConflicts(slot, selectedCalendars);
   }
 
@@ -388,48 +383,29 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
     task: Task
   ): Promise<TimeSlot[]> {
     const availableSlots: TimeSlot[] = [];
+    const selectedCalendars = parseSelectedCalendars(
+      this.settings.selectedCalendars
+    );
 
-    // Get all scheduled tasks
-    const scheduledTasks = await this.prisma.task.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduledStart: { not: null },
-        scheduledEnd: { not: null },
-        id: { not: task.id }, // Exclude current task
-      },
-    });
+    // Prepare slots for batch checking
+    const slotsToCheck = slots.map((slot) => ({
+      slot,
+      taskId: task.id,
+    }));
 
-    for (const slot of slots) {
-      const conflicts = await this.findCalendarConflicts(slot);
+    // Batch check conflicts
+    const batchResults = await this.calendarService.findBatchConflicts(
+      slotsToCheck,
+      selectedCalendars,
+      task.id
+    );
 
-      // Check for conflicts with other scheduled tasks
-      const hasTaskConflict = scheduledTasks.some(
-        (scheduledTask) =>
-          scheduledTask.scheduledStart &&
-          scheduledTask.scheduledEnd &&
-          ((slot.start >= scheduledTask.scheduledStart &&
-            slot.start < scheduledTask.scheduledEnd) ||
-            (slot.end > scheduledTask.scheduledStart &&
-              slot.end <= scheduledTask.scheduledEnd))
-      );
-
-      if (conflicts.length === 0 && !hasTaskConflict) {
-        availableSlots.push(slot);
+    // Process results
+    for (const result of batchResults) {
+      if (result.conflicts.length === 0) {
+        availableSlots.push(result.slot);
       } else {
-        slot.conflicts = [
-          ...conflicts,
-          ...(hasTaskConflict
-            ? [
-                {
-                  type: "task" as const,
-                  start: slot.start,
-                  end: slot.end,
-                  title: "Conflict with another scheduled task",
-                  source: { type: "task" as const, id: "conflict" },
-                },
-              ]
-            : []),
-        ];
+        result.slot.conflicts = result.conflicts;
       }
     }
 

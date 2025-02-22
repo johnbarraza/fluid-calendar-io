@@ -1,23 +1,90 @@
 import { CalendarEvent, PrismaClient } from "@prisma/client";
 import { TimeSlot, Conflict } from "@/types/scheduling";
-import { CalendarService } from "./CalendarService";
+import { BatchConflictCheck, CalendarService } from "./CalendarService";
 import { areIntervalsOverlapping } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 
+interface EventCache {
+  events: CalendarEvent[];
+  startDay: number; // Unix timestamp for start of week
+  endDay: number; // Unix timestamp for end of week
+  calendarIds: string[];
+  timestamp: number;
+}
+
 export class CalendarServiceImpl implements CalendarService {
+  private cache: EventCache | null = null;
+  private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
+
   constructor(private prisma: PrismaClient) {}
+
+  private getDayTimestamp(date: Date): number {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    ).getTime();
+  }
+
+  private getWeekTimestamp(date: Date, start: boolean): number {
+    const d = new Date(date);
+    // Get to Sunday (start) or Saturday (end) of the week
+    const day = d.getDay();
+    const diff = start ? -day : 6 - day;
+    d.setDate(d.getDate() + diff);
+    return this.getDayTimestamp(d);
+  }
+
+  //TODO: we need to check cache if calendars or events change e.g. sync or crud of events or calendars - DO NOT REMOVE THIS COMMENT
+  private isCacheValid(start: Date, end: Date, calendarIds: string[]): boolean {
+    if (!this.cache) {
+      logger.log("[DEBUG] Cache miss - no cache exists");
+      return false;
+    }
+
+    const now = Date.now();
+    const cacheAge = now - this.cache.timestamp;
+    if (cacheAge > this.CACHE_TTL) {
+      logger.log("[DEBUG] Cache expired", { cacheAge });
+      return false;
+    }
+
+    // Sort and stringify calendar IDs for consistent comparison
+    const sortedRequestedIds = [...calendarIds].sort();
+    const sortedCachedIds = [...this.cache.calendarIds].sort();
+    const sameCalendars =
+      JSON.stringify(sortedRequestedIds) === JSON.stringify(sortedCachedIds);
+
+    // Check if the requested range falls within the cached week(s)
+    const requestedStartWeek = this.getWeekTimestamp(start, true);
+    const requestedEndWeek = this.getWeekTimestamp(end, false);
+    const hasDateRange =
+      this.cache.startDay <= requestedStartWeek &&
+      this.cache.endDay >= requestedEndWeek;
+
+    if (!hasDateRange || !sameCalendars) {
+      logger.log("[DEBUG] Cache invalid", {
+        reason: !hasDateRange ? "date range mismatch" : "calendar mismatch",
+        sameCalendars,
+        requestedStart: new Date(start).toISOString(),
+        requestedEnd: new Date(end).toISOString(),
+        requestedStartWeek: new Date(requestedStartWeek).toISOString(),
+        requestedEndWeek: new Date(requestedEndWeek).toISOString(),
+        cacheStart: new Date(this.cache.startDay).toISOString(),
+        cacheEnd: new Date(this.cache.endDay).toISOString(),
+        requestedIds: sortedRequestedIds,
+        cachedIds: sortedCachedIds,
+      });
+    }
+
+    return sameCalendars && hasDateRange;
+  }
 
   async findConflicts(
     slot: TimeSlot,
     selectedCalendarIds: string[],
     excludeTaskId?: string
   ): Promise<Conflict[]> {
-    // logger.log("[DEBUG] Checking conflicts for slot:", {
-    //   start: slot.start,
-    //   end: slot.end,
-    //   selectedCalendars: selectedCalendarIds,
-    // });
-
     const conflicts: Conflict[] = [];
 
     // Check calendar events
@@ -27,19 +94,6 @@ export class CalendarServiceImpl implements CalendarService {
       selectedCalendarIds
     );
 
-    // logger.log(`[DEBUG] Found ${events.length} calendar events in range`);
-    // if (events.length > 0) {
-    //   logger.log("[DEBUG] Calendar events:", {
-    //     events: events.map((e) => ({
-    //       id: e.id,
-    //       title: e.title,
-    //       start: e.start,
-    //       end: e.end,
-    //       feedId: e.feedId,
-    //     })),
-    //   });
-    // }
-
     for (const event of events) {
       if (
         areIntervalsOverlapping(
@@ -47,13 +101,6 @@ export class CalendarServiceImpl implements CalendarService {
           { start: event.start, end: event.end }
         )
       ) {
-        // logger.log("[DEBUG] Found calendar conflict with event:", {
-        //   id: event.id,
-        //   title: event.title,
-        //   start: event.start,
-        //   end: event.end,
-        // });
-
         conflicts.push({
           type: "calendar_event",
           start: event.start,
@@ -79,20 +126,6 @@ export class CalendarServiceImpl implements CalendarService {
       },
     });
 
-    // logger.log(
-    //   `[DEBUG] Found ${scheduledTasks.length} scheduled tasks to check`
-    // );
-    // if (scheduledTasks.length > 0) {
-    //   logger.log("[DEBUG] Scheduled tasks:", {
-    //     tasks: scheduledTasks.map((t) => ({
-    //       id: t.id,
-    //       title: t.title,
-    //       start: t.scheduledStart,
-    //       end: t.scheduledEnd,
-    //     })),
-    //   });
-    // }
-
     for (const task of scheduledTasks) {
       if (
         task.scheduledStart &&
@@ -102,13 +135,6 @@ export class CalendarServiceImpl implements CalendarService {
           { start: task.scheduledStart, end: task.scheduledEnd }
         )
       ) {
-        // logger.log("[DEBUG] Found task conflict with:", {
-        //   id: task.id,
-        //   title: task.title,
-        //   start: task.scheduledStart,
-        //   end: task.scheduledEnd,
-        // });
-
         conflicts.push({
           type: "task",
           start: task.scheduledStart,
@@ -136,10 +162,28 @@ export class CalendarServiceImpl implements CalendarService {
       return [];
     }
 
-    // logger.log("[DEBUG] Fetching events for calendars:", {
-    //   calendarIds: selectedCalendarIds,
-    // });
-    return this.prisma.calendarEvent.findMany({
+    // Check if we can use cached events
+    if (this.isCacheValid(start, end, selectedCalendarIds)) {
+      logger.log("[DEBUG] Using cached calendar events");
+      return this.cache!.events.filter(
+        (event) => event.start <= end && event.end >= start
+      );
+    }
+
+    // If cache miss, fetch events for the entire weeks containing the range
+    const startDay = new Date(this.getWeekTimestamp(start, true));
+    const endDay = new Date(this.getWeekTimestamp(end, false));
+    endDay.setDate(endDay.getDate() + 1); // Add one more day just to be safe
+
+    logger.log("[DEBUG] Cache miss - Fetching events for calendars:", {
+      calendarIds: selectedCalendarIds,
+      startDay: startDay.toISOString(),
+      endDay: endDay.toISOString(),
+      requestedStart: start.toISOString(),
+      requestedEnd: end.toISOString(),
+    });
+
+    const events = await this.prisma.calendarEvent.findMany({
       where: {
         feedId: {
           in: selectedCalendarIds,
@@ -147,16 +191,121 @@ export class CalendarServiceImpl implements CalendarService {
         AND: [
           {
             start: {
-              lte: end,
+              lte: endDay,
             },
           },
           {
             end: {
-              gte: start,
+              gte: startDay,
             },
           },
         ],
       },
+    });
+
+    // Update cache with new timestamp
+    this.cache = {
+      events,
+      startDay: startDay.getTime(),
+      endDay: endDay.getTime(),
+      calendarIds: selectedCalendarIds,
+      timestamp: Date.now(),
+    };
+
+    return events.filter((event) => event.start <= end && event.end >= start);
+  }
+
+  /**
+   * Checks conflicts for multiple slots in batch against calendar events and scheduled tasks
+   * @param slots Array of slots to check
+   * @param selectedCalendarIds Calendar IDs to check against
+   * @param excludeTaskId Optional task ID to exclude from conflict checking
+   * @returns Array of BatchConflictCheck results
+   */
+  async findBatchConflicts(
+    slots: { slot: TimeSlot; taskId: string }[],
+    selectedCalendarIds: string[],
+    excludeTaskId?: string
+  ): Promise<BatchConflictCheck[]> {
+    // Get the earliest start and latest end times from all slots
+    const startTime = slots.reduce(
+      (earliest, { slot }) => (slot.start < earliest ? slot.start : earliest),
+      slots[0].slot.start
+    );
+    const endTime = slots.reduce(
+      (latest, { slot }) => (slot.end > latest ? slot.end : latest),
+      slots[0].slot.end
+    );
+
+    // Fetch all calendar events for the entire time range at once
+    const events = await this.getEvents(
+      startTime,
+      endTime,
+      selectedCalendarIds
+    );
+
+    // Fetch all scheduled tasks once
+    const scheduledTasks = await this.prisma.task.findMany({
+      where: {
+        isAutoScheduled: true,
+        scheduledStart: { not: null },
+        scheduledEnd: { not: null },
+        id: excludeTaskId ? { not: excludeTaskId } : undefined,
+      },
+    });
+
+    // Check conflicts for each slot
+    return slots.map(({ slot, taskId }) => {
+      const conflicts: Conflict[] = [];
+
+      // Check calendar conflicts
+      for (const event of events) {
+        if (
+          areIntervalsOverlapping(
+            { start: slot.start, end: slot.end },
+            { start: event.start, end: event.end }
+          )
+        ) {
+          conflicts.push({
+            type: "calendar_event",
+            start: event.start,
+            end: event.end,
+            title: event.title,
+            source: {
+              type: "calendar",
+              id: event.id,
+            },
+          });
+          break; // Found a calendar conflict, no need to check more events
+        }
+      }
+
+      // If no calendar conflicts, check task conflicts
+      if (conflicts.length === 0) {
+        for (const task of scheduledTasks) {
+          if (
+            task.scheduledStart &&
+            task.scheduledEnd &&
+            areIntervalsOverlapping(
+              { start: slot.start, end: slot.end },
+              { start: task.scheduledStart, end: task.scheduledEnd }
+            )
+          ) {
+            conflicts.push({
+              type: "task",
+              start: task.scheduledStart,
+              end: task.scheduledEnd,
+              title: task.title,
+              source: {
+                type: "task",
+                id: task.id,
+              },
+            });
+          }
+        }
+      }
+
+      return { slot, taskId, conflicts };
     });
   }
 }

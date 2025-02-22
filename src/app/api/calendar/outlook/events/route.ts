@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       throw new Error("Failed to get event ID from Outlook Calendar");
     }
 
+    //todo this slows down the event creation significantly, we should just create the event in the database
     // Get the Outlook client and sync the calendar
     const client = await getOutlookClient(feed.accountId);
     await syncOutlookCalendar(
