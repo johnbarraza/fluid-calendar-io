@@ -3,6 +3,35 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { TaskStatus } from "@/types/task";
 import { newDate } from "./date-utils";
+import { convertOutlookRecurrenceToRRule } from "./outlook-calendar";
+
+interface OutlookDateTime {
+  dateTime: string;
+  timeZone: string;
+}
+
+interface RecurrencePattern {
+  type: string;
+  interval: number;
+  month?: number;
+  dayOfMonth?: number;
+  daysOfWeek?: string[];
+  firstDayOfWeek?: string;
+  index?: string;
+}
+
+interface RecurrenceRange {
+  type: string;
+  startDate: string;
+  endDate?: string;
+  numberOfOccurrences?: number;
+  recurrenceTimeZone?: string;
+}
+
+interface PatternedRecurrence {
+  pattern: RecurrencePattern;
+  range: RecurrenceRange;
+}
 
 export interface OutlookTask {
   id: string;
@@ -13,15 +42,16 @@ export interface OutlookTask {
   createdDateTime: string;
   lastModifiedDateTime: string;
   isReminderOn: boolean;
-  reminderDateTime?: string;
-  completedDateTime?: string;
-  dueDateTime?: string;
-  startDateTime?: string;
+  reminderDateTime?: OutlookDateTime;
+  completedDateTime?: OutlookDateTime;
+  dueDateTime?: OutlookDateTime;
+  startDateTime?: OutlookDateTime;
   body?: {
     content: string;
     contentType: string;
   };
   categories?: string[];
+  recurrence?: PatternedRecurrence;
 }
 
 export interface OutlookTaskList {
@@ -151,21 +181,43 @@ export class OutlookTasksService {
             continue;
           }
 
-          await prisma.task.create({
-            data: {
-              title: task.title,
-              description: task.body?.content,
-              status: this.mapStatus(task.status),
-              dueDate: task.dueDateTime ? newDate(task.dueDateTime) : null,
-              priority: this.mapPriority(task.importance),
-              projectId,
-              externalTaskId: task.id,
-              isAutoScheduled: mapping.isAutoScheduled,
-              scheduleLocked: false,
-              source: "OUTLOOK",
-              lastSyncedAt: newDate(),
-            },
-          });
+          // Create the base task data
+          const taskData = {
+            title: task.title,
+            description: task.body?.content,
+            status: this.mapStatus(task.status),
+            dueDate: task.dueDateTime?.dateTime
+              ? newDate(task.dueDateTime.dateTime)
+              : null,
+            priority: this.mapPriority(task.importance),
+            projectId,
+            externalTaskId: task.id,
+            isAutoScheduled: mapping.isAutoScheduled,
+            scheduleLocked: false,
+            source: "OUTLOOK",
+            lastSyncedAt: newDate(),
+          };
+
+          // Handle recurrence if present
+          if (task.recurrence) {
+            const rrule = convertOutlookRecurrenceToRRule({
+              pattern: task.recurrence.pattern,
+              range: task.recurrence.range,
+            });
+
+            await prisma.task.create({
+              data: {
+                ...taskData,
+                isRecurring: true,
+                recurrenceRule: rrule,
+              },
+            });
+          } else {
+            await prisma.task.create({
+              data: taskData,
+            });
+          }
+
           results.imported++;
         } catch (error) {
           results.failed++;

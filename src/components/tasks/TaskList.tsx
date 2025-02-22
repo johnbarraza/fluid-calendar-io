@@ -85,11 +85,11 @@ function SortableHeader({
   onSort,
   className = "",
 }: {
-  column: "createdAt" | "dueDate" | "status" | "project";
+  column: "title" | "dueDate" | "status" | "project";
   label: string;
   currentSort: string;
   direction: "asc" | "desc";
-  onSort: (column: "createdAt" | "dueDate" | "status" | "project") => void;
+  onSort: (column: "title" | "dueDate" | "status" | "project") => void;
   className?: string;
 }) {
   return (
@@ -953,6 +953,8 @@ export function TaskList({
     return [...filteredTasks].sort((a, b) => {
       const direction = sortDirection === "asc" ? 1 : -1;
       switch (sortBy) {
+        case "title":
+          return direction * a.title.localeCompare(b.title);
         case "dueDate":
           if (!a.dueDate) return 1;
           if (!b.dueDate) return -1;
@@ -1068,7 +1070,7 @@ export function TaskList({
                   Status
                 </th>
                 <SortableHeader
-                  column="createdAt"
+                  column="title"
                   label="Title"
                   currentSort={sortBy}
                   direction={sortDirection}

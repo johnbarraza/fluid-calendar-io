@@ -84,8 +84,21 @@ export async function POST(request: Request) {
       options
     );
 
+    // Get task list name for failed tasks
+    const taskLists = await outlookService.getTaskLists();
+    const taskList = taskLists.find((list) => list.id === listId);
+    const failedTasks = results.errors?.map((error) => ({
+      taskId: error.taskId,
+      name: error.taskId, // Using taskId as name since we don't have the task name
+      error: error.error,
+      listName: taskList?.name || "Unknown List",
+    }));
+
     return NextResponse.json({
-      ...results,
+      imported: results.imported,
+      skipped: results.skipped,
+      failed: results.failed,
+      failedTasks,
       projectId: targetProjectId,
     });
   } catch (error) {

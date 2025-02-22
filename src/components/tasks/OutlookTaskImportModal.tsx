@@ -23,6 +23,13 @@ interface OutlookTaskImportModalProps {
   accountId: string;
 }
 
+interface FailedTask {
+  name: string;
+  listName: string;
+  error: string;
+  taskId: string;
+}
+
 export function OutlookTaskImportModal({
   isOpen,
   onClose,
@@ -42,7 +49,9 @@ export function OutlookTaskImportModal({
     imported: number;
     skipped: number;
     failed: number;
+    failedTasks?: FailedTask[];
   } | null>(null);
+  const [showFailureDetails, setShowFailureDetails] = useState(false);
 
   // Fetch task lists when modal opens
   useEffect(() => {
@@ -93,6 +102,7 @@ export function OutlookTaskImportModal({
       let totalImported = 0;
       let totalSkipped = 0;
       let totalFailed = 0;
+      let allFailedTasks: FailedTask[] = [];
 
       // Process all selected lists
       for (const listId of selectedLists) {
@@ -115,15 +125,34 @@ export function OutlookTaskImportModal({
           throw new Error(result.error || "Failed to import tasks");
         }
 
+        console.log("Import result:", result); // Debug log
+
         totalImported += result.imported;
         totalSkipped += result.skipped;
         totalFailed += result.failed;
+
+        // Collect failed tasks details if any
+        if (result.failedTasks) {
+          console.log("Failed tasks for list:", result.failedTasks); // Debug log
+          const listName =
+            taskLists.find((l) => l.id === listId)?.name || "Unknown List";
+          allFailedTasks = [
+            ...allFailedTasks,
+            ...result.failedTasks.map((task: Omit<FailedTask, "listName">) => ({
+              ...task,
+              listName,
+            })),
+          ];
+        }
       }
+
+      console.log("All failed tasks:", allFailedTasks); // Debug log
 
       setImportResults({
         imported: totalImported,
         skipped: totalSkipped,
         failed: totalFailed,
+        failedTasks: allFailedTasks,
       });
     } catch (err) {
       console.error("Failed to import tasks:", err);
@@ -157,10 +186,39 @@ export function OutlookTaskImportModal({
                   {importResults.failed > 0 && (
                     <li className="text-orange-700">
                       {importResults.failed} tasks failed
+                      <button
+                        onClick={() => setShowFailureDetails(true)}
+                        className="ml-2 text-sm underline hover:text-orange-800"
+                      >
+                        View Details
+                      </button>
                     </li>
                   )}
                 </ul>
               </div>
+
+              {showFailureDetails && importResults.failedTasks && (
+                <div className="mt-4 max-h-60 overflow-y-auto">
+                  <h4 className="font-medium mb-2 text-gray-900">
+                    Failed Tasks:
+                  </h4>
+                  <div className="space-y-2">
+                    {importResults.failedTasks.map((task, index) => (
+                      <div key={index} className="bg-orange-50 p-3 rounded-md">
+                        <div className="font-medium text-orange-800">
+                          {task.name}
+                        </div>
+                        <div className="text-sm text-orange-700">
+                          List: {task.listName}
+                        </div>
+                        <div className="text-sm text-orange-700">
+                          Error: {task.error}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end pt-4">
                 <button
