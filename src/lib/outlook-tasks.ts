@@ -100,12 +100,31 @@ export class OutlookTasksService {
     }
   }
 
+  /**
+   * Gets all tasks from an Outlook task list, handling pagination
+   * @param listId The ID of the task list to fetch tasks from
+   * @returns Promise<OutlookTask[]> Array of all tasks in the list
+   */
   async getTasks(listId: string): Promise<OutlookTask[]> {
     try {
-      const response = await this.client
-        .api(`/me/todo/lists/${listId}/tasks`)
-        .get();
-      return response.value;
+      let url = `/me/todo/lists/${listId}/tasks`;
+      const allTasks: OutlookTask[] = [];
+
+      while (url) {
+        const response = await this.client
+          .api(url.includes("https://") ? url : url)
+          .get();
+
+        allTasks.push(...response.value);
+
+        // Get the next page URL if it exists, extract just the path if it's a full URL
+        url = response["@odata.nextLink"] || "";
+        if (url.includes("https://")) {
+          url = url.split("graph.microsoft.com/v1.0")[1];
+        }
+      }
+
+      return allTasks;
     } catch (error) {
       logger.log("Failed to get tasks", { error });
       throw error;

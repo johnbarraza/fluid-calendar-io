@@ -2,18 +2,34 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SchedulingService } from "@/services/scheduling/SchedulingService";
 import { AutoScheduleSettings } from "@prisma/client";
+import { TaskStatus } from "@/types/task";
 
 export async function POST(request: Request) {
   try {
     const { settings } = (await request.json()) as {
       settings: AutoScheduleSettings;
     };
+    //reset all scheduled tasks
+    await prisma.task.updateMany({
+      where: {
+        isAutoScheduled: true,
+        scheduleLocked: false,
+      },
+      data: {
+        scheduledStart: null,
+        scheduledEnd: null,
+        scheduleScore: null,
+      },
+    });
 
     // Get all tasks marked for auto-scheduling that are not locked
     const tasksToSchedule = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
         scheduleLocked: false,
+        status: {
+          not: TaskStatus.COMPLETED,
+        },
       },
       include: {
         project: true,
@@ -26,6 +42,9 @@ export async function POST(request: Request) {
       where: {
         isAutoScheduled: true,
         scheduleLocked: true,
+        status: {
+          not: TaskStatus.COMPLETED,
+        },
       },
       include: {
         project: true,

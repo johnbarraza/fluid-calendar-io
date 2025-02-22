@@ -13,6 +13,7 @@ import { CalendarType } from "@/lib/calendar/init";
 import { useTaskStore } from "@/store/task";
 import { newDate } from "@/lib/date-utils";
 import { DEFAULT_TASK_COLOR } from "@/lib/task-utils";
+import { TaskStatus } from "@/types/task";
 // Separate store for view preferences that will be persisted in localStorage
 interface ViewStore extends CalendarViewState {
   setView: (view: CalendarView) => void;
@@ -762,6 +763,9 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
 
     const events = tasks
       .filter((task) => {
+        if (task.status === TaskStatus.COMPLETED) {
+          return false;
+        }
         if (task.isAutoScheduled && task.scheduledStart && task.scheduledEnd) {
           // For auto-scheduled tasks, check if scheduled time is within range
           const scheduledStart = newDate(task.scheduledStart);

@@ -2,7 +2,7 @@ import { memo } from "react";
 import { IoRepeat, IoCheckmarkCircle, IoTimeOutline } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import type { EventContentArg } from "@fullcalendar/core";
-import { Priority } from "@/types/task";
+import { Priority, TaskStatus } from "@/types/task";
 import { isTaskOverdue } from "@/lib/task-utils";
 
 interface CalendarEventContentProps {
@@ -39,11 +39,12 @@ export const CalendarEventContent = memo(function CalendarEventContent({
         isTask && priority && priorityColors[priority as Priority],
         isTask &&
           !priority && {
-            "border-green-500": status === "completed",
-            "border-yellow-500": status === "in_progress",
-            "border-gray-500": status === "todo",
+            "border-green-500": status === TaskStatus.COMPLETED,
+            "border-yellow-500": status === TaskStatus.IN_PROGRESS,
+            "border-gray-500": status === TaskStatus.TODO,
           },
-        isOverdue && "text-red-600 font-medium border-red-500"
+        isOverdue && "text-red-600 font-medium border-red-500",
+        status === TaskStatus.COMPLETED && "text-gray-500 line-through"
       )}
     >
       {isTask ? (

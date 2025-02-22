@@ -4,6 +4,8 @@
 - [ ] if i have a bunch of tasks that have isautoscheduled false and i click autoschedule the UI updates with a blank list because no tasks are returned. i have to refresh the page to get the tasks.
 - [ ] auto scheduling is creating task in the past (it might be off by one day)
 - [ ] auto scheduling did not schedule high priority tasks first
+- [ ] save task completed date and sync it with outlook 
+  
 ## Next Steps
 - [ ] Integrate google calendar
   - [ ] auto sync with webhooks

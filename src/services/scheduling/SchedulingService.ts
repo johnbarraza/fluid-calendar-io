@@ -65,18 +65,7 @@ export class SchedulingService {
     //   `[DEBUG] ${tasksToSchedule.length} tasks to schedule (excluding locked tasks)`
     // );
 
-    await this.prisma.task.updateMany({
-      where: {
-        id: {
-          in: tasksToSchedule.map((t) => t.id),
-        },
-      },
-      data: {
-        scheduledStart: null,
-        scheduledEnd: null,
-        isAutoScheduled: false,
-      },
-    });
+
     // logger.log("[DEBUG] Cleared existing schedules for non-locked tasks");
 
     // Get initial scores for all tasks
