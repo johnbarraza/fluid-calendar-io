@@ -49,6 +49,36 @@ export const useViewStore = create<ViewStore>()(
   )
 );
 
+// Store for UI preferences that will be persisted in localStorage
+interface UIStore {
+  isSidebarOpen: boolean;
+  isHydrated: boolean;
+  setSidebarOpen: (isOpen: boolean) => void;
+  setHydrated: (hydrated: boolean) => void;
+}
+
+export const useCalendarUIStore = create<UIStore>()(
+  persist(
+    (set) => ({
+      isSidebarOpen: true,
+      isHydrated: false,
+      setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+      setHydrated: (hydrated) => set({ isHydrated: hydrated }),
+    }),
+    {
+      name: "calendar-ui-store",
+      partialize: (state) => ({
+        isSidebarOpen: state.isSidebarOpen,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true;
+        }
+      },
+    }
+  )
+);
+
 // Main calendar store for data management
 interface CalendarStore extends CalendarState {
   // Feed management

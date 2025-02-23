@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useLayoutEffect } from "react";
 import { HiMenu } from "react-icons/hi";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { WeekView } from "@/components/calendar/WeekView";
 import { FeedManager } from "@/components/calendar/FeedManager";
 import { addDays, newDate, subDays, formatDate } from "@/lib/date-utils";
-import { useViewStore } from "@/store/calendar";
+import { useViewStore, useCalendarUIStore } from "@/store/calendar";
 import { useTaskStore } from "@/store/task";
 import { cn } from "@/lib/utils";
 
 export function Calendar() {
   const { date: currentDate, setDate } = useViewStore();
+  const { isSidebarOpen, setSidebarOpen, isHydrated } = useCalendarUIStore();
   const { scheduleAllTasks } = useTaskStore();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handlePrevWeek = () => {
     setDate(subDays(currentDate, 7));
@@ -36,9 +36,10 @@ export function Calendar() {
         className={cn(
           "h-full w-80 bg-white border-r border-gray-200 flex-none",
           "transform transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          !isHydrated && "duration-0 opacity-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ marginLeft: sidebarOpen ? 0 : "-20rem" }}
+        style={{ marginLeft: isSidebarOpen ? 0 : "-20rem" }}
       >
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-gray-200">
@@ -57,7 +58,7 @@ export function Calendar() {
         {/* Header */}
         <header className="h-16 border-b border-gray-200 flex items-center px-4 flex-none">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
             <HiMenu className="w-5 h-5" />
