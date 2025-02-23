@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useLayoutEffect } from "react";
 import { UserSettings } from "@/components/settings/UserSettings";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
 import { Separator } from "@/components/ui/separator";
@@ -19,16 +19,48 @@ type SettingsTab =
   | "outlook-tasks";
 
 export default function SettingsPage() {
+  const [isHydrated, setIsHydrated] = useState(false);
+  const tabs = useMemo(
+    () =>
+      [
+        { id: "accounts", label: "Accounts" },
+        { id: "user", label: "User" },
+        { id: "calendar", label: "Calendar" },
+        { id: "auto-schedule", label: "Auto-Schedule" },
+        { id: "outlook-tasks", label: "Outlook Tasks" },
+        { id: "system", label: "System" },
+      ] as const,
+    []
+  );
+
   const [activeTab, setActiveTab] = useState<SettingsTab>("accounts");
 
-  const tabs = [
-    { id: "accounts", label: "Accounts" },
-    { id: "user", label: "User" },
-    { id: "calendar", label: "Calendar" },
-    { id: "auto-schedule", label: "Auto-Schedule" },
-    { id: "outlook-tasks", label: "Outlook Tasks" },
-    { id: "system", label: "System" },
-  ] as const;
+  // Check initial hash on mount using useLayoutEffect
+  useLayoutEffect(() => {
+    const hash = window.location.hash.slice(1) as SettingsTab;
+    if (tabs.some((tab) => tab.id === hash)) {
+      setActiveTab(hash);
+    }
+    setIsHydrated(true);
+  }, [tabs]);
+
+  useEffect(() => {
+    // Update hash when tab changes
+    window.location.hash = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Listen for hash changes
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1) as SettingsTab;
+      if (tabs.some((tab) => tab.id === hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [tabs]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -55,18 +87,23 @@ export default function SettingsPage() {
         <aside className="lg:w-1/5">
           <nav className="space-y-1">
             {tabs.map((tab) => (
-              <button
+              <a
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as SettingsTab)}
+                href={`#${tab.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab(tab.id as SettingsTab);
+                }}
                 className={cn(
                   "flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium",
+                  !isHydrated && "duration-0",
                   activeTab === tab.id
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 {tab.label}
-              </button>
+              </a>
             ))}
           </nav>
         </aside>
@@ -79,7 +116,9 @@ export default function SettingsPage() {
               </p>
             </div>
             <Separator />
-            <div className="space-y-8">{renderContent()}</div>
+            <div className={cn("space-y-8", !isHydrated && "opacity-0")}>
+              {renderContent()}
+            </div>
           </div>
         </div>
       </div>
