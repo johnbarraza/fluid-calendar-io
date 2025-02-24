@@ -28,9 +28,6 @@
 
 ## Tasks
 - [ ] task dependencies
-- [ ] reschedule tasks after calendars to consider are changed
-- [x] confidence scoring for auto-scheduled tasks
-- [x] improved time slot selection algorithm
 
 ## 1. Core Calendar Features
 - [ ] Calendar Grid Component
