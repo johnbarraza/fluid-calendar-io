@@ -38,6 +38,11 @@ export function useCommands() {
   // Handle keyboard shortcuts
   useEffect(() => {
     let pressedKeys: string[] = [];
+    // Map arrow keys to their shortcut names
+    const keyMap: Record<string, string> = {
+      arrowleft: "left",
+      arrowright: "right",
+    };
 
     const handleKeyDown = async (e: KeyboardEvent) => {
       // Don't handle shortcuts when typing in input fields
@@ -51,8 +56,9 @@ export function useCommands() {
 
       // Add the pressed key to the array if not already present
       const key = e.key.toLowerCase();
-      if (!pressedKeys.includes(key)) {
-        pressedKeys.push(key);
+      const mappedKey = keyMap[key] || key;
+      if (!pressedKeys.includes(mappedKey)) {
+        pressedKeys.push(mappedKey);
       }
 
       // Get the current combination of pressed keys
@@ -70,7 +76,8 @@ export function useCommands() {
     const handleKeyUp = (e: KeyboardEvent) => {
       // Remove the released key from the array
       const key = e.key.toLowerCase();
-      pressedKeys = pressedKeys.filter((k) => k !== key);
+      const mappedKey = keyMap[key] || key;
+      pressedKeys = pressedKeys.filter((k) => k !== mappedKey);
     };
 
     document.addEventListener("keydown", handleKeyDown);

@@ -57,7 +57,10 @@ export function useCalendarCommands(): Command[] {
       section: "calendar",
       perform: () => setDate(subDays(currentDate, 7)),
       shortcut: "left",
-      context: calendarContext,
+      context: {
+        requiredPath: "/",
+        navigateIfNeeded: false,
+      },
     },
     {
       id: "calendar.next-week",
@@ -67,7 +70,10 @@ export function useCalendarCommands(): Command[] {
       section: "calendar",
       perform: () => setDate(addDays(currentDate, 7)),
       shortcut: "right",
-      context: calendarContext,
+      context: {
+        requiredPath: "/",
+        navigateIfNeeded: false,
+      },
     },
     {
       id: "calendar.toggle-sidebar",
