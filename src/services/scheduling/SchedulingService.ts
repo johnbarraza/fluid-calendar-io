@@ -6,6 +6,7 @@ import { addDays, newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 
 const DEFAULT_TASK_DURATION = 30; // Default duration in minutes
+const LOG_SOURCE = "SchedulingService";
 
 interface PerformanceMetrics {
   operation: string;
@@ -52,19 +53,29 @@ export class SchedulingService {
       this.metrics[this.metrics.length - 1].endTime! -
       this.metrics[0].startTime;
 
-    logger.log("Scheduling Performance Metrics", {
-      totalDuration: `${(totalDuration / 1000).toFixed(2)}s`,
-      operations: this.metrics.map((m) => ({
-        operation: m.operation,
-        duration: m.duration
-          ? `${(m.duration / 1000).toFixed(2)}s`
-          : "incomplete",
-        percentage: m.duration
-          ? `${((m.duration / totalDuration) * 100).toFixed(1)}%`
-          : "n/a",
-        metadata: m.metadata,
-      })),
-    });
+    logger.debug(
+      "Scheduling Performance Metrics",
+      {
+        metadata: {
+          data: {
+            totalDuration: `${(totalDuration / 1000).toFixed(2)}s`,
+            operations: JSON.stringify(
+              this.metrics.map((m) => ({
+                operation: m.operation,
+                duration: m.duration
+                  ? `${(m.duration / 1000).toFixed(2)}s`
+                  : "incomplete",
+                percentage: m.duration
+                  ? `${((m.duration / totalDuration) * 100).toFixed(1)}%`
+                  : "n/a",
+                metadata: m.metadata,
+              }))
+            ),
+          },
+        },
+      },
+      LOG_SOURCE
+    );
 
     // Reset metrics for next run
     this.metrics = [];
@@ -89,7 +100,7 @@ export class SchedulingService {
       };
     }
 
-    // logger.log("[DEBUG] Creating TimeSlotManager with settings", {
+    // logger.debug("[DEBUG] Creating TimeSlotManager with settings", {
     //   workHours: {
     //     start: settings.workHourStart,
     //     end: settings.workHourEnd,
@@ -282,7 +293,13 @@ export class SchedulingService {
         this.endMetric("scheduleTask", taskStart);
         return updatedTask;
       } else {
-        logger.log(`No available slots found in ${window.label} window`);
+        logger.debug(
+          `No available slots found in ${window.label} window`,
+          {
+            windowLabel: window.label,
+          },
+          LOG_SOURCE
+        );
       }
 
       this.endMetric("tryWindow", windowStart);

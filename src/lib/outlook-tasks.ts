@@ -68,6 +68,8 @@ interface OutlookTaskListResponse {
   parentGroupKey?: string;
 }
 
+const LOG_SOURCE = "OutlookTasks";
+
 export class OutlookTasksService {
   private client: Client;
   private accountId: string;
@@ -81,9 +83,13 @@ export class OutlookTasksService {
     try {
       const response = await this.client.api("/me/todo/lists").get();
       if (!response.value || !Array.isArray(response.value)) {
-        logger.log("[ERROR] Invalid response format from Outlook API", {
-          response,
-        });
+        logger.error(
+          "[ERROR] Invalid response format from Outlook API",
+          {
+            response: JSON.stringify(response),
+          },
+          LOG_SOURCE
+        );
         throw new Error("Invalid response format from Outlook API");
       }
       return response.value.map((list: OutlookTaskListResponse) => ({
@@ -93,7 +99,13 @@ export class OutlookTasksService {
         parentGroupKey: list.parentGroupKey,
       }));
     } catch (error) {
-      logger.log("[ERROR] Failed to get task lists", { error });
+      logger.error(
+        "[ERROR] Failed to get task lists",
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        LOG_SOURCE
+      );
       throw error;
     }
   }
@@ -124,7 +136,13 @@ export class OutlookTasksService {
 
       return allTasks;
     } catch (error) {
-      logger.log("Failed to get tasks", { error });
+      logger.error(
+        "Failed to get tasks",
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        LOG_SOURCE
+      );
       throw error;
     }
   }
@@ -253,7 +271,15 @@ export class OutlookTasksService {
 
       return results;
     } catch (error) {
-      logger.log("Failed to import tasks", { error, listId, projectId });
+      logger.error(
+        "Failed to import tasks",
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          listId,
+          projectId,
+        },
+        LOG_SOURCE
+      );
       throw error;
     }
   }

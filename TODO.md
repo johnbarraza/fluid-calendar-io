@@ -133,9 +133,27 @@
   - [ ] Add keyboard shortcut reference
   - [ ] Create onboarding guide
 
+## Implementation Order:
+1. Database schema and migrations
+2. Core logger service updates
+3. API endpoints
+4. Settings UI and commands
+5. Testing and documentation
+
 ## Next Steps
 1. Implement the calendar grid component
 2. Add basic task management
 3. Implement drag and drop functionality
 4. Add data persistence
-5. Enhance UI with animations and responsive design 
+5. Enhance UI with animations and responsive design
+
+## Calendar Sync and Auto-scheduling
+- [ ] Implement background sync system
+  - [ ] Create useCalendarSync custom hook
+  - [ ] Add sync status indicators in UI
+  - [ ] Implement error handling and retry logic
+  - [ ] Add manual sync trigger to command registry
+  - [ ] Add sync preferences to settings
+  - [ ] Implement proper cleanup on unmount
+  - [ ] Add visual indicators for sync status
+  - [ ] Add sync error notifications

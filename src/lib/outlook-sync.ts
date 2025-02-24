@@ -62,6 +62,8 @@ const timeMin = newDateFromYMD(now.getFullYear() - 1, 0, 1); // 2 years ago, Jan
 const timeMax = newDateFromYMD(now.getFullYear() + 1, 11, 31); // End of next year
 const PAGE_SIZE = 200;
 
+const LOG_SOURCE = "OutlookSync";
+
 // Helper to create base event data shared between master and instance events
 export function createBaseEventData(
   event: OutlookEvent,
@@ -81,9 +83,7 @@ export function createBaseEventData(
     isMaster,
     allDay: event.isAllDay || false,
     status: event.showAs || "busy",
-    created: event.createdDateTime
-      ? newDate(event.createdDateTime)
-      : newDate(),
+    created: event.createdDateTime ? newDate(event.createdDateTime) : newDate(),
     lastModified: event.lastModifiedDateTime
       ? newDate(event.lastModifiedDateTime)
       : newDate(),
@@ -145,7 +145,11 @@ export async function fetchAllEvents(
   // Always include startDateTime and endDateTime as required by the API
 
   if (syncToken && !forceFullSync) {
-    logger.log("Using delta query for incremental sync");
+    logger.debug(
+      "Using delta query for incremental sync",
+      undefined,
+      LOG_SOURCE
+    );
     queryParams.push(`$deltatoken=${syncToken}`);
   } else {
     queryParams.push(`startDateTime=${timeMin.toISOString()}`);
@@ -163,7 +167,13 @@ export async function fetchAllEvents(
 
   // Handle pagination
   while (nextLink) {
-    logger.log("Fetching next page of events", { nextLink });
+    logger.debug(
+      "Fetching next page of events",
+      {
+        nextLink,
+      },
+      LOG_SOURCE
+    );
     response = await client
       .api(nextLink)
       .header("Prefer", `odata.maxpagesize=${PAGE_SIZE}`)
@@ -177,11 +187,14 @@ export async function fetchAllEvents(
     }
   }
 
-  logger.log("Sync completed", {
-    totalEvents: allEvents.length,
-    hasDeltaLink: !!deltaLink,
-    deltaLink,
-  });
+  logger.debug(
+    "Sync completed",
+    {
+      totalEvents: String(allEvents.length),
+      hasDeltaLink: !!deltaLink,
+    },
+    LOG_SOURCE
+  );
 
   // For delta query, the response includes information about deleted events
   const deletedEvents = allEvents.filter(
@@ -224,7 +237,13 @@ export async function fetchEventInstances(
 
   // Handle pagination
   while (nextLink) {
-    logger.log("Fetching next page of instances", { nextLink });
+    logger.debug(
+      "Fetching next page of instances",
+      {
+        nextLink,
+      },
+      LOG_SOURCE
+    );
     response = await client.api(nextLink).get();
     allInstances = allInstances.concat(response.value);
     nextLink = response["@odata.nextLink"];
@@ -283,19 +302,27 @@ export async function processMasterEvent(
 
         await saveEventToDatabase(instanceData, feed.id, instance.id, false);
       } catch (error) {
-        logger.log("Failed to process instance", {
-          instanceId: instance.id,
-          subject: instance.subject,
-          error,
-        });
+        logger.error(
+          "Failed to process instance",
+          {
+            error: error instanceof Error ? error.message : "Unknown error",
+            eventId: instance.id,
+            subject: instance.subject,
+          },
+          LOG_SOURCE
+        );
       }
     }
   } catch (error) {
-    logger.log("Failed to process master event", {
-      masterId: masterEvent.id,
-      subject: masterEvent.subject,
-      error,
-    });
+    logger.error(
+      "Failed to process master event",
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+        masterEventId: masterEvent.id,
+        masterSubject: masterEvent?.subject || "Unknown",
+      },
+      LOG_SOURCE
+    );
   }
 
   return processedIds;
@@ -313,11 +340,15 @@ export async function syncOutlookCalendar(
     deletedEventIds,
     nextSyncToken,
   } = await fetchAllEvents(client, feed.url, lastSyncToken, forceFullSync);
-  logger.log("Fetched events from Outlook", {
-    totalCount: allEvents.length,
-    deletedEventsCount: deletedEventIds?.length || 0,
-    nextSyncToken: nextSyncToken ? "present" : "not present",
-  });
+  logger.debug(
+    "Fetched events from Outlook",
+    {
+      totalCount: allEvents.length,
+      deletedEventsCount: deletedEventIds?.length || 0,
+      nextSyncToken: nextSyncToken ? "present" : "not present",
+    },
+    LOG_SOURCE
+  );
   if (forceFullSync) {
     // delete all events from the database
     await prisma.calendarEvent.deleteMany({
@@ -344,10 +375,14 @@ export async function syncOutlookCalendar(
           });
         }
       } catch (error) {
-        logger.log("Failed to delete event", {
-          eventId,
-          error,
-        });
+        logger.error(
+          "Failed to delete event",
+          {
+            error: error instanceof Error ? error.message : "Unknown error",
+            eventId,
+          },
+          LOG_SOURCE
+        );
       }
     }
   }
@@ -364,13 +399,17 @@ export async function syncOutlookCalendar(
     }
   }
 
-  logger.log("Retrieved events from Outlook", {
-    totalCount: allEvents.length,
-    masterEventsCount: masterEvents.size,
-    nonRecurringCount: nonRecurringEvents.length,
-    deletedEventsCount: deletedEventIds?.length || 0,
-    nextSyncToken: nextSyncToken ? "present" : "not present",
-  });
+  logger.debug(
+    "Retrieved events from Outlook",
+    {
+      totalCount: allEvents.length,
+      masterEventsCount: masterEvents.size,
+      nonRecurringCount: nonRecurringEvents.length,
+      deletedEventsCount: deletedEventIds?.length || 0,
+      nextSyncToken: nextSyncToken ? "present" : "not present",
+    },
+    LOG_SOURCE
+  );
 
   // Process each event
   const processedEventIds = new Set<string>();
@@ -389,11 +428,15 @@ export async function syncOutlookCalendar(
 
       await saveEventToDatabase(eventData, feed.id, event.id);
     } catch (error) {
-      logger.log("Failed to process non-recurring event", {
-        eventId: event.id,
-        subject: event.subject,
-        error,
-      });
+      logger.error(
+        "Failed to process non-recurring event",
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          eventId: event.id,
+          subject: event.subject,
+        },
+        LOG_SOURCE
+      );
     }
   }
 
