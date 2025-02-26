@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { RRule } from "rrule";
 import { TaskStatus } from "@/types/task";
 import { newDate } from "@/lib/date-utils";
+import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules";
+import { logger } from "@/lib/logger";
 
+const LOG_SOURCE = "task-route";
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -26,7 +29,13 @@ export async function GET(
 
     return NextResponse.json(task);
   } catch (error) {
-    console.error("Error fetching task:", error);
+    logger.error(
+      "Error fetching task:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -54,6 +63,14 @@ export async function PUT(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { tagIds, project, projectId, ...updates } = json;
 
+    // Set completedAt when task is marked as completed
+    if (
+      updates.status === TaskStatus.COMPLETED &&
+      task.status !== TaskStatus.COMPLETED
+    ) {
+      updates.completedAt = newDate();
+    }
+
     // Handle recurring task completion
     if (
       task.isRecurring &&
@@ -61,7 +78,12 @@ export async function PUT(
       task.recurrenceRule
     ) {
       try {
-        const rrule = RRule.fromString(task.recurrenceRule);
+        // Normalize the recurrence rule to ensure compatibility with RRule
+        const standardRecurrenceRule = normalizeRecurrenceRule(
+          task.recurrenceRule
+        );
+
+        const rrule = RRule.fromString(standardRecurrenceRule!);
 
         // For tasks, we only care about the date part
         const baseDate = newDate(task.dueDate || newDate());
@@ -78,10 +100,6 @@ export async function PUT(
           nextOccurrence.setUTCHours(0, 0, 0, 0);
         }
 
-        console.log("baseDate", baseDate.toISOString());
-        console.log("searchDate", searchDate.toISOString());
-        console.log("nextOccurrence", nextOccurrence?.toISOString());
-
         if (nextOccurrence) {
           // Create a completed instance as a separate task
           await prisma.task.create({
@@ -96,6 +114,7 @@ export async function PUT(
               preferredTime: task.preferredTime,
               projectId: task.projectId,
               isRecurring: false,
+              completedAt: newDate(), // Set completedAt for the completed instance
               tags: {
                 connect: task.tags.map((tag) => ({ id: tag.id })),
               },
@@ -108,11 +127,22 @@ export async function PUT(
           updates.lastCompletedDate = newDate();
         }
       } catch (error) {
-        console.error("Error handling task completion:", error);
+        logger.error(
+          "Error handling task completion:",
+          {
+            error: error instanceof Error ? error.message : String(error),
+          },
+          LOG_SOURCE
+        );
         return new NextResponse("Error handling task completion", {
           status: 500,
         });
       }
+    }
+
+    // Normalize recurrence rule if it exists in updates
+    if (updates.recurrenceRule) {
+      updates.recurrenceRule = normalizeRecurrenceRule(updates.recurrenceRule);
     }
 
     const updatedTask = await prisma.task.update({
@@ -142,7 +172,13 @@ export async function PUT(
 
     return NextResponse.json(updatedTask);
   } catch (error) {
-    console.error("Error updating task:", error);
+    logger.error(
+      "Error updating task:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -171,7 +207,13 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting task:", error);
+    logger.error(
+      "Error deleting task:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

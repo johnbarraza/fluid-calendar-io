@@ -16,6 +16,7 @@ import {
   subDays,
   isSameDay,
   areIntervalsOverlapping,
+  isBefore,
 } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 
@@ -118,6 +119,10 @@ export function formatToLocalISOString(date: Date): string {
   return newDate(date.getTime() - tzOffset).toISOString().slice(0, 16);
 }
 
+export function addHours(date: Date, hours: number): Date {
+  return addMinutes(date, hours * 60);
+}
+
 // Re-export date-fns functions
 export {
   addMinutes,
@@ -138,4 +143,5 @@ export {
   formatInTimeZone,
   toZonedTime,
   areIntervalsOverlapping,
+  isBefore,
 };
