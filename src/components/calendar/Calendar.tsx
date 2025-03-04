@@ -4,6 +4,8 @@ import { HiMenu } from "react-icons/hi";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
+import { MultiMonthView } from "@/components/calendar/MultiMonthView";
+import { DayView } from "@/components/calendar/DayView";
 import { FeedManager } from "@/components/calendar/FeedManager";
 import { addDays, newDate, subDays, formatDate } from "@/lib/date-utils";
 import { useViewStore, useCalendarUIStore } from "@/store/calendar";
@@ -17,22 +19,24 @@ export function Calendar() {
   const { scheduleAllTasks } = useTaskStore();
 
   const handlePrevWeek = () => {
-    if (view === "month") {
+    if (view === "month" || view === "multiMonth") {
       const newDate = new Date(currentDate);
       newDate.setMonth(newDate.getMonth() - 1);
       setDate(newDate);
     } else {
-      setDate(subDays(currentDate, 7));
+      const days = view === "day" ? 1 : 7;
+      setDate(subDays(currentDate, days));
     }
   };
 
   const handleNextWeek = () => {
-    if (view === "month") {
+    if (view === "month" || view === "multiMonth") {
       const newDate = new Date(currentDate);
       newDate.setMonth(newDate.getMonth() + 1);
       setDate(newDate);
     } else {
-      setDate(addDays(currentDate, 7));
+      const days = view === "day" ? 1 : 7;
+      setDate(addDays(currentDate, days));
     }
   };
 
@@ -111,8 +115,19 @@ export function Calendar() {
             <h1 className="text-xl font-semibold">{formatDate(currentDate)}</h1>
           </div>
 
-          {/* View Switching Buttons - Moved to the right */}
+          {/* View Switching Buttons */}
           <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setView("day")}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-lg",
+                view === "day"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Day
+            </button>
             <button
               onClick={() => setView("week")}
               className={cn(
@@ -135,15 +150,30 @@ export function Calendar() {
             >
               Month
             </button>
+            <button
+              onClick={() => setView("multiMonth")}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-lg",
+                view === "multiMonth"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Year
+            </button>
           </div>
         </header>
 
         {/* Calendar Grid */}
         <div className="flex-1 overflow-hidden">
-          {view === "week" ? (
+          {view === "day" ? (
+            <DayView currentDate={currentDate} onDateClick={setDate} />
+          ) : view === "week" ? (
             <WeekView currentDate={currentDate} onDateClick={setDate} />
-          ) : (
+          ) : view === "month" ? (
             <MonthView currentDate={currentDate} onDateClick={setDate} />
+          ) : (
+            <MultiMonthView currentDate={currentDate} onDateClick={setDate} />
           )}
         </div>
       </main>

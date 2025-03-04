@@ -78,7 +78,7 @@ export interface CalendarState {
   error?: string;
 }
 
-export type CalendarView = "day" | "week" | "month" | "agenda";
+export type CalendarView = "day" | "week" | "month" | "multiMonth" | "agenda";
 
 export interface CalendarViewState {
   view: CalendarView;
