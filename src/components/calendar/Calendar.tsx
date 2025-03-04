@@ -55,10 +55,6 @@ export function Calendar() {
         style={{ marginLeft: isSidebarOpen ? 0 : "-20rem" }}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">Calendars</h2>
-          </div>
-
           {/* Feed Manager */}
           <div className="flex-1 overflow-y-auto">
             <FeedManager />
