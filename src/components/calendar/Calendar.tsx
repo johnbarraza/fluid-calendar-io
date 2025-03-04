@@ -3,6 +3,7 @@
 import { HiMenu } from "react-icons/hi";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { WeekView } from "@/components/calendar/WeekView";
+import { MonthView } from "@/components/calendar/MonthView";
 import { FeedManager } from "@/components/calendar/FeedManager";
 import { addDays, newDate, subDays, formatDate } from "@/lib/date-utils";
 import { useViewStore, useCalendarUIStore } from "@/store/calendar";
@@ -11,16 +12,28 @@ import { cn } from "@/lib/utils";
 import { SponsorshipBanner } from "@/components/ui/sponsorship-banner";
 
 export function Calendar() {
-  const { date: currentDate, setDate } = useViewStore();
+  const { date: currentDate, setDate, view, setView } = useViewStore();
   const { isSidebarOpen, setSidebarOpen, isHydrated } = useCalendarUIStore();
   const { scheduleAllTasks } = useTaskStore();
 
   const handlePrevWeek = () => {
-    setDate(subDays(currentDate, 7));
+    if (view === "month") {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() - 1);
+      setDate(newDate);
+    } else {
+      setDate(subDays(currentDate, 7));
+    }
   };
 
   const handleNextWeek = () => {
-    setDate(addDays(currentDate, 7));
+    if (view === "month") {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() + 1);
+      setDate(newDate);
+    } else {
+      setDate(addDays(currentDate, 7));
+    }
   };
 
   const handleAutoSchedule = async () => {
@@ -101,11 +114,41 @@ export function Calendar() {
 
             <h1 className="text-xl font-semibold">{formatDate(currentDate)}</h1>
           </div>
+
+          {/* View Switching Buttons - Moved to the right */}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setView("week")}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-lg",
+                view === "week"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setView("month")}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-lg",
+                view === "month"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Month
+            </button>
+          </div>
         </header>
 
         {/* Calendar Grid */}
         <div className="flex-1 overflow-hidden">
-          <WeekView currentDate={currentDate} onDateClick={setDate} />
+          {view === "week" ? (
+            <WeekView currentDate={currentDate} onDateClick={setDate} />
+          ) : (
+            <MonthView currentDate={currentDate} onDateClick={setDate} />
+          )}
         </div>
       </main>
     </div>

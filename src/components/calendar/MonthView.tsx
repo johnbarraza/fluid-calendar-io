@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type {
   EventClickArg,
@@ -20,16 +20,15 @@ import { CalendarEventContent } from "./CalendarEventContent";
 import { newDate } from "@/lib/date-utils";
 import { useEventModalStore } from "@/lib/commands/groups/calendar";
 
-interface WeekViewProps {
+interface MonthViewProps {
   currentDate: Date;
   onDateClick?: (date: Date) => void;
 }
 
-export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
+export function MonthView({ currentDate, onDateClick }: MonthViewProps) {
   const { feeds, getAllCalendarItems, isLoading, removeEvent } =
     useCalendarStore();
-  const { user: userSettings, calendar: calendarSettings } = useSettingsStore();
-  const { updateTask } = useTaskStore();
+  const { user: userSettings } = useSettingsStore();
   const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent>>();
   const [selectedTask, setSelectedTask] = useState<Task>();
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -60,7 +59,6 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
   // Update events when the calendar view changes
   const handleDatesSet = useCallback(
     async (arg: DatesSetArg) => {
-      // Get all calendar items with current task data
       const items = getAllCalendarItems(arg.start, arg.end);
       const formattedItems = items
         .filter((item) => {
@@ -86,10 +84,8 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
           classNames: [
             item.extendedProps?.isTask ? "calendar-task" : "calendar-event",
           ],
-          // Store the original event data
           extendedProps: {
             ...item,
-            // Bring important flags to top level of extendedProps for easy access
             isTask: item.extendedProps?.isTask,
             isRecurring: item.isRecurring,
             status: item.extendedProps?.status,
@@ -97,13 +93,6 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
           },
         }));
 
-      // console.log("Setting formatted calendar items:", {
-      //   total: formattedItems.length,
-      //   tasks: formattedItems.filter((item) => item.extendedProps?.isTask)
-      //     .length,
-      //   events: formattedItems.filter((item) => !item.extendedProps?.isTask)
-      //     .length,
-      // });
       setEvents(formattedItems);
     },
     [feeds, getAllCalendarItems]
@@ -111,7 +100,6 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
 
   // Initial data load
   useEffect(() => {
-    console.log("Loading initial data...");
     Promise.all([
       useCalendarStore.getState().loadFromDatabase(),
       useTaskStore.getState().fetchTasks(),
@@ -121,7 +109,6 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
   // Update items when loading state changes, feeds change, or tasks change
   useEffect(() => {
     if (!isLoading && calendarRef.current) {
-      console.log("Updating calendar items due to dependency change");
       const calendar = calendarRef.current.getApi();
       handleDatesSet({
         start: calendar.view.activeStart,
@@ -155,7 +142,7 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
     const rect = info.el.getBoundingClientRect();
     setQuickViewPosition({
       x: rect.left,
-      y: rect.bottom + 8, // Add some padding
+      y: rect.bottom + 8,
     });
 
     if (isTask) {
@@ -208,11 +195,9 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
     if (!quickViewItem) return;
 
     if (isTask) {
-      // It's a task
       setSelectedTask(quickViewItem as Task);
       setIsTaskModalOpen(true);
     } else {
-      // It's an event
       setSelectedEvent(quickViewItem as CalendarEvent);
       setIsEventModalOpen(true);
     }
@@ -223,13 +208,11 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
     if (!quickViewItem) return;
 
     if (isTask) {
-      // It's a task
       if (confirm("Are you sure you want to delete this task?")) {
         await useTaskStore.getState().deleteTask(quickViewItem.id);
         handleQuickViewClose();
       }
     } else {
-      // It's an event
       if (confirm("Are you sure you want to delete this event?")) {
         await removeEvent(
           quickViewItem.id,
@@ -246,51 +229,20 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
   );
 
   return (
-    <div className="h-full [&_.fc-timegrid-slot]:!h-[25px]">
+    <div className="h-full">
       <FullCalendar
         ref={calendarRef}
-        plugins={[timeGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek"
+        plugins={[dayGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
         headerToolbar={false}
         initialDate={currentDate}
         events={events}
-        nowIndicator={true}
-        allDaySlot={true}
-        slotMinTime="00:00:00"
-        slotMaxTime="24:00:00"
-        scrollTime={calendarSettings.workingHours.start}
+        dayMaxEvents={true}
         expandRows={true}
-        slotEventOverlap={true}
         stickyHeaderDates={true}
-        slotDuration="00:30:00"
         timeZone="local"
         displayEventEnd={true}
-        eventTimeFormat={{
-          hour: userSettings.timeFormat === "12h" ? "numeric" : "2-digit",
-          minute: "2-digit",
-          meridiem: userSettings.timeFormat === "12h" ? "short" : false,
-          hour12: userSettings.timeFormat === "12h",
-        }}
-        slotLabelFormat={{
-          hour: userSettings.timeFormat === "12h" ? "numeric" : "2-digit",
-          minute: "2-digit",
-          meridiem: userSettings.timeFormat === "12h" ? "short" : false,
-          hour12: userSettings.timeFormat === "12h",
-        }}
         firstDay={userSettings.weekStartDay === "monday" ? 1 : 0}
-        businessHours={{
-          daysOfWeek: calendarSettings.workingHours.enabled
-            ? calendarSettings.workingHours.days
-            : [0, 1, 2, 3, 4, 5, 6],
-          startTime: calendarSettings.workingHours.start,
-          endTime: calendarSettings.workingHours.end,
-        }}
-        dayHeaderFormat={{
-          weekday: "short",
-          month: "numeric",
-          day: "numeric",
-          omitCommas: true,
-        }}
         height="100%"
         dateClick={(arg) => onDateClick?.(arg.date)}
         eventClick={handleEventClick}
@@ -300,17 +252,7 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
         datesSet={handleDatesSet}
         eventContent={renderEventContent}
       />
-      {quickViewItem && (
-        <EventQuickView
-          isOpen={!!quickViewItem}
-          onClose={handleQuickViewClose}
-          item={quickViewItem}
-          onEdit={handleQuickViewEdit}
-          onDelete={handleQuickViewDelete}
-          position={quickViewPosition}
-          isTask={isTask}
-        />
-      )}
+
       <EventModal
         isOpen={isEventModalOpen || eventModalStore.isOpen}
         onClose={handleEventModalClose}
@@ -326,12 +268,24 @@ export function WeekView({ currentDate, onDateClick }: WeekViewProps) {
           task={selectedTask}
           tags={useTaskStore.getState().tags}
           onSave={async (updates) => {
-            await updateTask(selectedTask.id, updates);
+            await useTaskStore.getState().updateTask(selectedTask.id, updates);
             handleTaskModalClose();
           }}
           onCreateTag={async (name: string, color?: string) => {
             return useTaskStore.getState().createTag({ name, color });
           }}
+        />
+      )}
+
+      {quickViewItem && (
+        <EventQuickView
+          isOpen={!!quickViewItem}
+          onClose={handleQuickViewClose}
+          item={quickViewItem}
+          onEdit={handleQuickViewEdit}
+          onDelete={handleQuickViewDelete}
+          position={quickViewPosition}
+          isTask={isTask}
         />
       )}
     </div>
