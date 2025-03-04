@@ -8,11 +8,12 @@ interface AvailableCalendar {
   color: string;
   accessRole?: string;
   canEdit?: boolean;
+  alreadyAdded?: boolean;
 }
 
 interface Props {
   accountId: string;
-  provider: "GOOGLE" | "OUTLOOK";
+  provider: "GOOGLE" | "OUTLOOK" | "CALDAV";
 }
 
 export function AvailableCalendars({ accountId, provider }: Props) {
@@ -25,10 +26,21 @@ export function AvailableCalendars({ accountId, provider }: Props) {
   const loadAvailableCalendars = useCallback(async () => {
     try {
       setIsLoading(true);
-      const endpoint =
-        provider === "GOOGLE"
-          ? `/api/calendar/google/available?accountId=${accountId}`
-          : `/api/calendar/outlook/available?accountId=${accountId}`;
+      let endpoint;
+
+      switch (provider) {
+        case "GOOGLE":
+          endpoint = `/api/calendar/google/available?accountId=${accountId}`;
+          break;
+        case "OUTLOOK":
+          endpoint = `/api/calendar/outlook/available?accountId=${accountId}`;
+          break;
+        case "CALDAV":
+          endpoint = `/api/calendar/caldav/available?accountId=${accountId}`;
+          break;
+        default:
+          throw new Error(`Unsupported provider: ${provider}`);
+      }
 
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error("Failed to fetch calendars");
@@ -50,10 +62,21 @@ export function AvailableCalendars({ accountId, provider }: Props) {
     async (calendar: AvailableCalendar) => {
       try {
         setAddingCalendars((prev) => new Set(prev).add(calendar.id));
-        const endpoint =
-          provider === "GOOGLE"
-            ? "/api/calendar/google"
-            : "/api/calendar/outlook/sync";
+        let endpoint;
+
+        switch (provider) {
+          case "GOOGLE":
+            endpoint = "/api/calendar/google";
+            break;
+          case "OUTLOOK":
+            endpoint = "/api/calendar/outlook/sync";
+            break;
+          case "CALDAV":
+            endpoint = "/api/calendar/caldav";
+            break;
+          default:
+            throw new Error(`Unsupported provider: ${provider}`);
+        }
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -71,7 +94,17 @@ export function AvailableCalendars({ accountId, provider }: Props) {
         if (!response.ok) throw new Error("Failed to add calendar");
 
         // Remove from available list
-        setCalendars((prev) => prev.filter((c) => c.id !== calendar.id));
+        setCalendars((prev) =>
+          prev.filter((c) => {
+            if (calendar.alreadyAdded) {
+              return false;
+            }
+            if (c.id === calendar.id) {
+              return false;
+            }
+            return true;
+          })
+        );
       } catch (error) {
         console.error("Failed to add calendar:", error);
       } finally {

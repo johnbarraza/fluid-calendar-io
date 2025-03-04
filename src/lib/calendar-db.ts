@@ -1,37 +1,76 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { CalendarEvent, CalendarFeed } from "@prisma/client";
+import {
+  ValidatedEvent,
+  CalendarEventWithFeed,
+  EventStatus,
+  AttendeeStatus,
+} from "@/types/calendar";
 
-type EventWithFeed = CalendarEvent & {
-  feed: CalendarFeed;
-};
-
-type ValidatedEvent = CalendarEvent & {
-  feed: CalendarFeed & {
-    accountId: string;
-    url: string;
-  };
-  externalEventId: string;
-};
-
-export async function getEvent(eventId: string) {
-  return prisma.calendarEvent.findUnique({
+export async function getEvent(
+  eventId: string
+): Promise<CalendarEventWithFeed | null> {
+  const event = await prisma.calendarEvent.findUnique({
     where: { id: eventId },
     include: { feed: true },
   });
+
+  if (!event) return null;
+
+  // Map Prisma result to our CalendarEventWithFeed type
+  return {
+    ...event,
+    externalEventId: event.externalEventId || undefined,
+    description: event.description || undefined,
+    location: event.location || undefined,
+    recurrenceRule: event.recurrenceRule || undefined,
+    sequence: event.sequence || undefined,
+    status: (event.status as EventStatus) || undefined,
+    created: event.created || undefined,
+    lastModified: event.lastModified || undefined,
+    organizer: event.organizer as { name?: string; email?: string } | undefined,
+    attendees: event.attendees as
+      | Array<{ name?: string; email: string; status?: AttendeeStatus }>
+      | undefined,
+    masterEventId: event.masterEventId || undefined,
+    recurringEventId: event.recurringEventId || undefined,
+    feed: {
+      ...event.feed,
+      type: event.feed.type as "GOOGLE" | "OUTLOOK" | "CALDAV",
+      url: event.feed.url || undefined,
+      color: event.feed.color || undefined,
+      lastSync: event.feed.lastSync || undefined,
+      error: event.feed.error || undefined,
+      caldavPath: event.feed.caldavPath || undefined,
+      accountId: event.feed.accountId || undefined,
+    },
+  };
 }
 
 export async function validateEvent(
-  event: EventWithFeed | null,
-  provider: "GOOGLE" | "OUTLOOK"
+  event: CalendarEventWithFeed | null,
+  provider: "GOOGLE" | "OUTLOOK" | "CALDAV"
 ): Promise<ValidatedEvent | NextResponse> {
-  if (!event || !event.feed || !event.feed.url || !event.feed.accountId) {
+  if (!event || !event.feed || !event.feed.accountId) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
   if (event.feed.type !== provider) {
     return NextResponse.json(
       { error: `Not a ${provider} Calendar event` },
+      { status: 400 }
+    );
+  }
+
+  // For CalDAV, we need either a URL or a caldavPath
+  if (provider === "CALDAV" && !event.feed.caldavPath && !event.feed.url) {
+    return NextResponse.json(
+      { error: "No CalDAV calendar path found" },
+      { status: 400 }
+    );
+  } else if (provider !== "CALDAV" && !event.feed.url) {
+    return NextResponse.json(
+      { error: "No calendar URL found" },
       { status: 400 }
     );
   }

@@ -1,5 +1,35 @@
 # FluidCalendar Implementation Plan
 
+# CalDAV Implementation
+
+## Phase 1: Setup and Basic Structure ✅
+- [x] Add required libraries (`tsdav`, `ical.js`)
+- [x] Update database schema with CalDAV-specific fields
+- [x] Create basic CalDAV client class structure
+- [x] Update validation logic for CalDAV events
+- [x] Fix linter errors in CalDAV implementation
+
+## Phase 2: Authentication and Calendar Discovery ✅
+- [x] Create UI for adding CalDAV accounts
+- [x] Implement authentication flow for CalDAV
+- [x] Discover available calendars from CalDAV server
+- [x] Update calendar selection UI to support CalDAV
+- [x] Fix form component errors and align with project patterns
+- [x] Fix logger usage to match project conventions
+
+## Phase 3: Calendar Synchronization (Pending)
+- [x] Implement calendar event fetching from CalDAV server
+- [x] Create/update/delete events on CalDAV server
+- [x] Handle recurring events
+- [ ] Implement two-way sync with change tracking
+- [ ] all day events are off by a day
+
+## Phase 4: Advanced Features (Pending)
+- [ ] Support for CalDAV collections
+- [ ] Handle different calendar permissions
+- [ ] Implement free/busy status
+- [ ] Add support for calendar sharing
+
 ## Focus Mode Implementation
 - [ ] fix keyboard shortcuts
 - [ ] in taskmodal make the tags more obvious if they are selected
@@ -10,6 +40,7 @@
 - [ ] auto scheduling is creating task in the past (it might be off by one day)
 - [ ] auto scheduling did not schedule high priority tasks first
 - [ ] save task completed date and sync it with outlook 
+- [ ] deleteing a recurring event from quickview doens't work well and doesn't ask me if i want to delete the series or just the instance.
   
 ## Next Steps
 - [ ] Integrate google calendar
