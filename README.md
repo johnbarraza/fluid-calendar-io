@@ -4,9 +4,6 @@ An open-source alternative to Motion, designed for intelligent task scheduling a
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# BREAKING CHANGE
-**I am moving away from SQLite and towards Postgres. This means that the database will be reset when the container is restarted.  You can migrate your data to the new database using the migrate.js script see details [here](./docs/sqlite-migration.md)**
-
 ⚠️ **WARNING: ACTIVE DEVELOPMENT VERY BUGGY - REPORT BUGS AND BE PATIENT ✌️** ⚠️
 
 This project is in active development and currently contains many bugs and incomplete features. It is not yet recommended for production use. If you encounter issues:
@@ -26,6 +23,16 @@ FluidCalendar is built for people who want full control over their scheduling wo
 
 ![Snagit 2024 2025-02-16 12 33 23](https://github.com/user-attachments/assets/515381e9-b961-475d-a272-d454ecca59cb)
 
+## Support the Project ❤️
+
+If you find FluidCalendar useful, please consider supporting its development. Your sponsorship helps ensure continued maintenance and new features.
+
+[![GitHub Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa.svg?style=for-the-badge&logo=github)](https://github.com/sponsors/eibrahim)
+
+By becoming a sponsor, you:
+- Help keep the project actively maintained
+- Get early access to new features
+- Support open-source software development
 
 ## Try the SaaS Version
 

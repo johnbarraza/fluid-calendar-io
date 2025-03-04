@@ -8,6 +8,7 @@ import { addDays, newDate, subDays, formatDate } from "@/lib/date-utils";
 import { useViewStore, useCalendarUIStore } from "@/store/calendar";
 import { useTaskStore } from "@/store/task";
 import { cn } from "@/lib/utils";
+import { SponsorshipBanner } from "@/components/ui/sponsorship-banner";
 
 export function Calendar() {
   const { date: currentDate, setDate } = useViewStore();
@@ -49,6 +50,9 @@ export function Calendar() {
           <div className="flex-1 overflow-y-auto">
             <FeedManager />
           </div>
+
+          {/* Sponsorship Banner */}
+          <SponsorshipBanner />
         </div>
       </aside>
 

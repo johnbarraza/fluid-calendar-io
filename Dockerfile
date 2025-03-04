@@ -7,25 +7,22 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Install netcat
 RUN apk add --no-cache netcat-openbsd
 
-# Install dependencies only when needed
-FROM base AS deps
-COPY package*.json ./
-RUN npm ci
-
 # Development stage
 FROM base AS development
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+ENV NODE_ENV=development
+COPY package*.json ./
+RUN npm install
 COPY . .
 RUN chmod +x /app/entrypoint.sh
-ENV NODE_ENV=development
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
 # Production builder stage
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+RUN npm ci
 COPY . .
 RUN npm run build
 RUN npm run prisma:generate
