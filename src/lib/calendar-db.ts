@@ -43,6 +43,7 @@ export async function getEvent(
       error: event.feed.error || undefined,
       caldavPath: event.feed.caldavPath || undefined,
       accountId: event.feed.accountId || undefined,
+      syncToken: event.feed.syncToken || undefined,
     },
   };
 }

@@ -9,6 +9,7 @@ export interface CalendarFeed {
   error?: string;
   caldavPath?: string;
   accountId?: string;
+  syncToken?: string;
 }
 
 export interface ExtendedEventProps {
