@@ -11,8 +11,24 @@ import { DndProvider } from "@/components/dnd/DndProvider";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { ShortcutsModal } from "@/components/ui/shortcuts-modal";
 import { useShortcutsStore } from "@/store/shortcuts";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const getTitleFromPathname = (pathname: string) => {
+  switch (pathname) {
+    case "/":
+      return "Calendar | FluidCalendar";
+    case "/tasks":
+      return "Tasks | FluidCalendar";
+    case "/focus":
+      return "Focus | FluidCalendar";
+    case "/settings":
+      return "Settings | FluidCalendar";
+    default:
+      return "FluidCalendar";
+  }
+};
 
 export default function RootLayout({
   children,
@@ -22,6 +38,7 @@ export default function RootLayout({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const { isOpen: shortcutsOpen, setOpen: setShortcutsOpen } =
     useShortcutsStore();
+  const pathname = usePathname();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -40,6 +57,9 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="h-full">
+      <head>
+        <title>{getTitleFromPathname(pathname)}</title>
+      </head>
       <body
         className={cn(
           inter.className,
