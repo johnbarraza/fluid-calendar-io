@@ -178,9 +178,12 @@ export function TaskModal({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg z-[10000]">
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-lg z-[10000] flex flex-col"
+          style={{ maxHeight: "calc(100vh - 2rem)" }}
+        >
           {isSubmitting && <LoadingOverlay />}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between p-4 border-b">
             <Dialog.Title className="text-lg font-semibold">
               {task ? "Edit Task" : "New Task"}
             </Dialog.Title>
@@ -189,442 +192,452 @@ export function TaskModal({
             </Dialog.Close>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                ref={titleInputRef}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  {Object.values(TaskStatus).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="dueDate"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  id="dueDate"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="duration"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Duration (minutes)
-                </label>
-                <input
-                  type="number"
-                  id="duration"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  min="0"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="priority"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Priority
-                </label>
-                <select
-                  id="priority"
-                  value={priority || Priority.NONE}
-                  onChange={(e) => setPriority(e.target.value as Priority)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  {Object.values(Priority).map((level) => (
-                    <option key={level} value={level}>
-                      {formatEnumValue(level)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="energyLevel"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Energy Level
-                </label>
-                <select
-                  id="energyLevel"
-                  value={energyLevel}
-                  onChange={(e) =>
-                    setEnergyLevel(e.target.value as EnergyLevel)
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">None</option>
-                  {Object.values(EnergyLevel).map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="preferredTime"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Preferred Time
-                </label>
-                <select
-                  id="preferredTime"
-                  value={preferredTime}
-                  onChange={(e) =>
-                    setPreferredTime(e.target.value as TimePreference)
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">None</option>
-                  {Object.values(TimePreference).map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-2 border-t">
-              <div className="flex items-center justify-between">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            <div className="overflow-y-auto flex-1">
+              <div className="p-4 space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Auto-Schedule
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Title
                   </label>
-                  <p className="text-sm text-gray-500">
-                    Let the system schedule this task automatically
-                  </p>
+                  <input
+                    type="text"
+                    id="title"
+                    ref={titleInputRef}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required
+                  />
                 </div>
-                <Switch
-                  checked={isAutoScheduled}
-                  onCheckedChange={setIsAutoScheduled}
-                />
-              </div>
 
-              {isAutoScheduled && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">
-                        Lock Schedule
-                      </label>
-                      <p className="text-sm text-gray-500">
-                        Prevent automatic rescheduling
-                      </p>
-                    </div>
-                    <Switch
-                      checked={scheduleLocked}
-                      onCheckedChange={setScheduleLocked}
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="status"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Status
+                    </label>
+                    <select
+                      id="status"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      {Object.values(TaskStatus).map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="dueDate"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Due Date
+                    </label>
+                    <input
+                      type="date"
+                      id="dueDate"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     />
                   </div>
 
-                  {task?.scheduledStart && task?.scheduledEnd && (
-                    <div className="rounded-md bg-blue-50 p-3">
-                      <div className="text-sm text-blue-700">
-                        Scheduled for{" "}
-                        {format(newDate(task.scheduledStart), "PPp")} to{" "}
-                        {format(newDate(task.scheduledEnd), "p")}
+                  <div>
+                    <label
+                      htmlFor="duration"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Duration (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      id="duration"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      min="0"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="priority"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Priority
+                    </label>
+                    <select
+                      id="priority"
+                      value={priority || Priority.NONE}
+                      onChange={(e) => setPriority(e.target.value as Priority)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      {Object.values(Priority).map((level) => (
+                        <option key={level} value={level}>
+                          {formatEnumValue(level)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="energyLevel"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Energy Level
+                    </label>
+                    <select
+                      id="energyLevel"
+                      value={energyLevel}
+                      onChange={(e) =>
+                        setEnergyLevel(e.target.value as EnergyLevel)
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      <option value="">None</option>
+                      {Object.values(EnergyLevel).map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="preferredTime"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Preferred Time
+                    </label>
+                    <select
+                      id="preferredTime"
+                      value={preferredTime}
+                      onChange={(e) =>
+                        setPreferredTime(e.target.value as TimePreference)
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      <option value="">None</option>
+                      {Object.values(TimePreference).map((time) => (
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2 border-t">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Auto-Schedule
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Let the system schedule this task automatically
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isAutoScheduled}
+                      onCheckedChange={setIsAutoScheduled}
+                    />
+                  </div>
+
+                  {isAutoScheduled && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">
+                            Lock Schedule
+                          </label>
+                          <p className="text-sm text-gray-500">
+                            Prevent automatic rescheduling
+                          </p>
+                        </div>
+                        <Switch
+                          checked={scheduleLocked}
+                          onCheckedChange={setScheduleLocked}
+                        />
                       </div>
-                      {task.scheduleScore && (
-                        <div className="text-sm text-blue-600 mt-1">
-                          Confidence: {Math.round(task.scheduleScore * 100)}%
+
+                      {task?.scheduledStart && task?.scheduledEnd && (
+                        <div className="rounded-md bg-blue-50 p-3">
+                          <div className="text-sm text-blue-700">
+                            Scheduled for{" "}
+                            {format(newDate(task.scheduledStart), "PPp")} to{" "}
+                            {format(newDate(task.scheduledEnd), "p")}
+                          </div>
+                          {task.scheduleScore && (
+                            <div className="text-sm text-blue-600 mt-1">
+                              Confidence: {Math.round(task.scheduleScore * 100)}
+                              %
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
+                    </>
                   )}
-                </>
-              )}
-            </div>
+                </div>
 
-            <div>
-              <label
-                htmlFor="project"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Project
-              </label>
-              <select
-                id="project"
-                value={projectId || ""}
-                onChange={(e) => setProjectId(e.target.value || null)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              >
-                <option value="">No Project</option>
-                {projects
-                  .filter((p) => p.status === "active")
-                  .map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Tags
-              </label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {tags.map((tag) => (
+                <div>
                   <label
-                    key={tag.id}
-                    className={cn(
-                      "inline-flex items-center px-3 py-1.5 rounded-full text-sm cursor-pointer transition-colors",
-                      selectedTagIds.includes(tag.id)
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    )}
+                    htmlFor="project"
+                    className="block text-sm font-medium text-gray-700"
                   >
+                    Project
+                  </label>
+                  <select
+                    id="project"
+                    value={projectId || ""}
+                    onChange={(e) => setProjectId(e.target.value || null)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  >
+                    <option value="">No Project</option>
+                    {projects
+                      .filter((p) => p.status === "active")
+                      .map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tags
+                  </label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <label
+                        key={tag.id}
+                        className={cn(
+                          "inline-flex items-center px-3 py-1.5 rounded-full text-sm cursor-pointer transition-colors",
+                          selectedTagIds.includes(tag.id)
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={selectedTagIds.includes(tag.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTagIds([...selectedTagIds, tag.id]);
+                            } else {
+                              setSelectedTagIds(
+                                selectedTagIds.filter((id) => id !== tag.id)
+                              );
+                            }
+                          }}
+                        />
+                        <span
+                          className="w-2 h-2 rounded-full mr-2"
+                          style={{ backgroundColor: tag.color || "#E5E7EB" }}
+                        />
+                        {tag.name}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      type="text"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      placeholder="New tag name"
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                    <input
+                      type="color"
+                      value={newTagColor}
+                      onChange={(e) => setNewTagColor(e.target.value)}
+                      className="h-9 w-9 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateTag}
+                      disabled={!newTagName.trim()}
+                      className={cn(
+                        "px-3 py-2 rounded-md text-sm font-medium",
+                        "bg-blue-600 text-white hover:bg-blue-700",
+                        "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      Add Tag
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      className="sr-only"
-                      checked={selectedTagIds.includes(tag.id)}
+                      checked={isRecurring}
                       onChange={(e) => {
+                        setIsRecurring(e.target.checked);
                         if (e.target.checked) {
-                          setSelectedTagIds([...selectedTagIds, tag.id]);
-                        } else {
-                          setSelectedTagIds(
-                            selectedTagIds.filter((id) => id !== tag.id)
-                          );
+                          if (!dueDate) {
+                            // If no due date, set to today
+                            const today = newDate();
+                            setDueDate(today.toISOString().split("T")[0]);
+                          }
+                          if (!recurrenceRule) {
+                            // Set default weekly recurrence on Monday when enabling
+                            setRecurrenceRule(
+                              new RRule({
+                                freq: RRule.WEEKLY,
+                                interval: 1,
+                                byweekday: [RRule.MO],
+                              }).toString()
+                            );
+                          }
                         }
                       }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span
-                      className="w-2 h-2 rounded-full mr-2"
-                      style={{ backgroundColor: tag.color || "#E5E7EB" }}
-                    />
-                    {tag.name}
+                    <span className="text-sm text-gray-700">
+                      Make this a recurring task
+                    </span>
                   </label>
-                ))}
+                  {isRecurring && !dueDate && (
+                    <div className="text-sm text-blue-600 mt-1 ml-6">
+                      A recurring task needs a start date. Today has been set as
+                      the default.
+                    </div>
+                  )}
+                  {isRecurring && (
+                    <div className="mt-2 space-y-3 pl-6">
+                      <div>
+                        <label className="block text-sm text-gray-600">
+                          Repeat every
+                        </label>
+                        <div className="mt-1 flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={
+                              recurrenceRule
+                                ? RRule.fromString(recurrenceRule).options
+                                    .interval || 1
+                                : 1
+                            }
+                            onChange={(e) => {
+                              const interval = parseInt(e.target.value) || 1;
+                              const currentRule = recurrenceRule
+                                ? RRule.fromString(recurrenceRule)
+                                : new RRule({
+                                    freq: RRule.WEEKLY,
+                                    interval: 1,
+                                    byweekday: [RRule.MO],
+                                  });
+                              setRecurrenceRule(
+                                new RRule({
+                                  ...currentRule.options,
+                                  interval,
+                                }).toString()
+                              );
+                            }}
+                            className="w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          />
+                          <select
+                            value={
+                              recurrenceRule
+                                ? RRule.fromString(recurrenceRule).options.freq
+                                : RRule.WEEKLY
+                            }
+                            onChange={(e) => {
+                              const freq = parseInt(e.target.value);
+                              const currentRule = recurrenceRule
+                                ? RRule.fromString(recurrenceRule)
+                                : new RRule({
+                                    freq: RRule.WEEKLY,
+                                    interval: 1,
+                                    byweekday: [RRule.MO],
+                                  });
+                              setRecurrenceRule(
+                                new RRule({
+                                  ...currentRule.options,
+                                  freq,
+                                  // Always set Monday for weekly recurrence
+                                  byweekday:
+                                    freq === RRule.WEEKLY ? [RRule.MO] : null,
+                                }).toString()
+                              );
+                            }}
+                            className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          >
+                            <option value={RRule.DAILY}>days</option>
+                            <option value={RRule.WEEKLY}>weeks</option>
+                            <option value={RRule.MONTHLY}>months</option>
+                            <option value={RRule.YEARLY}>years</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="text"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  placeholder="New tag name"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-                <input
-                  type="color"
-                  value={newTagColor}
-                  onChange={(e) => setNewTagColor(e.target.value)}
-                  className="h-9 w-9 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
+            <div className="border-t bg-white p-4 mt-auto">
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={handleCreateTag}
-                  disabled={!newTagName.trim()}
+                  onClick={onClose}
                   className={cn(
-                    "px-3 py-2 rounded-md text-sm font-medium",
+                    "px-4 py-2 rounded-md text-sm font-medium",
+                    "text-gray-700 hover:bg-gray-100",
+                    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  )}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !title.trim()}
+                  className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium",
                     "bg-blue-600 text-white hover:bg-blue-700",
                     "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
                     "disabled:opacity-50 disabled:cursor-not-allowed"
                   )}
                 >
-                  Add Tag
+                  {isSubmitting ? "Saving..." : task ? "Update" : "Create"}
                 </button>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={isRecurring}
-                  onChange={(e) => {
-                    setIsRecurring(e.target.checked);
-                    if (e.target.checked) {
-                      if (!dueDate) {
-                        // If no due date, set to today
-                        const today = newDate();
-                        setDueDate(today.toISOString().split("T")[0]);
-                      }
-                      if (!recurrenceRule) {
-                        // Set default weekly recurrence on Monday when enabling
-                        setRecurrenceRule(
-                          new RRule({
-                            freq: RRule.WEEKLY,
-                            interval: 1,
-                            byweekday: [RRule.MO],
-                          }).toString()
-                        );
-                      }
-                    }
-                  }}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">
-                  Make this a recurring task
-                </span>
-              </label>
-              {isRecurring && !dueDate && (
-                <div className="text-sm text-blue-600 mt-1 ml-6">
-                  A recurring task needs a start date. Today has been set as the
-                  default.
-                </div>
-              )}
-              {isRecurring && (
-                <div className="mt-2 space-y-3 pl-6">
-                  <div>
-                    <label className="block text-sm text-gray-600">
-                      Repeat every
-                    </label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        value={
-                          recurrenceRule
-                            ? RRule.fromString(recurrenceRule).options
-                                .interval || 1
-                            : 1
-                        }
-                        onChange={(e) => {
-                          const interval = parseInt(e.target.value) || 1;
-                          const currentRule = recurrenceRule
-                            ? RRule.fromString(recurrenceRule)
-                            : new RRule({
-                                freq: RRule.WEEKLY,
-                                interval: 1,
-                                byweekday: [RRule.MO],
-                              });
-                          setRecurrenceRule(
-                            new RRule({
-                              ...currentRule.options,
-                              interval,
-                            }).toString()
-                          );
-                        }}
-                        className="w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                      <select
-                        value={
-                          recurrenceRule
-                            ? RRule.fromString(recurrenceRule).options.freq
-                            : RRule.WEEKLY
-                        }
-                        onChange={(e) => {
-                          const freq = parseInt(e.target.value);
-                          const currentRule = recurrenceRule
-                            ? RRule.fromString(recurrenceRule)
-                            : new RRule({
-                                freq: RRule.WEEKLY,
-                                interval: 1,
-                                byweekday: [RRule.MO],
-                              });
-                          setRecurrenceRule(
-                            new RRule({
-                              ...currentRule.options,
-                              freq,
-                              // Always set Monday for weekly recurrence
-                              byweekday:
-                                freq === RRule.WEEKLY ? [RRule.MO] : null,
-                            }).toString()
-                          );
-                        }}
-                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      >
-                        <option value={RRule.DAILY}>days</option>
-                        <option value={RRule.WEEKLY}>weeks</option>
-                        <option value={RRule.MONTHLY}>months</option>
-                        <option value={RRule.YEARLY}>years</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium",
-                  "text-gray-700 hover:bg-gray-100",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                )}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !title.trim()}
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium",
-                  "bg-blue-600 text-white hover:bg-blue-700",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-              >
-                {isSubmitting ? "Saving..." : task ? "Update" : "Create"}
-              </button>
             </div>
           </form>
         </Dialog.Content>
