@@ -189,7 +189,7 @@ Note: For production deployment:
 2. Run the following commands:
    ```bash
    # Clone the repository
-   git clone https://github.com/yourusername/fluid-calendar.git
+   git clone https://github.com/dotnetfactory/fluid-calendar.git
    cd fluid-calendar
 
    # Start the application
@@ -208,7 +208,7 @@ If you want to develop FluidCalendar:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/fluid-calendar.git
+   git clone https://github.com/dotnetfactory/fluid-calendar.git
    cd fluid-calendar
    ```
 
