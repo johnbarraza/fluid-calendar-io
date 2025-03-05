@@ -140,7 +140,7 @@ export function TaskModal({
         title: title.trim(),
         description: description.trim() || undefined,
         status,
-        dueDate: dueDate ? newDate(dueDate) : undefined,
+        dueDate: dueDate ? newDate(dueDate) : null,
         duration: duration ? parseInt(duration, 10) : undefined,
         energyLevel: energyLevel || undefined,
         preferredTime: preferredTime || undefined,
