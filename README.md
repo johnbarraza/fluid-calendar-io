@@ -308,3 +308,60 @@ Please reach out to us at hello@elitecoders.co or visit our website at [www.elit
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
+## SAAS Development
+
+FluidCalendar is available as both an open source self-hosted solution and a managed SAAS service. The open source version contains all the core functionality, while the SAAS version includes additional premium features.
+
+### Open Source vs SAAS Features
+
+| Feature | Open Source | SAAS |
+|---------|------------|------|
+| Calendar Management | ✅ | ✅ |
+| Task Management | ✅ | ✅ |
+| Google Calendar Integration | ✅ | ✅ |
+| Outlook Calendar Integration | ✅ | ✅ |
+| CalDAV Integration | ✅ | ✅ |
+| Billing & Subscription Management | ❌ | ✅ |
+
+### SAAS Development Setup
+
+If you're a contributor to the SAAS version, follow these steps to set up your development environment:
+
+1. Clone the private SAAS repository:
+   ```
+   git clone https://github.com/fluidcalendar/fluidcalendar-saas.git
+   ```
+
+2. Enable SAAS features in your environment:
+   ```
+   # .env.local
+   ENABLE_SAAS_FEATURES=true
+   ```
+
+3. Run the development server:
+   ```
+   npm run dev
+   ```
+
+### Syncing Changes Between Repositories
+
+To sync changes from the private SAAS repository to the public open source repository:
+
+1. Use the provided sync script:
+   ```
+   ./scripts/sync-repos.sh /path/to/private/repo /path/to/public/repo
+   ```
+
+2. Review the changes in the public repository
+3. Commit and push the changes to the public repository
+
+### Contributing to SAAS Features
+
+When developing SAAS features:
+
+1. Place all SAAS-specific code in the `src/saas` directory
+2. Use the feature flag system to conditionally enable SAAS features
+3. Provide fallbacks for SAAS features in the open source version
+
+For more information about contributing to the SAAS version, please contact the maintainers.

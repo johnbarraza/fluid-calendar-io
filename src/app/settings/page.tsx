@@ -12,6 +12,10 @@ import { UserManagement } from "@/components/settings/UserManagement";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useAdmin } from "@/hooks/use-admin";
+import { Suspense } from "react";
+
+// Import the Teams page directly instead of using dynamic import
+import TeamsPage from "./teams/page";
 
 type SettingsTab =
   | "accounts"
@@ -21,7 +25,8 @@ type SettingsTab =
   | "system"
   | "outlook-tasks"
   | "logs"
-  | "user-management";
+  | "user-management"
+  | "teams";
 
 export default function SettingsPage() {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -45,7 +50,10 @@ export default function SettingsPage() {
         ] as const)
       : ([] as const);
 
-    return [...baseTabs, ...adminTabs];
+    // Always include the Teams tab - it will show either the SAAS feature or the upgrade teaser
+    const teamTab = [{ id: "teams", label: "Teams" }] as const;
+
+    return [...baseTabs, ...adminTabs, ...teamTab];
   }, [isAdmin]);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("accounts");
@@ -97,6 +105,12 @@ export default function SettingsPage() {
         return <LogViewer />;
       case "user-management":
         return <UserManagement />;
+      case "teams":
+        return (
+          <Suspense fallback={<div>Loading Teams...</div>}>
+            <TeamsPage />
+          </Suspense>
+        );
       default:
         return null;
     }

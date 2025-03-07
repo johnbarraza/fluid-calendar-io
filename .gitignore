@@ -53,3 +53,6 @@ node_modules/
 /blog/
 diff.txt
 data/*
+
+# SAAS-specific code (private)
+/src/saas/
