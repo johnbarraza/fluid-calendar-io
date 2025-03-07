@@ -34,6 +34,36 @@ export async function GET(request: NextRequest) {
     }
 
     const settings = await prisma.systemSettings.findFirst();
+
+    // If no settings exist, create default settings
+    if (!settings) {
+      logger.info(
+        "No system settings found, creating defaults",
+        {},
+        LOG_SOURCE
+      );
+
+      const defaultSettings = await prisma.systemSettings.create({
+        data: {
+          logLevel: "error",
+          logDestination: "db",
+          logRetention: {
+            error: 30,
+            warn: 14,
+            info: 7,
+            debug: 3,
+          },
+          publicSignup: false,
+        },
+      });
+
+      return NextResponse.json({
+        logLevel: defaultSettings.logLevel,
+        logDestination: defaultSettings.logDestination,
+        logRetention: defaultSettings.logRetention,
+      });
+    }
+
     return NextResponse.json({
       logLevel: settings?.logLevel || "none",
       logDestination: settings?.logDestination || "db",

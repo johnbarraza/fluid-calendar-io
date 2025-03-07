@@ -132,6 +132,21 @@ export async function POST(request: Request) {
           retainDataFor: 365,
         },
       }),
+
+      // Create system settings
+      prisma.systemSettings.create({
+        data: {
+          logLevel: "error",
+          logDestination: "db",
+          logRetention: {
+            error: 30,
+            warn: 14,
+            info: 7,
+            debug: 3,
+          },
+          publicSignup: false,
+        },
+      }),
     ]);
 
     logger.info("Created default settings for admin user", {}, LOG_SOURCE);
