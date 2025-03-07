@@ -1,15 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "tag-route";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
         id,
+        // Ensure the tag belongs to the current user
+        userId,
       },
     });
 
@@ -19,20 +32,35 @@ export async function GET(
 
     return NextResponse.json(tag);
   } catch (error) {
-    console.error("Error fetching tag:", error);
+    logger.error(
+      "Error fetching tag:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
         id,
+        // Ensure the tag belongs to the current user
+        userId,
       },
     });
 
@@ -43,12 +71,13 @@ export async function PUT(
     const json = await request.json();
     const { name, color } = json;
 
-    // Check if another tag with the same name exists
+    // Check if another tag with the same name exists for this user
     if (name && name !== tag.name) {
       const existingTag = await prisma.tag.findFirst({
         where: {
           name,
           id: { not: id }, // Exclude current tag
+          userId, // Only check tags belonging to the current user
         },
       });
 
@@ -62,6 +91,8 @@ export async function PUT(
     const updatedTag = await prisma.tag.update({
       where: {
         id,
+        // Ensure the tag belongs to the current user
+        userId,
       },
       data: {
         ...(name && { name }),
@@ -71,20 +102,35 @@ export async function PUT(
 
     return NextResponse.json(updatedTag);
   } catch (error) {
-    console.error("Error updating tag:", error);
+    logger.error(
+      "Error updating tag:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const tag = await prisma.tag.findUnique({
       where: {
         id,
+        // Ensure the tag belongs to the current user
+        userId,
       },
     });
 
@@ -95,12 +141,20 @@ export async function DELETE(
     await prisma.tag.delete({
       where: {
         id,
+        // Ensure the tag belongs to the current user
+        userId,
       },
     });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting tag:", error);
+    logger.error(
+      "Error deleting tag:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

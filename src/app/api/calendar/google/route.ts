@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma";
 import { google, calendar_v3 } from "googleapis";
@@ -7,6 +7,9 @@ import { getGoogleCalendarClient } from "@/lib/google-calendar";
 import { createGoogleOAuthClient } from "@/lib/google";
 import { GaxiosError } from "gaxios";
 import { newDate, newDateFromYMD } from "@/lib/date-utils";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "GoogleCalendarAPI";
 
 // Helper function to process recurrence rules
 function processRecurrenceRule(
@@ -46,7 +49,7 @@ function processRecurrenceRule(
 }
 
 // Handle Google OAuth callback and account connection
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const codeParam = url.searchParams.get("code");
@@ -54,6 +57,12 @@ export async function GET(request: Request) {
     if (!codeParam) {
       return NextResponse.json({ error: "No code provided" }, { status: 400 });
     }
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
 
     const oauth2Client = await createGoogleOAuthClient({
       redirectUrl: `${process.env.NEXTAUTH_URL}/api/calendar/google`,
@@ -86,7 +95,8 @@ export async function GET(request: Request) {
           accessToken: tokens.access_token!,
           refreshToken: tokens.refresh_token!,
           expiresAt: newDate(Date.now() + (tokens.expiry_date || 3600 * 1000)),
-        }
+        },
+        userId ?? "unknown"
       );
 
       // Get list of calendars
@@ -103,6 +113,7 @@ export async function GET(request: Request) {
                 type: "GOOGLE",
                 url: cal.id,
                 accountId,
+                userId,
               },
             });
 
@@ -116,6 +127,7 @@ export async function GET(request: Request) {
                   type: "GOOGLE",
                   color: cal.backgroundColor ?? undefined,
                   accountId,
+                  userId,
                 },
               });
             }
@@ -143,8 +155,15 @@ export async function GET(request: Request) {
 }
 
 // Add a Google Calendar to sync
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { accountId, calendarId, name, color } = await request.json();
 
     if (!accountId || !calendarId) {
@@ -154,12 +173,25 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if account belongs to the current user
+    const account = await prisma.connectedAccount.findUnique({
+      where: {
+        id: accountId,
+        userId,
+      },
+    });
+
+    if (!account) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+
     // Check if calendar already exists
     const existingFeed = await prisma.calendarFeed.findFirst({
       where: {
         type: "GOOGLE",
         url: calendarId,
         accountId,
+        userId,
       },
     });
 
@@ -168,7 +200,7 @@ export async function POST(request: Request) {
     }
 
     // Create calendar client
-    const calendar = await getGoogleCalendarClient(accountId);
+    const calendar = await getGoogleCalendarClient(accountId, userId);
 
     // Verify access to the calendar
     try {
@@ -192,6 +224,7 @@ export async function POST(request: Request) {
         type: "GOOGLE",
         color,
         accountId,
+        userId,
       },
     });
 
@@ -380,26 +413,42 @@ export async function POST(request: Request) {
 }
 
 // Sync specific calendar
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { feedId } = await request.json();
-    console.log("Syncing calendar feed:", feedId);
 
-    // Get the calendar feed with account info
-    const feed = await prisma.calendarFeed.findUnique({
-      where: { id: feedId },
-      include: { account: true },
-    });
-
-    if (!feed || feed.type !== "GOOGLE" || !feed.url || !feed.accountId) {
+    if (!feedId) {
       return NextResponse.json(
-        { error: "Calendar not found or invalid" },
-        { status: 404 }
+        { error: "Feed ID is required" },
+        { status: 400 }
       );
     }
 
+    // Get the feed and ensure it belongs to the current user
+    const feed = await prisma.calendarFeed.findUnique({
+      where: {
+        id: feedId,
+        userId,
+      },
+      include: { account: true },
+    });
+
+    if (!feed || !feed.accountId || !feed.url) {
+      return NextResponse.json({ error: "Feed not found" }, { status: 404 });
+    }
+
     // Create calendar client using account ID
-    const googleCalendarClient = await getGoogleCalendarClient(feed.accountId);
+    const googleCalendarClient = await getGoogleCalendarClient(
+      feed.accountId,
+      userId
+    );
     console.log("Fetching events from Google Calendar:", feed.url);
 
     // Fetch events from Google Calendar
@@ -506,7 +555,7 @@ export async function PUT(request: Request) {
 
       // Update feed sync status
       await tx.calendarFeed.update({
-        where: { id: feedId },
+        where: { id: feedId, userId },
         data: {
           lastSync: newDate(),
           error: null,

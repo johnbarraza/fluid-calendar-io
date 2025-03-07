@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import {
@@ -6,6 +6,7 @@ import {
   loginToCalDAVServer,
   fetchCalDAVCalendars,
 } from "../utils";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 const LOG_SOURCE = "CalDAVAvailable";
 
@@ -13,8 +14,15 @@ const LOG_SOURCE = "CalDAVAvailable";
  * API route for discovering and listing available CalDAV calendars
  * GET /api/calendar/caldav/available?accountId=123
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get("accountId");
 
@@ -32,14 +40,26 @@ export async function GET(request: Request) {
       LOG_SOURCE
     );
 
-    // Get the account from the database
+    // Get the account from the database and ensure it belongs to the current user
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: {
+        id: accountId,
+        userId,
+      },
     });
 
     if (!account) {
-      logger.error(`Account not found: ${accountId}`, {}, LOG_SOURCE);
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      logger.error(
+        `Account not found or you don't have permission to access it: ${accountId}`,
+        {},
+        LOG_SOURCE
+      );
+      return NextResponse.json(
+        {
+          error: "Account not found or you don't have permission to access it",
+        },
+        { status: 404 }
+      );
     }
 
     if (account.provider !== "CALDAV") {
@@ -119,6 +139,7 @@ export async function GET(request: Request) {
         where: {
           accountId: account.id,
           type: "CALDAV",
+          userId,
         },
         select: {
           url: true,
@@ -145,7 +166,9 @@ export async function GET(request: Request) {
       );
 
       // Return the array directly, consistent with Google and Outlook
-      return NextResponse.json(formattedCalendars.filter((cal) => !cal.alreadyAdded));
+      return NextResponse.json(
+        formattedCalendars.filter((cal) => !cal.alreadyAdded)
+      );
     } catch (error) {
       logger.error(
         `Error fetching available calendars for account: ${accountId}`,

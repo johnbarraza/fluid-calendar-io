@@ -13,6 +13,8 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import { ShortcutsModal } from "@/components/ui/shortcuts-modal";
 import { useShortcutsStore } from "@/store/shortcuts";
 import { usePathname } from "next/navigation";
+import { SetupCheck } from "@/components/setup/SetupCheck";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,6 +28,8 @@ const getTitleFromPathname = (pathname: string) => {
       return "Focus | FluidCalendar";
     case "/settings":
       return "Settings | FluidCalendar";
+    case "/setup":
+      return "Setup | FluidCalendar";
     default:
       return "FluidCalendar";
   }
@@ -72,6 +76,7 @@ export default function RootLayout({
           <ThemeProvider>
             <PrivacyProvider>
               <DndProvider>
+                <SetupCheck />
                 <CommandPalette
                   open={commandPaletteOpen}
                   onOpenChange={setCommandPaletteOpen}
@@ -82,6 +87,7 @@ export default function RootLayout({
                 />
                 <AppNav />
                 <main className="flex-1 relative">{children}</main>
+                <Toaster />
               </DndProvider>
             </PrivacyProvider>
           </ThemeProvider>

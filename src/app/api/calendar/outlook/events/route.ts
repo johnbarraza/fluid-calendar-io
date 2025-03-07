@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   createOutlookEvent,
@@ -14,17 +14,30 @@ import {
   validateEvent,
 } from "@/lib/calendar-db";
 import { newDate } from "@/lib/date-utils";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 const LOG_SOURCE = "OutlookCalendarEventsAPI";
 
 // Helper function to write event to database
 
 // Create a new event
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { feedId, ...eventData } = await request.json();
+
+    // Check if the feed belongs to the current user
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id: feedId },
+      where: {
+        id: feedId,
+        userId,
+      },
       include: {
         account: true,
       },
@@ -38,16 +51,21 @@ export async function POST(request: Request) {
     }
 
     // Create event in Outlook Calendar
-    const outlookEvent = await createOutlookEvent(feed.accountId, feed.url, {
-      title: eventData.title,
-      description: eventData.description,
-      location: eventData.location,
-      start: newDate(eventData.start),
-      end: newDate(eventData.end),
-      allDay: eventData.allDay,
-      isRecurring: eventData.isRecurring,
-      recurrenceRule: eventData.recurrenceRule,
-    });
+    const outlookEvent = await createOutlookEvent(
+      feed.accountId,
+      userId,
+      feed.url,
+      {
+        title: eventData.title,
+        description: eventData.description,
+        location: eventData.location,
+        start: newDate(eventData.start),
+        end: newDate(eventData.end),
+        allDay: eventData.allDay,
+        isRecurring: eventData.isRecurring,
+        recurrenceRule: eventData.recurrenceRule,
+      }
+    );
 
     if (!outlookEvent.id) {
       throw new Error("Failed to get event ID from Outlook Calendar");
@@ -55,7 +73,7 @@ export async function POST(request: Request) {
 
     //todo this slows down the event creation significantly, we should just create the event in the database
     // Get the Outlook client and sync the calendar
-    const client = await getOutlookClient(feed.accountId);
+    const client = await getOutlookClient(feed.accountId, userId);
     await syncOutlookCalendar(
       client,
       { id: feed.id, url: feed.url },
@@ -91,14 +109,27 @@ export async function POST(request: Request) {
 }
 
 // Update an event
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { eventId, mode, ...updates } = await request.json();
     if (!eventId) {
       return NextResponse.json({ error: "Event ID required" }, { status: 400 });
     }
 
     const event = await getEvent(eventId);
+
+    // Check if the event belongs to a feed owned by the current user
+    if (event && event.feed.userId !== userId) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     const validatedEvent = await validateEvent(event, "OUTLOOK");
 
     if (validatedEvent instanceof NextResponse) {
@@ -108,6 +139,7 @@ export async function PUT(request: Request) {
     // Update in Outlook Calendar
     const outlookEvent = await updateOutlookEvent(
       validatedEvent.feed.accountId,
+      userId,
       validatedEvent.feed.url,
       validatedEvent.externalEventId,
       {
@@ -133,7 +165,10 @@ export async function PUT(request: Request) {
     });
 
     // Get the updated event and its instances
-    const client = await getOutlookClient(validatedEvent.feed.accountId);
+    const client = await getOutlookClient(
+      validatedEvent.feed.accountId,
+      userId
+    );
     await syncOutlookCalendar(
       client,
       { id: validatedEvent.feed.id, url: validatedEvent.feed.url },
@@ -162,14 +197,27 @@ export async function PUT(request: Request) {
 }
 
 // Delete an event
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { eventId, mode } = await request.json();
     if (!eventId) {
       return NextResponse.json({ error: "Event ID required" }, { status: 400 });
     }
 
     const event = await getEvent(eventId);
+
+    // Check if the event belongs to a feed owned by the current user
+    if (event && event.feed.userId !== userId) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     const validatedEvent = await validateEvent(event, "OUTLOOK");
 
     if (validatedEvent instanceof NextResponse) {

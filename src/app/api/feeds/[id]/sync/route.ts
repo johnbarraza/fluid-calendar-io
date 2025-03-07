@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { newDate } from "@/lib/date-utils";
+import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "FeedSyncAPI";
 
 interface CalendarEventInput {
   start: string | Date;
@@ -11,12 +15,31 @@ interface CalendarEventInput {
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { events } = await request.json();
     const { id: feedId } = await params;
+
+    // Verify the feed belongs to the current user
+    const feed = await prisma.calendarFeed.findUnique({
+      where: {
+        id: feedId,
+        userId,
+      },
+    });
+
+    if (!feed) {
+      return NextResponse.json({ error: "Feed not found" }, { status: 404 });
+    }
 
     // Start a transaction to ensure data consistency
     await prisma.$transaction(async (tx) => {
@@ -46,14 +69,21 @@ export async function POST(
 
       // Update feed's lastSync timestamp
       await tx.calendarFeed.update({
-        where: { id: feedId },
+        where: { id: feedId, userId },
         data: { lastSync: newDate() },
       });
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to sync feed:", error);
-    return NextResponse.json({ error: "Failed to sync feed" }, { status: 500 });
+    logger.error(
+      "Failed to sync feed events:",
+      { error: error instanceof Error ? error.message : String(error) },
+      LOG_SOURCE
+    );
+    return NextResponse.json(
+      { error: "Failed to sync feed events" },
+      { status: 500 }
+    );
   }
 }

@@ -1,11 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getGoogleCalendarClient } from "@/lib/google-calendar";
 import { GaxiosError } from "gaxios";
+import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "GoogleAvailableCalendarsAPI";
 
 // Get available (unconnected) calendars for an account
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const url = new URL(request.url);
     const accountId = url.searchParams.get("accountId");
 
@@ -16,20 +27,35 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get the account
+    // Get the account and ensure it belongs to the current user
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: {
+        id: accountId,
+        userId,
+      },
       include: {
         calendars: true,
       },
     });
 
-    if (!account || account.provider !== "GOOGLE") {
-      return NextResponse.json({ error: "Invalid account" }, { status: 400 });
+    if (!account) {
+      return NextResponse.json(
+        {
+          error: "Account not found or you don't have permission to access it",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (account.provider !== "GOOGLE") {
+      return NextResponse.json(
+        { error: "Invalid account type" },
+        { status: 400 }
+      );
     }
 
     // Create calendar client
-    const calendar = await getGoogleCalendarClient(accountId);
+    const calendar = await getGoogleCalendarClient(accountId, userId);
 
     // Get list of calendars
     const calendarList = await calendar.calendarList.list();
@@ -54,7 +80,13 @@ export async function GET(request: Request) {
 
     return NextResponse.json(availableCalendars || []);
   } catch (error) {
-    console.error("Failed to list available calendars:", error);
+    logger.error(
+      "Failed to list available calendars:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     if (error instanceof GaxiosError && Number(error.code) === 401) {
       return NextResponse.json(
         { error: "Authentication failed. Please try signing in again." },

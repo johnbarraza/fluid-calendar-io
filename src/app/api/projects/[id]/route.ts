@@ -1,14 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "project-route";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const project = await prisma.project.findUnique({
-      where: { id },
+      where: {
+        id,
+        // Ensure the project belongs to the current user
+        userId,
+      },
       include: {
         tasks: true,
         _count: {
@@ -23,21 +38,38 @@ export async function GET(
 
     return NextResponse.json(project);
   } catch (error) {
-    console.error("Error fetching project:", error);
+    logger.error(
+      "Error fetching project:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const json = await request.json();
 
     const project = await prisma.project.update({
-      where: { id },
+      where: {
+        id,
+        // Ensure the project belongs to the current user
+        userId,
+      },
       data: {
         name: json.name,
         description: json.description,
@@ -53,21 +85,38 @@ export async function PUT(
 
     return NextResponse.json(project);
   } catch (error) {
-    console.error("Error updating project:", error);
+    logger.error(
+      "Error updating project:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
 
     // Check if project exists and get task count
     const project = await prisma.project.findUnique({
-      where: { id },
+      where: {
+        id,
+        // Ensure the project belongs to the current user
+        userId,
+      },
       include: {
         _count: {
           select: { tasks: true },
@@ -83,12 +132,20 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       // Delete all tasks associated with the project
       await tx.task.deleteMany({
-        where: { projectId: id },
+        where: {
+          projectId: id,
+          // Ensure we only delete tasks belonging to the current user
+          userId,
+        },
       });
 
       // Delete the project (this will cascade delete OutlookTaskListMappings due to onDelete: CASCADE)
       await tx.project.delete({
-        where: { id },
+        where: {
+          id,
+          // Ensure the project belongs to the current user
+          userId,
+        },
       });
     });
 
@@ -97,7 +154,13 @@ export async function DELETE(
       deletedTasks: project._count.tasks,
     });
   } catch (error) {
-    console.error("Error deleting project:", error);
+    logger.error(
+      "Error deleting project:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

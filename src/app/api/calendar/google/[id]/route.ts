@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { GaxiosError } from "gaxios";
+import { authenticateRequest } from "@/lib/auth/api-auth";
+
+const LOG_SOURCE = "GoogleCalendarIdAPI";
 
 interface UpdateRequest {
   enabled?: boolean;
@@ -9,13 +12,23 @@ interface UpdateRequest {
 
 // Update a Google Calendar feed
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id },
+      where: {
+        id,
+        userId,
+      },
       include: { account: true },
     });
 
@@ -30,7 +43,7 @@ export async function PATCH(
 
     // Update only local properties
     const updatedFeed = await prisma.calendarFeed.update({
-      where: { id },
+      where: { id, userId },
       data: {
         enabled: updates.enabled,
         color: updates.color,
@@ -55,26 +68,32 @@ export async function PATCH(
 
 // Delete a Google Calendar feed
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const feed = await prisma.calendarFeed.findUnique({
-      where: { id },
-      include: { account: true },
-    });
-
-    if (!feed || feed.type !== "GOOGLE" || !feed.url || !feed.accountId) {
-      return NextResponse.json(
-        { error: "Invalid calendar feed" },
-        { status: 400 }
-      );
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
     }
 
-    // Delete the feed and all its events
+    const userId = auth.userId;
+
+    const { id } = await params;
+    const feed = await prisma.calendarFeed.findUnique({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!feed) {
+      return NextResponse.json({ error: "Feed not found" }, { status: 404 });
+    }
+
+    // Delete the feed
     await prisma.calendarFeed.delete({
-      where: { id },
+      where: { id, userId },
     });
 
     return NextResponse.json({ success: true });

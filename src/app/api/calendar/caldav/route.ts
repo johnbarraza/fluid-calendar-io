@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { formatISO } from "date-fns";
@@ -9,6 +9,7 @@ import {
 } from "./utils";
 import { CalDAVCalendarService } from "@/lib/caldav-calendar";
 import { newDate } from "@/lib/date-utils";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 const LOG_SOURCE = "CalDAVCalendar";
 
@@ -17,8 +18,15 @@ const LOG_SOURCE = "CalDAVCalendar";
  * POST /api/calendar/caldav
  * Body: { accountId, calendarUrl, name, color }
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const json = await request.json();
     const { accountId, calendarId } = json;
 
@@ -35,9 +43,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get the account from the database
+    // Get the account from the database and ensure it belongs to the current user
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: {
+        id: accountId,
+        userId,
+      },
     });
 
     if (!account) {
@@ -139,6 +150,7 @@ export async function POST(request: Request) {
       const existingCalendar = await prisma.calendarFeed.findFirst({
         where: {
           url: calendarId,
+          userId,
         },
       });
 
@@ -174,6 +186,7 @@ export async function POST(request: Request) {
           type: "CALDAV",
           url: calendarId,
           accountId,
+          userId,
           enabled: true,
           lastSync: formatISO(new Date()),
           syncToken: calendar.syncToken,
@@ -195,11 +208,11 @@ export async function POST(request: Request) {
         );
 
         const caldavService = new CalDAVCalendarService(prisma, account);
-        await caldavService.syncCalendar(newCalendar.id, calendarId);
+        await caldavService.syncCalendar(newCalendar.id, calendarId, userId);
 
         // Update the last sync time
         await prisma.calendarFeed.update({
-          where: { id: newCalendar.id },
+          where: { id: newCalendar.id, userId },
           data: {
             lastSync: newDate(),
           },

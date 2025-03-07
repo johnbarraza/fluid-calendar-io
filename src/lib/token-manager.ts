@@ -23,9 +23,9 @@ export class TokenManager {
     return TokenManager.instance;
   }
 
-  async getTokens(accountId: string): Promise<TokenInfo | null> {
+  async getTokens(accountId: string, userId: string): Promise<TokenInfo | null> {
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: { id: accountId, userId },
     });
 
     if (!account) {
@@ -39,9 +39,9 @@ export class TokenManager {
     };
   }
 
-  async refreshGoogleTokens(accountId: string): Promise<TokenInfo | null> {
+  async refreshGoogleTokens(accountId: string, userId: string): Promise<TokenInfo | null> {
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: { id: accountId, userId },
     });
 
     if (!account || !account.refreshToken) {
@@ -64,7 +64,7 @@ export class TokenManager {
 
       // Update tokens in database
       const updatedAccount = await prisma.connectedAccount.update({
-        where: { id: accountId },
+        where: { id: accountId, userId },
         data: {
           accessToken: response.credentials.access_token!,
           refreshToken:
@@ -91,10 +91,12 @@ export class TokenManager {
       accessToken: string;
       refreshToken?: string;
       expiresAt: Date;
-    }
+    },
+    userId: string
   ): Promise<string> {
     const account = await prisma.connectedAccount.upsert({
       where: {
+        userId,
         provider_email: {
           provider,
           email,
@@ -104,6 +106,7 @@ export class TokenManager {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
+        userId,
       },
       create: {
         provider,
@@ -111,54 +114,16 @@ export class TokenManager {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
+        userId,
       },
     });
 
     return account.id;
   }
 
-  async removeAccount(accountId: string): Promise<void> {
-    // First delete all calendar feeds associated with this account
-    await prisma.calendarFeed.deleteMany({
-      where: { accountId },
-    });
-
-    // Then delete the account
-    await prisma.connectedAccount.delete({
-      where: { id: accountId },
-    });
-  }
-
-  async listAccounts(): Promise<
-    Array<{
-      id: string;
-      provider: Provider;
-      email: string;
-      calendars: Array<{ id: string; name: string }>;
-    }>
-  > {
-    const accounts = await prisma.connectedAccount.findMany({
-      include: {
-        calendars: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    return accounts.map((account) => ({
-      id: account.id,
-      provider: account.provider as Provider,
-      email: account.email,
-      calendars: account.calendars,
-    }));
-  }
-
-  async refreshOutlookTokens(accountId: string): Promise<TokenInfo | null> {
+  async refreshOutlookTokens(accountId: string, userId: string): Promise<TokenInfo | null> {
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: { id: accountId, userId },
     });
 
     if (!account || !account.refreshToken) {
@@ -193,7 +158,7 @@ export class TokenManager {
 
       // Update tokens in database
       const updatedAccount = await prisma.connectedAccount.update({
-        where: { id: accountId },
+        where: { id: accountId, userId },
         data: {
           accessToken: data.access_token,
           refreshToken: data.refresh_token || account.refreshToken,
@@ -214,9 +179,9 @@ export class TokenManager {
 
   // For CalDAV, we don't need to refresh tokens as we store the password directly
   // This method is provided for consistency with other providers
-  async refreshCalDAVTokens(accountId: string): Promise<TokenInfo | null> {
+  async refreshCalDAVTokens(accountId: string, userId: string): Promise<TokenInfo | null> {
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId },
+      where: { id: accountId, userId },
     });
 
     if (!account) {

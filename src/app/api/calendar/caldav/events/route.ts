@@ -1,15 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CalDAVCalendarService } from "@/lib/caldav-calendar";
 import { logger } from "@/lib/logger";
 import { newDate } from "@/lib/date-utils";
 import { getEvent, validateEvent } from "@/lib/calendar-db";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 const LOG_SOURCE = "CalDAVEventsAPI";
 
 // Create a new event
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { feedId, ...eventData } = await request.json();
 
     logger.info(
@@ -22,8 +30,12 @@ export async function POST(request: Request) {
       LOG_SOURCE
     );
 
+    // Check if the feed belongs to the current user
     const feed = await prisma.calendarFeed.findUnique({
-      where: { id: feedId },
+      where: {
+        id: feedId,
+        userId,
+      },
       include: {
         account: true,
       },
@@ -76,9 +88,11 @@ export async function POST(request: Request) {
       start: newDate(eventData.start),
       end: newDate(eventData.end),
       allDay: eventData.allDay,
-      isRecurring: eventData.isRecurring,
-      recurrenceRule: eventData.recurrenceRule,
-    });
+        isRecurring: eventData.isRecurring,
+        recurrenceRule: eventData.recurrenceRule,
+      },
+      userId
+    );
 
     logger.info(
       "Successfully created CalDAV event",
@@ -110,8 +124,15 @@ export async function POST(request: Request) {
 }
 
 // Update an existing event
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { eventId, mode, ...updates } = await request.json();
 
     logger.info(
@@ -129,6 +150,12 @@ export async function PUT(request: Request) {
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
+
+    // Check if the event belongs to a feed owned by the current user
+    if (event.feed.userId !== userId) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     const validatedEvent = await validateEvent(event, "CALDAV");
 
     if (validatedEvent instanceof NextResponse) {
@@ -147,7 +174,10 @@ export async function PUT(request: Request) {
 
     // Get the account
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: validatedEvent.feed.accountId },
+      where: {
+        id: validatedEvent.feed.accountId,
+        userId,
+      },
     });
 
     if (!account) {
@@ -177,7 +207,8 @@ export async function PUT(request: Request) {
         isRecurring: updates.isRecurring ?? validatedEvent.isRecurring,
         recurrenceRule: updates.recurrenceRule ?? validatedEvent.recurrenceRule,
       },
-      "series" //todo: implement editing a single instance correctly.
+      "series", //todo: implement editing a single instance correctly.
+      userId
     );
 
     logger.info(
@@ -209,8 +240,15 @@ export async function PUT(request: Request) {
 }
 
 // Delete an event
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { eventId, mode } = await request.json();
 
     logger.info(
@@ -227,6 +265,12 @@ export async function DELETE(request: Request) {
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
+
+    // Check if the event belongs to a feed owned by the current user
+    if (event.feed.userId !== userId) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     const validatedEvent = await validateEvent(event, "CALDAV");
 
     if (validatedEvent instanceof NextResponse) {
@@ -245,7 +289,10 @@ export async function DELETE(request: Request) {
 
     // Get the account
     const account = await prisma.connectedAccount.findUnique({
-      where: { id: validatedEvent.feed.accountId },
+      where: {
+        id: validatedEvent.feed.accountId,
+        userId,
+      },
     });
 
     if (!account) {
@@ -265,7 +312,8 @@ export async function DELETE(request: Request) {
       event,
       calendarPath,
       validatedEvent.externalEventId,
-      mode || "single"
+      mode || "single",
+      userId
     );
 
     logger.info(

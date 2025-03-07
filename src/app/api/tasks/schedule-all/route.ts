@@ -1,19 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SchedulingService } from "@/services/scheduling/SchedulingService";
 import { AutoScheduleSettings } from "@prisma/client";
 import { TaskStatus } from "@/types/task";
+import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
-export async function POST(request: Request) {
+const LOG_SOURCE = "task-schedule-route";
+
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { settings } = (await request.json()) as {
       settings: AutoScheduleSettings;
     };
-    //reset all scheduled tasks
+
+    //reset all scheduled tasks for the current user
     await prisma.task.updateMany({
       where: {
         isAutoScheduled: true,
         scheduleLocked: false,
+        userId,
       },
       data: {
         scheduledStart: null,
@@ -22,7 +35,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Get all tasks marked for auto-scheduling that are not locked
+    // Get all tasks marked for auto-scheduling that are not locked for the current user
     const tasksToSchedule = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
@@ -30,6 +43,7 @@ export async function POST(request: Request) {
         status: {
           not: TaskStatus.COMPLETED,
         },
+        userId,
       },
       include: {
         project: true,
@@ -37,7 +51,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Get locked tasks (we'll keep their schedules)
+    // Get locked tasks (we'll keep their schedules) for the current user
     const lockedTasks = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
@@ -45,6 +59,7 @@ export async function POST(request: Request) {
         status: {
           not: TaskStatus.COMPLETED,
         },
+        userId,
       },
       include: {
         project: true,
@@ -61,6 +76,7 @@ export async function POST(request: Request) {
         id: {
           in: tasksToSchedule.map((task) => task.id),
         },
+        userId,
       },
       data: {
         scheduledStart: null,
@@ -73,7 +89,7 @@ export async function POST(request: Request) {
     const updatedTasks = await schedulingService.scheduleMultipleTasks([
       ...tasksToSchedule,
       ...lockedTasks,
-    ]);
+    ], userId);
 
     // Fetch the tasks again with their relations to return
     const tasksWithRelations = await prisma.task.findMany({
@@ -81,6 +97,7 @@ export async function POST(request: Request) {
         id: {
           in: updatedTasks.map((task) => task.id),
         },
+        userId,
       },
       include: {
         tags: true,
@@ -90,7 +107,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(tasksWithRelations);
   } catch (error) {
-    console.error("Error scheduling tasks:", error);
+    logger.error(
+      "Error scheduling tasks:",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      LOG_SOURCE
+    );
     return NextResponse.json(
       { error: "Failed to schedule tasks" },
       { status: 500 }

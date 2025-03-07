@@ -1,21 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { RRule } from "rrule";
 import { TaskStatus } from "@/types/task";
 import { newDate } from "@/lib/date-utils";
 import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules";
 import { logger } from "@/lib/logger";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 const LOG_SOURCE = "task-route";
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const task = await prisma.task.findUnique({
       where: {
         id,
+        // Ensure the task belongs to the current user
+        userId,
       },
       include: {
         tags: true,
@@ -41,14 +51,23 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const task = await prisma.task.findUnique({
       where: {
         id,
+        // Ensure the task belongs to the current user
+        userId,
       },
       include: {
         tags: true,
@@ -115,6 +134,8 @@ export async function PUT(
               projectId: task.projectId,
               isRecurring: false,
               completedAt: newDate(), // Set completedAt for the completed instance
+              // Associate the task with the current user
+              userId,
               tags: {
                 connect: task.tags.map((tag) => ({ id: tag.id })),
               },
@@ -148,6 +169,8 @@ export async function PUT(
     const updatedTask = await prisma.task.update({
       where: {
         id: id,
+        // Ensure the task belongs to the current user
+        userId,
       },
       data: {
         ...updates,
@@ -184,14 +207,23 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const userId = auth.userId;
+
     const { id } = await params;
     const task = await prisma.task.findUnique({
       where: {
         id,
+        // Ensure the task belongs to the current user
+        userId,
       },
     });
 
@@ -202,6 +234,8 @@ export async function DELETE(
     await prisma.task.delete({
       where: {
         id,
+        // Ensure the task belongs to the current user
+        userId,
       },
     });
 

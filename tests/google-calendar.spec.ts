@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { getGoogleEvent } from "@/lib/google-calendar";
+import getGoogleEvent from "@/lib/google-calendar";
 import { prisma } from "@/lib/prisma";
 
 // Helper function to get Test Calendar information
@@ -24,6 +24,7 @@ async function getTestCalendarInfo() {
     feed,
     feedId: feed.id,
     accountId: feed.account.id,
+    userId: feed.account.userId,
     calendarId: feed.url,
     displayName: feed.name,
   };
@@ -32,6 +33,7 @@ async function getTestCalendarInfo() {
 // Helper function to verify event deletion with retries
 async function verifyEventDeletion(
   accountId: string,
+  userId: string,
   calendarId: string,
   eventId: string,
   maxAttempts = 3
@@ -41,7 +43,7 @@ async function verifyEventDeletion(
       `Attempt ${attempt}/${maxAttempts} to verify event deletion...`
     );
     try {
-      const event = await getGoogleEvent(accountId, calendarId, eventId);
+      const event = await getGoogleEvent(accountId, calendarId, eventId, userId);
       console.log(`Attempt ${attempt}: Event data:`, event);
 
       // Check if the event is marked as cancelled
@@ -176,6 +178,7 @@ test.describe("Google Calendar Integration", () => {
     console.log("Verifying event in Google Calendar API...");
     const eventData = await getGoogleEvent(
       testCalendar.accountId,
+      testCalendar.userId || "",
       testCalendar.calendarId,
       event.externalEventId
     );
@@ -215,6 +218,7 @@ test.describe("Google Calendar Integration", () => {
     console.log("Verifying event deletion in Google Calendar API...");
     await verifyEventDeletion(
       testCalendar.accountId,
+      testCalendar.userId || "",
       testCalendar.calendarId,
       event.externalEventId
     );
@@ -324,6 +328,7 @@ test.describe("Google Calendar Integration", () => {
     console.log("Verifying event in Google Calendar API...");
     const eventData = await getGoogleEvent(
       testCalendar.accountId,
+      testCalendar.userId || "",
       testCalendar.calendarId,
       event.externalEventId
     );
@@ -379,6 +384,7 @@ test.describe("Google Calendar Integration", () => {
     console.log("Verifying event deletion in Google Calendar API...");
     await verifyEventDeletion(
       testCalendar.accountId,
+      testCalendar.userId || "",
       testCalendar.calendarId,
       event.recurringEventId
     );
