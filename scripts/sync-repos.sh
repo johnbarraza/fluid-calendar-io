@@ -4,7 +4,7 @@
 
 # Check if arguments are provided
 if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 /path/to/private/repo /path/to/public/repo"
+  echo "Usage: $0 /Users/emad/src/fluid-calendar-saas /Users/emad/src/fluid-calendar"
   exit 1
 fi
 
@@ -35,12 +35,22 @@ if [ ! -d "$PUBLIC_REPO/.git" ]; then
   exit 1
 fi
 
+# Backup the public repo's .gitignore file
+echo "Backing up public repo's .gitignore file..."
+GITIGNORE_BACKUP=$(mktemp)
+cp "$PUBLIC_REPO/.gitignore" "$GITIGNORE_BACKUP"
+
 # Copy files from private to public, respecting .gitignore
 echo "Copying files from private to public repo..."
 rsync -av --delete \
   --exclude-from="$PUBLIC_REPO/.gitignore" \
   --exclude=".git" \
   "$PRIVATE_REPO/" "$PUBLIC_REPO/"
+
+# Restore the public repo's .gitignore file
+echo "Restoring public repo's .gitignore file..."
+cp "$GITIGNORE_BACKUP" "$PUBLIC_REPO/.gitignore"
+rm "$GITIGNORE_BACKUP"
 
 echo "Files copied successfully."
 
