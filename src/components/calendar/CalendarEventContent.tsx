@@ -33,7 +33,7 @@ export const CalendarEventContent = memo(function CalendarEventContent({
     <div
       data-testid={isTask ? "calendar-task" : "calendar-event"}
       className={cn(
-        "flex items-center gap-1 text-xs overflow-hidden h-full",
+        "flex flex-col justify-start pt-1 px-1 gap-1 text-xs overflow-hidden h-full",
         isTask && "border-l-4",
         isTask && "text-gray-700",
         isTask && priority && priorityColors[priority as Priority],
@@ -47,21 +47,25 @@ export const CalendarEventContent = memo(function CalendarEventContent({
         status === TaskStatus.COMPLETED && "text-gray-500 line-through"
       )}
     >
-      {isTask ? (
-        <IoCheckmarkCircle className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
-      ) : isRecurring ? (
-        <IoRepeat className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
-      ) : (
-        <IoTimeOutline className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="font-medium truncate calendar-event-title">{title}</div>
-        {location && (
-          <div className="truncate opacity-80 text-[10px] event-location">
-            {location}
-          </div>
+      <div className="flex items-center gap-1 w-full">
+        {isTask ? (
+          <IoCheckmarkCircle className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
+        ) : isRecurring ? (
+          <IoRepeat className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
+        ) : (
+          <IoTimeOutline className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
         )}
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate calendar-event-title">
+            {title}
+          </div>
+        </div>
       </div>
+      {location && (
+        <div className="truncate opacity-80 text-[10px] event-location pl-4">
+          {location}
+        </div>
+      )}
     </div>
   );
 });

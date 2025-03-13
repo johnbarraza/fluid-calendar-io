@@ -19,7 +19,7 @@ send this with every request so the AI knows what to do.
 - if there are changes to the rules or setup, update the main-rule.mdc file accordingly
 - if you add methods or code that need implementation add a //todo comment explaining what it needs to do so we can implement it later
 - when generating react content make sure to replace quotes and apostrohpes with &apos; and &quot;
-- as you make changes update a changelog.md file with the changes, so we can keep track for release notes
+- as you make changes update a changelog.md file with the changes under the unreleased section, so we can keep track for release notes
 - when adding new features, consider if they should be in the saas version or the open source version or both and if you are not sure, ask to confirm
 - when adding new features, consider if they should be in the cmdk commands, if so ask me to confirm then add them to src/lib/commands or @useCommands.ts
 

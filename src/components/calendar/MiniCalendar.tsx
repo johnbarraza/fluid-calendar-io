@@ -53,7 +53,7 @@ export function MiniCalendar({ currentDate, onDateClick }: MiniCalendarProps) {
   const emptyDays = adjustedFirstDay - 1;
 
   return (
-    <div className="w-[220px] mx-auto p-2">
+    <div className="mx-auto p-2">
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-2 px-1">
         <h2 className="text-sm font-medium text-foreground">

@@ -2,8 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [unreleased]
 
+## [1.2.1] 2025-03-13
+### Added
+- Added login button to SAAS home page that redirects to signin screen or app root based on authentication status
+- Added SessionProvider to SAAS layout to support authentication state across SAAS pages
+- Added pre-commit hooks with husky and lint-staged to run linting and type checking before commits
+
+### Changed
+- Removed Settings option from the main navigation bar since it's already available in the user dropdown menu
+- Improved dark mode by replacing black with dark gray colors for better visual comfort and reduced contrast
+
+### Fixed
+- Fixed event title alignment in calendar events to be top-aligned instead of vertically centered
+- Removed minimum height constraint for all-day events in WeekView and DayView components to improve space utilization
+- Made EventModal and TaskModal content scrollable on small screens to ensure buttons remain accessible
+
+## [1.2.0] 2025-03-13
 ### Added
 - Added background job processing system with BullMQ
   - Implemented BaseProcessor for handling job processing
@@ -78,8 +94,3 @@ All notable changes to this project will be documented in this file.
 - Improved code maintainability with better type definitions
 - Added documentation for the job processing system
 - Standardized error handling across the codebase
-
-## [0.1.0] - 2023-03-15
-
-### Added
-- Initial release 

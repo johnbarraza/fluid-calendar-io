@@ -50,6 +50,7 @@ describe("SlotScorer", () => {
 
     baseTask = {
       id: "test-task",
+      userId: "test-user",
       title: "Test Task",
       description: null,
       status: "todo",
@@ -73,6 +74,8 @@ describe("SlotScorer", () => {
       projectId: null,
       createdAt: now,
       updatedAt: now,
+      postponedUntil: null,
+      completedAt: null,
     };
 
     baseSlot = {

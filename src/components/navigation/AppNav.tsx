@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BsCalendar, BsGear, BsListTask } from "react-icons/bs";
+import { BsCalendar, BsListTask } from "react-icons/bs";
 import { HiOutlineLightBulb, HiOutlineSearch } from "react-icons/hi";
 import { cn } from "@/lib/utils";
 import { RiKeyboardLine } from "react-icons/ri";
@@ -33,7 +33,6 @@ export function AppNav({ className }: AppNavProps) {
     { href: "/", label: "Calendar", icon: BsCalendar },
     { href: "/tasks", label: "Tasks", icon: BsListTask },
     { href: "/focus", label: "Focus", icon: HiOutlineLightBulb },
-    { href: "/settings", label: "Settings", icon: BsGear },
   ];
 
   return (

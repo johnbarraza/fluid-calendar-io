@@ -6,33 +6,18 @@
 - [ ] improve auto scheduling performance
 - [ ] improve task lists and focus view see [tasklist](docs/tasklist-enhancements.md)
   - [ ] add view for scheduled tasks and over due or saved views
-- [ ] import outlook tasks not working
 - [ ] add a flag that auto schedule needs to run instead of automatically auto scheduling
 - [ ] add start date to tasks to hide them from view until start date
 - [ ] use task-reminder job for sending reminders
 - [ ] cron job to cleanup logs
 - [ ] cron job to expire waitlist verifications
+- [ ] all-day multi-day editing is not working (google)
+- [ ] support attendees
+- [ ] support event notifications
+- [ ] add localization for date formatting
 
 # CalDAV Implementation
-## Phase 1: Setup and Basic Structure ✅
-- [x] Add required libraries (`tsdav`, `ical.js`)
-- [x] Update database schema with CalDAV-specific fields
-- [x] Create basic CalDAV client class structure
-- [x] Update validation logic for CalDAV events
-- [x] Fix linter errors in CalDAV implementation
-
-## Phase 2: Authentication and Calendar Discovery ✅
-- [x] Create UI for adding CalDAV accounts
-- [x] Implement authentication flow for CalDAV
-- [x] Discover available calendars from CalDAV server
-- [x] Update calendar selection UI to support CalDAV
-- [x] Fix form component errors and align with project patterns
-- [x] Fix logger usage to match project conventions
-
 ## Phase 3: Calendar Synchronization (Pending)
-- [x] Implement calendar event fetching from CalDAV server
-- [x] Create/update/delete events on CalDAV server
-- [x] Handle recurring events
 - [ ] Implement two-way sync with change tracking
 - [ ] all day events are off by a day
 
@@ -42,6 +27,7 @@
 - [ ] Implement free/busy status
 - [ ] Add support for calendar sharing
 
+# Focus Mode
 ## Focus Mode Implementation
 - [ ] fix keyboard shortcuts
 - [ ] in taskmodal make the tags more obvious if they are selected
@@ -53,7 +39,8 @@
 - [ ] auto scheduling did not schedule high priority tasks first
 - [ ] save task completed date and sync it with outlook 
 - [ ] deleteing a recurring event from quickview doens't work well and doesn't ask me if i want to delete the series or just the instance.
-  
+
+# Misc
 ## Next Steps
 - [ ] Integrate google calendar
   - [ ] auto sync with webhooks
@@ -219,14 +206,3 @@
   - [ ] Implement proper cleanup on unmount
   - [ ] Add visual indicators for sync status
   - [ ] Add sync error notifications
-
-## Landing Page Implementation
-
-- [x] Create landing page component in SAAS directory
-- [x] Create landing page route in SAAS directory
-- [x] Add feature flag for landing page
-- [x] Modify middleware to redirect non-logged-in users to landing page
-- [x] Create layout file for landing page
-- [x] Create helper functions for landing page
-- [x] Add tests for landing page
-- [x] Update documentation

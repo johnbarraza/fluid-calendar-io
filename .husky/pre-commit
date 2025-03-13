@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Run linting
+echo "Running linting..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Linting failed. Please fix the errors before committing."
+  exit 1
+fi
+
+# Run type checking
+echo "Running type checking..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "Type checking failed. Please fix the errors before committing."
+  exit 1
+fi
+
+# If we got here, all checks passed
+echo "All checks passed!"
