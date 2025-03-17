@@ -19,13 +19,6 @@ export function useCommands() {
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log(
-    "useCommands initialized with router:",
-    !!router,
-    "pathname:",
-    pathname
-  );
-
   // Register commands on mount
   useEffect(() => {
     // Clear existing commands to avoid duplicates
@@ -44,23 +37,10 @@ export function useCommands() {
       // Add other command groups here as we create them
     ];
 
-    console.log(
-      "Registering commands:",
-      commands.map((cmd) => ({ id: cmd.id, shortcut: cmd.shortcut }))
-    );
-
     // Register all commands
     commands.forEach((command) => {
       commandRegistry.register(command);
     });
-
-    // Log all registered commands
-    console.log(
-      "All registered commands:",
-      commandRegistry
-        .getAll()
-        .map((cmd) => ({ id: cmd.id, shortcut: cmd.shortcut }))
-    );
 
     // Cleanup on unmount
     return () => {
@@ -128,32 +108,12 @@ export function useCommands() {
       const allCommands = commandRegistry.getAll();
       const validCommands = allCommands.filter(isCommandValidForPath);
 
-      console.log(
-        `Current path: ${currentPath}, Valid commands: ${validCommands.length}/${allCommands.length}`
-      );
-
-      if (allCommands.length !== validCommands.length) {
-        console.log(
-          "Filtered out commands:",
-          allCommands
-            .filter((cmd) => !isCommandValidForPath(cmd))
-            .map((cmd) => ({
-              id: cmd.id,
-              shortcut: cmd.shortcut,
-              requiredPath: cmd.context?.requiredPath,
-            }))
-        );
-      }
-
       // For arrow keys, we want to handle them directly
       if (mappedKey === "left" || mappedKey === "right") {
-        console.log("Arrow key pressed:", mappedKey);
-
         // Find a command with this shortcut that's valid for the current path
         const command = validCommands.find((cmd) => cmd.shortcut === mappedKey);
 
         if (command) {
-          console.log("Command found for arrow key:", command.id);
           e.preventDefault();
           await commandRegistry.execute(command.id, router);
           return;
@@ -171,13 +131,10 @@ export function useCommands() {
         if (e.shiftKey) shortcut += "shift+";
         shortcut += mappedKey;
 
-        console.log("Modifier shortcut pressed:", shortcut);
-
         // Find a command with this shortcut that's valid for the current path
         const command = validCommands.find((cmd) => cmd.shortcut === shortcut);
 
         if (command) {
-          console.log("Command found:", command.id);
           e.preventDefault();
           await commandRegistry.execute(command.id, router);
         }
@@ -206,20 +163,11 @@ export function useCommands() {
           pressedKeys.slice(-1).join(""), // Just the last key
         ];
 
-        console.log(
-          "Key combinations:",
-          keyCombinations,
-          "Pressed keys:",
-          pressedKeys
-        );
-
         // Find a command with any of these shortcuts that's valid for the current path
         for (const combo of keyCombinations) {
           const command = validCommands.find((cmd) => cmd.shortcut === combo);
           if (command) {
-            console.log("Command found:", command.id, "for combo:", combo);
             e.preventDefault();
-            console.log("Executing command with router:", !!router);
             await commandRegistry.execute(command.id, router);
             // Reset the sequence after executing a command
             pressedKeys = [];
@@ -247,12 +195,10 @@ export function useCommands() {
     };
 
     // Add event listener
-    console.log("Adding keydown event listener");
     document.addEventListener("keydown", handleKeyDown);
 
     // Cleanup
     return () => {
-      console.log("Removing keydown event listener");
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [pathname, router]);
@@ -264,7 +210,6 @@ export function useCommands() {
         commandRegistry.getBySection(section),
       searchCommands: (query: string) => commandRegistry.search(query),
       executeCommand: (commandId: string) => {
-        console.log("executeCommand called with router:", !!router);
         return commandRegistry.execute(commandId, router);
       },
     }),

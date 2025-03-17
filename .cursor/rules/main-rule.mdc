@@ -22,6 +22,7 @@ send this with every request so the AI knows what to do.
 - as you make changes update a changelog.md file with the changes under the unreleased section, so we can keep track for release notes
 - when adding new features, consider if they should be in the saas version or the open source version or both and if you are not sure, ask to confirm
 - when adding new features, consider if they should be in the cmdk commands, if so ask me to confirm then add them to src/lib/commands or @useCommands.ts
+- use bullmq for backgound jobs and queue management.  all jobs are in the saas/jobs folder
 
 
 ## SAAS vs Open Source

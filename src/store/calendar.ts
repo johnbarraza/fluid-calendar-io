@@ -430,8 +430,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         await get().loadFromDatabase();
 
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
@@ -451,8 +451,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         await get().loadFromDatabase();
 
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
@@ -472,28 +472,13 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         await get().loadFromDatabase();
 
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
-      // For other calendars, use the existing API
-      const response = await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEvent),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save event to database");
-      }
-
-      // Reload from database to get the latest state
-      await get().loadFromDatabase();
-
-      // Trigger auto-scheduling after event is created
-      const { scheduleAllTasks } = useTaskStore.getState();
-      await scheduleAllTasks();
+      // For other calendars, throw an error
+      throw new Error("Unsupported calendar type");
     } catch (error) {
       console.error("Failed to add event:", error);
       throw error;
@@ -524,8 +509,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         // Reload from database to get the latest state
         await get().loadFromDatabase();
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
@@ -544,8 +529,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         // Reload from database to get the latest state
         await get().loadFromDatabase();
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
@@ -564,27 +549,13 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
         // Reload from database to get the latest state
         await get().loadFromDatabase();
         // Trigger auto-scheduling after event is created
-        const { scheduleAllTasks } = useTaskStore.getState();
-        await scheduleAllTasks();
+        const { triggerScheduleAllTasks } = useTaskStore.getState();
+        await triggerScheduleAllTasks();
         return;
       }
 
-      // For other calendars, use the existing API
-      const response = await fetch(`/api/events/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update event in database");
-      }
-
-      // Reload from database to get the latest state
-      await get().loadFromDatabase();
-      // Trigger auto-scheduling after event is created
-      const { scheduleAllTasks } = useTaskStore.getState();
-      await scheduleAllTasks();
+      // For other calendars, throw an error
+      throw new Error("Unsupported calendar type");
     } catch (error) {
       console.error("Failed to update event:", error);
       throw error;
@@ -646,8 +617,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
       // Reload from database to get the latest state
       await get().loadFromDatabase();
       // Trigger auto-scheduling after event is created
-      const { scheduleAllTasks } = useTaskStore.getState();
-      await scheduleAllTasks();
+      const { triggerScheduleAllTasks } = useTaskStore.getState();
+      await triggerScheduleAllTasks();
     } catch (error) {
       console.error("Failed to remove event:", error);
       throw error;
@@ -698,8 +669,8 @@ export const useCalendarStore = create<CalendarStore>()((set, get) => ({
       // Reload events from database
       await get().loadFromDatabase();
       // Trigger auto-scheduling after event is created
-      const { scheduleAllTasks } = useTaskStore.getState();
-      await scheduleAllTasks();
+      const { triggerScheduleAllTasks } = useTaskStore.getState();
+      await triggerScheduleAllTasks();
     } catch (error) {
       console.error("Failed to sync feed:", error);
       // Update feed with error

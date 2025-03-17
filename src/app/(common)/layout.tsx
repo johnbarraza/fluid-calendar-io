@@ -17,6 +17,23 @@ import { useShortcutsStore } from "@/store/shortcuts";
 import { usePathname } from "next/navigation";
 import { SetupCheck } from "@/components/setup/SetupCheck";
 import { Toaster } from "@/components/ui/sonner";
+import dynamic from "next/dynamic";
+
+// Dynamically import the NotificationProvider based on SAAS flag
+const NotificationProvider = dynamic<{ children: React.ReactNode }>(
+  () =>
+    import(
+      `@/components/providers/NotificationProvider${
+        process.env.NEXT_PUBLIC_ENABLE_SAAS_FEATURES === "true"
+          ? ".saas"
+          : ".open"
+      }`
+    ).then((mod) => mod.NotificationProvider),
+  {
+    ssr: false,
+    loading: () => <>{/* Render nothing while loading */}</>,
+  }
+);
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -90,7 +107,9 @@ export default function RootLayout({
                   onClose={() => setShortcutsOpen(false)}
                 />
                 <AppNav />
-                <main className="flex-1 relative">{children}</main>
+                <main className="flex-1 relative">
+                  <NotificationProvider>{children}</NotificationProvider>
+                </main>
                 <Toaster />
               </DndProvider>
             </PrivacyProvider>

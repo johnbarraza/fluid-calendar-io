@@ -3,7 +3,6 @@
 - [ ] add a calculator comparing motion to FC
 - [ ] add a sidebar thingy in open to tell them to move to saas
 - [ ] auto schedule working hours in settings using 24 instead am/pm
-- [ ] improve auto scheduling performance
 - [ ] improve task lists and focus view see [tasklist](docs/tasklist-enhancements.md)
   - [ ] add view for scheduled tasks and over due or saved views
 - [ ] add a flag that auto schedule needs to run instead of automatically auto scheduling
@@ -16,6 +15,7 @@
 - [ ] support event notifications
 - [ ] add localization for date formatting
 - [ ] share availability
+- [ ] use SSE throughout to improve sync performance
 
 # CalDAV Implementation
 ## Phase 3: Calendar Synchronization (Pending)

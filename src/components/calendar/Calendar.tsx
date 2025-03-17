@@ -41,9 +41,7 @@ export function Calendar() {
   };
 
   const handleAutoSchedule = async () => {
-    if (confirm("Auto-schedule all tasks marked for auto-scheduling?")) {
-      await scheduleAllTasks();
-    }
+    await scheduleAllTasks();
   };
 
   return (

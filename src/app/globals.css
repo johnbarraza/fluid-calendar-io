@@ -359,3 +359,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Override toast description styles for better readability */
+.notification-toast [data-description] {
+  color: var(--foreground) !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}

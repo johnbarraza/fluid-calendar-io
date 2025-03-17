@@ -89,3 +89,11 @@ export interface TaskFilters {
   search?: string;
   projectId?: string;
 }
+
+/**
+ * Task with its related entities
+ */
+export interface TaskWithRelations extends Task {
+  tags: Tag[];
+  project: Project | null;
+}

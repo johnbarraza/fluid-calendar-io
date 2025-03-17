@@ -141,13 +141,7 @@ export default function TasksPage() {
               <Button
                 variant="secondary"
                 onClick={() => {
-                  if (
-                    confirm(
-                      "Auto-schedule all tasks marked for auto-scheduling?"
-                    )
-                  ) {
-                    scheduleAllTasks();
-                  }
+                  scheduleAllTasks();
                 }}
               >
                 Auto Schedule

@@ -12,10 +12,24 @@ All notable changes to this project will be documented in this file.
   - Implemented `interestedInLifetime` flag in Waitlist and PendingWaitlist models
   - Added admin notification emails when users express interest in lifetime subscription
   - Updated waitlist API to handle lifetime subscription interest
+- Added background task scheduling system with real-time notifications
+  - Implemented task scheduling queue with BullMQ for asynchronous processing
+  - Added debouncing mechanism to prevent duplicate scheduling jobs
+  - Created SSE (Server-Sent Events) endpoint with Redis-backed notifications
+  - Integrated with existing notification system for toast messages
+  - Added fallback to direct scheduling for open source version without Redis
 
 ### Changed
 - Modified job retry functionality to update existing job records instead of creating new ones
 - Updated email templates to use "FluidCalendar" instead of "Fluid Calendar" for consistent branding
+- Refactored task scheduling logic into a common service to reduce code duplication
+  - Created `TaskSchedulingService` with shared scheduling functionality
+  - Updated both API route and background job processor to use the common service
+- Improved SAAS/open source code separation
+  - Moved SAAS-specific API routes to use `.saas.ts` extension
+  - Renamed NotificationProvider to NotificationProvider.saas.tsx
+  - Relocated NotificationProvider to SAAS layout for better code organization
+  - Updated client-side code to use the correct endpoints based on version
 
 ### Fixed
 - Fixed type errors in the job retry API by using the correct compound unique key (queueName + jobId)

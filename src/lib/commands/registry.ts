@@ -5,9 +5,7 @@ class CommandRegistryImpl {
   private commands: CommandRegistry = new Map();
 
   register(command: Command) {
-    console.log(
-      `Registering command: ${command.id} with shortcut: ${command.shortcut}`
-    );
+
     if (!command.id) {
       console.error("Attempted to register command without ID:", command);
       return;
@@ -16,7 +14,6 @@ class CommandRegistryImpl {
   }
 
   unregister(commandId: string) {
-    console.log(`Unregistering command: ${commandId}`);
     if (!commandId) {
       console.error("Attempted to unregister command without ID");
       return;
@@ -26,7 +23,6 @@ class CommandRegistryImpl {
 
   getAll(): Command[] {
     const commands = Array.from(this.commands.values());
-    console.log(`Getting all commands: ${commands.length} commands found`);
     return commands;
   }
 
@@ -53,29 +49,15 @@ class CommandRegistryImpl {
       throw new Error(`Command ${commandId} not found`);
     }
 
-    console.log(`Executing command: ${commandId}`, {
-      id: command.id,
-      shortcut: command.shortcut,
-      requiredPath: command.context?.requiredPath,
-      navigateIfNeeded: command.context?.navigateIfNeeded,
-      hasRouter: !!router,
-    });
-
     // Check if the command has a required path
     if (command.context?.requiredPath && typeof window !== "undefined") {
       const currentPath = window.location.pathname;
 
       // If we're not on the required path
       if (currentPath !== command.context.requiredPath) {
-        console.log(
-          `Command ${commandId} requires path ${command.context.requiredPath}, current path is ${currentPath}`
-        );
 
         // If navigateIfNeeded is true and we have a router, navigate
         if (command.context.navigateIfNeeded && router) {
-          console.log(
-            `Navigating to ${command.context.requiredPath} before executing command`
-          );
           await router.push(command.context.requiredPath);
           // Wait for navigation
           await new Promise((resolve) => setTimeout(resolve, 100));
