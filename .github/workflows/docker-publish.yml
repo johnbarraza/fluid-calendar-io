@@ -119,62 +119,79 @@ jobs:
 
       - name: Create and push manifest
         run: |
+          # Enable experimental features for docker
+          mkdir -p ~/.docker
+          echo '{"experimental": "enabled"}' > ~/.docker/config.json
+
           # For main branch or latest tag
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Remove the manifest if it already exists
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
+            # Create a new manifest without dependencies - full specifiers
+            IMAGE_AMD64="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$(docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format '{{index .RepoDigests 0}}' | cut -d'@' -f2)"
+            IMAGE_ARM64="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$(docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 --format '{{index .RepoDigests 0}}' | cut -d'@' -f2)"
             
-            # Create a new manifest
-            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+            # Create a new manifest with digests
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-new \
+              $IMAGE_AMD64 \
+              $IMAGE_ARM64
             
             # Annotate the manifest with platform information
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --os linux --arch amd64
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 --os linux --arch arm64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-new \
+              $IMAGE_AMD64 --os linux --arch amd64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-new \
+              $IMAGE_ARM64 --os linux --arch arm64
             
             # Push the manifest
-            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-new
+            
+            # Rename the manifest
+            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-new ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
           # For tags (releases)
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
             
-            # Remove the manifest if it already exists
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} || true
+            # Create a new manifest without dependencies - full specifiers
+            IMAGE_AMD64="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$(docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} --format '{{index .RepoDigests 0}}' | cut -d'@' -f2)"
+            IMAGE_ARM64="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$(docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64 --format '{{index .RepoDigests 0}}' | cut -d'@' -f2)"
             
-            # Create and push version-specific manifest
-            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64
+            # Create a new manifest with digests for version tag
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-new \
+              $IMAGE_AMD64 \
+              $IMAGE_ARM64
             
             # Annotate the manifest
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} --os linux --arch amd64
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64 --os linux --arch arm64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-new \
+              $IMAGE_AMD64 --os linux --arch amd64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-new \
+              $IMAGE_ARM64 --os linux --arch arm64
             
             # Push the manifest
-            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-new
             
-            # Remove the major.minor manifest if it exists
+            # Rename the manifest
+            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-new ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+            docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+            
+            # Process major.minor tag
             MAJOR_MINOR=$(echo ${VERSION} | cut -d. -f1,2)
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} || true
             
-            # Create and push major.minor manifest
-            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-arm64
+            # Create a new manifest with digests for major.minor tag
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-new \
+              $IMAGE_AMD64 \
+              $IMAGE_ARM64
             
             # Annotate the manifest
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} --os linux --arch amd64
-            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-arm64 --os linux --arch arm64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-new \
+              $IMAGE_AMD64 --os linux --arch amd64
+            docker manifest annotate ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-new \
+              $IMAGE_ARM64 --os linux --arch arm64
             
             # Push the manifest
-            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-new
+            
+            # Rename the manifest
+            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}-new ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}
+            docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}
           fi
