@@ -13,7 +13,7 @@ WORKDIR /app
 ENV NODE_ENV=development
 COPY . .
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --ignore-scripts
 RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
@@ -23,7 +23,7 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --ignore-scripts
 RUN npm run build
 RUN npm run prisma:generate
 
