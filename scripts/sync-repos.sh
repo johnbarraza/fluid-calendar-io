@@ -50,7 +50,7 @@ rsync -av --delete \
   --exclude="src/saas" \
   --exclude="src/saas/k8s" \
   --exclude="src/saas/Dockerfile.saas" \
-  --exclude=".github/workflows/deploy.saas.yml" \
+  --exclude=".github/workflows" \
   --exclude=".github/prompts" \
   "$PRIVATE_REPO/" "$PUBLIC_REPO/"
 

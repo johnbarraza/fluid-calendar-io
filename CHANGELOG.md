@@ -18,6 +18,10 @@ All notable changes to this project will be documented in this file.
   - Created SSE (Server-Sent Events) endpoint with Redis-backed notifications
   - Integrated with existing notification system for toast messages
   - Added fallback to direct scheduling for open source version without Redis
+- Docker image now available on GitHub Container Registry (ghcr.io)
+- GitHub workflow for automatic Docker image publication
+- Documentation for using the Docker image in README.md
+- Added `scripts/sync-repos-reverse.sh` for syncing changes from open source repository back to SAAS repository
 
 ### Changed
 - Modified job retry functionality to update existing job records instead of creating new ones

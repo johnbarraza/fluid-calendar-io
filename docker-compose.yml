@@ -1,19 +1,10 @@
 services:
   app:
-    build:
-      context: .
-      target: development
+    image: eibrahim/fluid-calendar:latest
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - next_cache:/app/.next
-      - turbo_cache:/app/.turbo
-      - build_cache:/app/.cache
-    environment:
-      - DATABASE_URL=postgresql://fluid:fluid@db:5432/fluid_calendar
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=dev-secret-key
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +29,3 @@ services:
 
 volumes:
   postgres_dev_data:
-  next_cache:
-  turbo_cache:
-  build_cache:

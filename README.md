@@ -183,24 +183,35 @@ Note: For production deployment:
 
 ## Installation
 
-### Quick Start (Recommended)
+### Quick Start with Docker (Recommended)
 
 1. Install Docker on your machine
-2. Run the following commands:
+2. Clone the repository (or just download the docker-compose.yml file):
    ```bash
-   # Clone the repository
    git clone https://github.com/dotnetfactory/fluid-calendar.git
    cd fluid-calendar
-
-   # Start the application
-   docker compose up
-
-   # View logs (optional)
-   docker compose logs -f
    ```
-3. Visit http://localhost:3000
 
-That's it! The application will be running with a PostgreSQL database automatically configured.
+3. Copy the example environment file and configure it:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit the `.env` file and set at minimum these values:
+   ```
+   DATABASE_URL=postgresql://fluid:fluid@db:5432/fluid_calendar
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-random-secret-key
+   ```
+   
+4. Run the application:
+   ```bash
+   docker compose up -d
+   ```
+
+5. Visit http://localhost:3000
+
+That's it! The application will be running with a PostgreSQL database automatically configured. The docker-compose.yml file is already configured to use the pre-built Docker image.
 
 ### For Developers
 
@@ -234,8 +245,9 @@ docker compose logs -f
 # Stop the application
 docker compose down
 
-# Rebuild and restart
-docker compose up -d --build
+# Update to the latest version
+docker pull eibrahim/fluid-calendar:latest
+docker compose up -d
 
 # Reset database (caution: deletes all data)
 docker compose down -v

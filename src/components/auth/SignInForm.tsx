@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +22,6 @@ import { logger } from "@/lib/logger";
 const LOG_SOURCE = "SignInForm";
 
 export function SignInForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -65,8 +63,13 @@ export function SignInForm() {
         });
       } else {
         toast.success("Signed in successfully");
-        router.push("/");
-        router.refresh();
+
+        // The token is set in the background, so we'll redirect after a minimal delay
+        // to ensure the token is available for the next request
+        setTimeout(() => {
+          // Force a hard navigation to ensure the middleware re-evaluates with the new token
+          window.location.href = "/";
+        }, 100);
       }
     } catch (error) {
       logger.error(

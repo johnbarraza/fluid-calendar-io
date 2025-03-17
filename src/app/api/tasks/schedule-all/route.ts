@@ -14,10 +14,9 @@ export async function POST(request: NextRequest) {
 
     const userId = auth.userId;
 
-    const { settings } = await request.json();
-
     // Use the common function to schedule all tasks
-    const tasksWithRelations = await scheduleAllTasksForUser(userId, settings);
+    // If settings are provided, use them, otherwise use the overloaded function
+    const tasksWithRelations =  await scheduleAllTasksForUser(userId);
 
     return NextResponse.json(tasksWithRelations);
   } catch (error) {

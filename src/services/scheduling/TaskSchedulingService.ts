@@ -9,7 +9,6 @@ import {
 } from "@/types/task";
 import { ProjectStatus } from "@/types/project";
 import { logger } from "@/lib/logger";
-import { AutoScheduleSettings } from "@prisma/client";
 
 const LOG_SOURCE = "TaskSchedulingService";
 
@@ -86,15 +85,29 @@ function convertDbTaskToTaskWithRelations(
 /**
  * Schedule all tasks for a user
  * @param userId The user ID
- * @param settings The auto-schedule settings to use
  * @returns The updated tasks
  */
 export async function scheduleAllTasksForUser(
-  userId: string,
-  settings: AutoScheduleSettings
+  userId: string
+): Promise<TaskWithRelations[]>;
+
+/**
+ * Implementation of scheduleAllTasksForUser
+ */
+export async function scheduleAllTasksForUser(
+  userId: string
 ): Promise<TaskWithRelations[]> {
   try {
     logger.info("Starting task scheduling for user", { userId }, LOG_SOURCE);
+
+    // If settings are not provided, fetch them from the database
+    const userSettings = await prisma.autoScheduleSettings.findUnique({
+      where: { userId },
+    });
+
+    if (!userSettings) {
+      throw new Error("Auto-schedule settings not found for user");
+    }
 
     // Get all tasks marked for auto-scheduling that are not locked
     const tasksToSchedule = await prisma.task.findMany({
@@ -138,7 +151,7 @@ export async function scheduleAllTasksForUser(
     );
 
     // Initialize scheduling service with settings
-    const schedulingService = new SchedulingService(settings);
+    const schedulingService = new SchedulingService(userSettings);
 
     // Clear existing schedules for non-locked tasks
     await prisma.task.updateMany({

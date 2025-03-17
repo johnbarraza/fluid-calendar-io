@@ -8,7 +8,6 @@ import {
   NewTag,
   TaskFilters,
 } from "@/types/task";
-import { useSettingsStore } from "@/store/settings";
 import { isSaasEnabled } from "@/lib/config";
 
 interface TaskState {
@@ -367,11 +366,9 @@ export const useTaskStore = create<TaskState>()(
       scheduleAllTasks: async () => {
         set({ loading: true, error: null });
         try {
-          const settings = useSettingsStore.getState().autoSchedule;
           const response = await fetch("/api/tasks/schedule-all", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ settings }),
           });
           if (!response.ok) throw new Error("Failed to schedule tasks");
           const updatedTasks = await response.json();

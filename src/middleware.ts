@@ -40,8 +40,7 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // If there's no token and we're on the root path in SAAS mode with landing page enabled,
-  // redirect to the home page
+  // If there's no token and we're on the root path, redirect to the home page
   if (!token && pathname === "/") {
     return NextResponse.redirect(new URL("/home", request.url));
   }
