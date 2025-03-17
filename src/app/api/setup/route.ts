@@ -133,19 +133,44 @@ export async function POST(request: Request) {
         },
       }),
 
-      // Create system settings
-      prisma.systemSettings.create({
-        data: {
-          logLevel: "error",
-          logDestination: "db",
-          logRetention: {
-            error: 30,
-            warn: 14,
-            info: 7,
-            debug: 3,
-          },
-          publicSignup: false,
-        },
+      // Ensure only one SystemSettings record exists
+      prisma.$transaction(async (tx) => {
+        // Check if any SystemSettings record exists
+        const existingSettings = await tx.systemSettings.findFirst();
+
+        if (existingSettings) {
+          // Update the existing record
+          return tx.systemSettings.update({
+            where: { id: existingSettings.id },
+            data: {
+              logLevel: "error",
+              logDestination: "db",
+              logRetention: {
+                error: 30,
+                warn: 14,
+                info: 7,
+                debug: 3,
+              },
+              publicSignup: false,
+            },
+          });
+        } else {
+          // Create a new record with default ID
+          return tx.systemSettings.create({
+            data: {
+              id: "default",
+              logLevel: "error",
+              logDestination: "db",
+              logRetention: {
+                error: 30,
+                warn: 14,
+                info: 7,
+                debug: 3,
+              },
+              publicSignup: false,
+            },
+          });
+        }
       }),
     ]);
 

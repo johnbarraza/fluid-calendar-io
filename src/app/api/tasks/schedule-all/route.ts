@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Schedule all non-locked tasks with full task objects
-    const updatedTasks = await schedulingService.scheduleMultipleTasks([
-      ...tasksToSchedule,
-      ...lockedTasks,
-    ], userId);
+    const updatedTasks = await schedulingService.scheduleMultipleTasks(
+      [...tasksToSchedule, ...lockedTasks],
+      userId
+    );
 
     // Fetch the tasks again with their relations to return
     const tasksWithRelations = await prisma.task.findMany({

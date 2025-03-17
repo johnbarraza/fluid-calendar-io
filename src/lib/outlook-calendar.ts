@@ -1,5 +1,4 @@
 import { Client } from "@microsoft/microsoft-graph-client";
-import { PrismaClient } from "@prisma/client";
 import { ConnectedAccount } from "@prisma/client";
 import { MSGraphCalendar, MSGraphUser } from "./outlook";
 import { TokenManager } from "./token-manager";
@@ -69,7 +68,7 @@ export class OutlookCalendarService {
   private client: Client;
   private tokenManager: TokenManager;
 
-  constructor(private prisma: PrismaClient, private account: ConnectedAccount) {
+  constructor(private account: ConnectedAccount) {
     this.tokenManager = TokenManager.getInstance();
     this.client = this.createClient();
   }

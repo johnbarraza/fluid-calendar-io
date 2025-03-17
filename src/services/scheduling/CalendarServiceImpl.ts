@@ -1,7 +1,8 @@
-import { CalendarEvent, PrismaClient } from "@prisma/client";
+import { CalendarEvent } from "@prisma/client";
 import { TimeSlot, Conflict } from "@/types/scheduling";
 import { BatchConflictCheck, CalendarService } from "./CalendarService";
 import { areIntervalsOverlapping } from "@/lib/date-utils";
+import { prisma } from "@/lib/prisma";
 
 interface EventCache {
   events: CalendarEvent[];
@@ -14,8 +15,6 @@ interface EventCache {
 export class CalendarServiceImpl implements CalendarService {
   private cache: EventCache | null = null;
   private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
-
-  constructor(private prisma: PrismaClient) {}
 
   private getDayTimestamp(date: Date): number {
     return new Date(
@@ -66,7 +65,7 @@ export class CalendarServiceImpl implements CalendarService {
     slot: TimeSlot,
     selectedCalendarIds: string[],
     userId: string,
-    excludeTaskId?: string,
+    excludeTaskId?: string
   ): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
 
@@ -100,7 +99,7 @@ export class CalendarServiceImpl implements CalendarService {
     }
 
     // Only check task conflicts if there are no calendar conflicts
-    const scheduledTasks = await this.prisma.task.findMany({
+    const scheduledTasks = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },
@@ -157,7 +156,7 @@ export class CalendarServiceImpl implements CalendarService {
     const endDay = new Date(this.getWeekTimestamp(end, false));
     endDay.setDate(endDay.getDate() + 1); // Add one more day just to be safe
 
-    const events = await this.prisma.calendarEvent.findMany({
+    const events = await prisma.calendarEvent.findMany({
       where: {
         feedId: {
           in: selectedCalendarIds,
@@ -220,7 +219,7 @@ export class CalendarServiceImpl implements CalendarService {
     );
 
     // Fetch all scheduled tasks once
-    const scheduledTasks = await this.prisma.task.findMany({
+    const scheduledTasks = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },

@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Initialize service and fetch calendars
-    const outlookService = new OutlookCalendarService(prisma, account);
+    const outlookService = new OutlookCalendarService(account);
     const calendars = await outlookService.listCalendars();
 
     // Transform calendars to match the expected format

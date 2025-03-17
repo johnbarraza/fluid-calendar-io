@@ -11,14 +11,22 @@ export async function GET(request: NextRequest) {
   if (authResponse) return authResponse;
 
   try {
-    // Get the first (and only) system settings record, or create it if it doesn't exist
-    const settings = await prisma.systemSettings.upsert({
-      where: { id: "1" },
-      update: {},
-      create: {
-        id: "1",
-        logLevel: "none",
-      },
+    // Get the first system settings record, or create it if it doesn't exist
+    const settings = await prisma.$transaction(async (tx) => {
+      // Check if any SystemSettings record exists
+      const existingSettings = await tx.systemSettings.findFirst();
+
+      if (existingSettings) {
+        return existingSettings;
+      } else {
+        // Create a new record with default ID
+        return tx.systemSettings.create({
+          data: {
+            id: "default",
+            logLevel: "none",
+          },
+        });
+      }
     });
 
     return NextResponse.json(settings);
@@ -42,13 +50,26 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const updates = await request.json();
-    const settings = await prisma.systemSettings.upsert({
-      where: { id: "1" },
-      update: updates,
-      create: {
-        id: "1",
-        ...updates,
-      },
+
+    const settings = await prisma.$transaction(async (tx) => {
+      // Check if any SystemSettings record exists
+      const existingSettings = await tx.systemSettings.findFirst();
+
+      if (existingSettings) {
+        // Update the existing record
+        return tx.systemSettings.update({
+          where: { id: existingSettings.id },
+          data: updates,
+        });
+      } else {
+        // Create a new record with default ID
+        return tx.systemSettings.create({
+          data: {
+            id: "default",
+            ...updates,
+          },
+        });
+      }
     });
 
     return NextResponse.json(settings);

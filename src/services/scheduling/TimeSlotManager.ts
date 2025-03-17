@@ -15,8 +15,9 @@ import {
 } from "@/lib/date-utils";
 import { CalendarService } from "./CalendarService";
 import { SlotScorer } from "./SlotScorer";
-import { Task, PrismaClient } from "@prisma/client";
+import { Task } from "@prisma/client";
 import { useSettingsStore } from "@/store/settings";
+import { prisma } from "@/lib/prisma"; // Import the global Prisma instance
 
 const DEFAULT_TASK_DURATION = 30;
 
@@ -46,8 +47,7 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
 
   constructor(
     private settings: AutoScheduleSettings,
-    private calendarService: CalendarService,
-    private prisma: PrismaClient
+    private calendarService: CalendarService
   ) {
     this.slotScorer = new SlotScorer(settings);
     this.timeZone = useSettingsStore.getState().user.timeZone;
@@ -55,7 +55,7 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
 
   async updateScheduledTasks(userId: string): Promise<void> {
     // Fetch all scheduled tasks
-    const scheduledTasks = await this.prisma.task.findMany({
+    const scheduledTasks = await prisma.task.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },

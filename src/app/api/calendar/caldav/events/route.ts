@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create CalDAV service
-    const caldavService = new CalDAVCalendarService(prisma, feed.account);
+    const caldavService = new CalDAVCalendarService(feed.account);
 
     // Create event in CalDAV calendar
     const createdEvent = await caldavService.createEvent(calendarPath, {
@@ -190,7 +190,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Create CalDAV service
-    const caldavService = new CalDAVCalendarService(prisma, account);
+    const caldavService = new CalDAVCalendarService(account);
 
     // Update the event in CalDAV
     const updatedEvent = await caldavService.updateEvent(
@@ -305,7 +305,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Create CalDAV service
-    const caldavService = new CalDAVCalendarService(prisma, account);
+    const caldavService = new CalDAVCalendarService(account);
 
     // Delete the event from CalDAV
     await caldavService.deleteEvent(

@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Create CalDAV service
-    const caldavService = new CalDAVCalendarService(prisma, feed.account);
+    const caldavService = new CalDAVCalendarService(feed.account);
 
     // Sync calendar
     try {
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Sync events for this calendar
-    const caldavService = new CalDAVCalendarService(prisma, account);
+    const caldavService = new CalDAVCalendarService(account);
 
     try {
       await caldavService.syncCalendar(feed.id, calendarId, userId);

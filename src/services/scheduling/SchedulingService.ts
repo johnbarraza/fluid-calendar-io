@@ -1,9 +1,10 @@
-import { PrismaClient, Task, AutoScheduleSettings } from "@prisma/client";
+import { Task, AutoScheduleSettings } from "@prisma/client";
 import { TimeSlotManagerImpl, TimeSlotManager } from "./TimeSlotManager";
 import { CalendarServiceImpl } from "./CalendarServiceImpl";
 import { useSettingsStore } from "@/store/settings";
 import { addDays, newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma"; // Import the global Prisma instance
 
 const DEFAULT_TASK_DURATION = 30; // Default duration in minutes
 const LOG_SOURCE = "SchedulingService";
@@ -17,14 +18,12 @@ interface PerformanceMetrics {
 }
 
 export class SchedulingService {
-  private prisma: PrismaClient;
   private calendarService: CalendarServiceImpl;
   private settings: AutoScheduleSettings | null;
   private metrics: PerformanceMetrics[] = [];
 
   constructor(settings?: AutoScheduleSettings) {
-    this.prisma = new PrismaClient();
-    this.calendarService = new CalendarServiceImpl(this.prisma);
+    this.calendarService = new CalendarServiceImpl();
     this.settings = settings || null;
   }
 
@@ -100,11 +99,7 @@ export class SchedulingService {
       };
     }
 
-    const manager = new TimeSlotManagerImpl(
-      settings,
-      this.calendarService,
-      this.prisma
-    );
+    const manager = new TimeSlotManagerImpl(settings, this.calendarService);
 
     this.endMetric("getTimeSlotManager", startTime);
     return manager;
@@ -214,7 +209,7 @@ export class SchedulingService {
 
     // Get all tasks (including locked ones) to return
     const finalFetchStart = this.startMetric("fetchFinalTasks");
-    const allTasks = await this.prisma.task.findMany({
+    const allTasks = await prisma.task.findMany({
       where: {
         id: {
           in: tasks.map((t) => t.id),
@@ -271,7 +266,7 @@ export class SchedulingService {
         });
 
         // Update the task with the selected slot
-        const updatedTask = await this.prisma.task.update({
+        const updatedTask = await prisma.task.update({
           where: { id: task.id },
           data: {
             scheduledStart: bestSlot.start,

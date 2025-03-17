@@ -15,6 +15,7 @@
 - [ ] support attendees
 - [ ] support event notifications
 - [ ] add localization for date formatting
+- [ ] share availability
 
 # CalDAV Implementation
 ## Phase 3: Calendar Synchronization (Pending)
@@ -28,6 +29,7 @@
 - [ ] Add support for calendar sharing
 
 # Focus Mode
+# Focus Mode
 ## Focus Mode Implementation
 - [ ] fix keyboard shortcuts
 - [ ] in taskmodal make the tags more obvious if they are selected
@@ -39,6 +41,8 @@
 - [ ] auto scheduling did not schedule high priority tasks first
 - [ ] save task completed date and sync it with outlook 
 - [ ] deleteing a recurring event from quickview doens't work well and doesn't ask me if i want to delete the series or just the instance.
+
+# Misc
 
 # Misc
 ## Next Steps

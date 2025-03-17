@@ -233,6 +233,20 @@ For `npm install` make sure to include the --legacy-peer-deps flag
    - Use transactions where appropriate
    - Handle errors gracefully
 
+3. Database Connection Management
+   - ALWAYS use the global Prisma instance from `@/lib/prisma`
+   - NEVER create new PrismaClient instances with `new PrismaClient()`
+   - Import Prisma types from `@prisma/client` but client instance from `@/lib/prisma`
+   - Example:
+     ```typescript
+     // ❌ Don't do this:
+     import { PrismaClient } from "@prisma/client";
+     const prisma = new PrismaClient();
+
+     // ✅ Do this instead:
+     import { Task, Project } from "@prisma/client"; // For types only
+     import { prisma } from "@/lib/prisma"; // For database access
+     ```
 
 # Conventions
 

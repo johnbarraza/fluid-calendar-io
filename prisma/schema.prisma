@@ -404,37 +404,39 @@ model Log {
 }
 
 model PendingWaitlist {
-  id                 String   @id @default(cuid())
-  email              String   @unique
-  name               String?
-  referralCode       String? // Referral code used during signup
-  verificationToken  String   @unique
-  verificationExpiry DateTime
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  email                String   @unique
+  name                 String?
+  referralCode         String? // Referral code used during signup
+  verificationToken    String   @unique
+  verificationExpiry   DateTime
+  interestedInLifetime Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@index([verificationToken])
   @@index([email])
 }
 
 model Waitlist {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  name             String?
-  status           String    @default("WAITING") // WAITING, INVITED, REGISTERED
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  invitedAt        DateTime?
-  registeredAt     DateTime?
-  invitationToken  String?
-  invitationExpiry DateTime?
-  referralCode     String    @unique
-  referredBy       String?
-  referralCount    Int       @default(0)
-  priorityScore    Float     @default(0)
-  lastVisitedAt    DateTime?
-  notes            String?
-  lastPosition     Int? // Added to track position changes
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  name                 String?
+  status               String    @default("WAITING") // WAITING, INVITED, REGISTERED
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  invitedAt            DateTime?
+  registeredAt         DateTime?
+  invitationToken      String?
+  invitationExpiry     DateTime?
+  referralCode         String    @unique
+  referredBy           String?
+  referralCount        Int       @default(0)
+  priorityScore        Float     @default(0)
+  lastVisitedAt        DateTime?
+  notes                String?
+  lastPosition         Int? // Added to track position changes
+  interestedInLifetime Boolean   @default(false)
 
   @@index([status])
   @@index([referredBy])
