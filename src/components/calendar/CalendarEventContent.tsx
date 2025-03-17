@@ -56,7 +56,7 @@ export const CalendarEventContent = memo(function CalendarEventContent({
           <IoTimeOutline className="flex-shrink-0 h-3 w-3 text-current opacity-75" />
         )}
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate calendar-event-title">
+          <div className="font-medium line-clamp-2 break-words calendar-event-title">
             {title}
           </div>
         </div>
