@@ -131,10 +131,14 @@ jobs:
 
           # For main branch or latest tag
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Create a manifest directly without pulling
-            docker buildx imagetools create --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            # Create a manifest using docker CLI commands
+            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+              
+            # Push the manifest
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
           # For tags (releases)
@@ -142,13 +146,21 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
             
             # Create version tag manifest
-            docker buildx imagetools create --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
+            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} || true
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64
             
+            # Push the manifest
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+            
             # Create major.minor tag manifest
             MAJOR_MINOR=$(echo ${VERSION} | cut -d. -f1,2)
-            docker buildx imagetools create --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
+            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} || true
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64
+            
+            # Push the manifest
+            docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR}
           fi
