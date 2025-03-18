@@ -37,12 +37,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=raw,value=amd64,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-amd64
+            type=ref,event=pr,suffix=-amd64
+            type=semver,pattern={{version}}-amd64
+            type=semver,pattern={{major}}.{{minor}}-amd64
+            type=sha,suffix=-amd64
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -82,7 +82,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest-arm64,enable={{is_default_branch}}
+            type=raw,value=arm64,enable={{is_default_branch}}
             type=ref,event=branch,suffix=-arm64
             type=ref,event=pr,suffix=-arm64
             type=semver,pattern={{version}}-arm64
@@ -131,11 +131,10 @@ jobs:
 
           # For main branch or latest tag
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Create a manifest using docker CLI commands
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
+            # Create a manifest for latest
             docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:arm64
               
             # Push the manifest
             docker manifest push --purge ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
@@ -146,9 +145,8 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
             
             # Create version tag manifest
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} || true
             docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-amd64 \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64
             
             # Push the manifest
@@ -156,9 +154,8 @@ jobs:
             
             # Create major.minor tag manifest
             MAJOR_MINOR=$(echo ${VERSION} | cut -d. -f1,2)
-            docker manifest rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} || true
             docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR_MINOR} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-amd64 \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-arm64
             
             # Push the manifest
