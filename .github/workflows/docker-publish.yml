@@ -122,6 +122,9 @@ jobs:
 
       - name: Create and push manifest
         run: |
+          # Login directly with Docker CLI to ensure proper token scope
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
           # Enable experimental features for docker
           mkdir -p ~/.docker
           echo '{"experimental": "enabled"}' > ~/.docker/config.json
