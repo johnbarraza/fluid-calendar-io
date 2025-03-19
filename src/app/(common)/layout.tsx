@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Inter } from "next/font/google";
+import { inter } from "@/lib/fonts";
 import "../globals.css";
 import { cn } from "@/lib/utils";
 import { SessionProvider } from "@/components/providers/SessionProvider";
@@ -34,8 +34,6 @@ const NotificationProvider = dynamic<{ children: React.ReactNode }>(
     loading: () => <>{/* Render nothing while loading */}</>,
   }
 );
-
-const inter = Inter({ subsets: ["latin"] });
 
 const getTitleFromPathname = (pathname: string) => {
   switch (pathname) {

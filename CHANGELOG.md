@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
+### Added
+
+### Changed
+- Replaced Google Fonts CDN with self-hosted Inter font to fix intermittent build failures
+
+### Fixed
+
 
 ## [1.2.2] 2025-03-18
 ### Added

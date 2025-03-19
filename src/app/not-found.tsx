@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Inter } from "next/font/google";
+import { inter } from "@/lib/fonts";
 import "../app/globals.css";
 import { useEffect, useState } from "react";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function NotFound() {
   // Use client-side rendering to avoid hydration issues

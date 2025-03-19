@@ -1,9 +1,6 @@
-import { Inter } from "next/font/google";
+import { inter } from "@/lib/fonts";
 import "@/app/globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function OpenSourceHomeLayout({
   children,
