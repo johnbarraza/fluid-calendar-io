@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
+
+## [1.2.2] 2025-03-18
 ### Added
 - Added rate limiting to email queue to limit processing to 2 emails per second
 - Added additional logging to email processor to monitor rate limiting effectiveness
@@ -22,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - GitHub workflow for automatic Docker image publication
 - Documentation for using the Docker image in README.md
 - Added `scripts/sync-repos-reverse.sh` for syncing changes from open source repository back to SAAS repository
+- Added data retention and deletion information to privacy policy to comply with Google's app verification requirements
 
 ### Changed
 - Modified job retry functionality to update existing job records instead of creating new ones
