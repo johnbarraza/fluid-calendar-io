@@ -1,29 +1,23 @@
 # FluidCalendar Implementation Plan
 # Random Tasks
 - [ ] add a calculator comparing motion to FC
-- [ ] add more time zones
 - [ ] add a sidebar thingy in open to tell them to move to saas
 - [ ] auto schedule working hours in settings using 24 instead am/pm
 - [ ] improve task lists and focus view see [tasklist](docs/tasklist-enhancements.md)
   - [ ] add view for scheduled tasks and over due or saved views
-- [ ] add a flag that auto schedule needs to run instead of automatically auto scheduling
-- [ ] add start date to tasks to hide them from view until start date
 - [ ] use task-reminder job for sending reminders
 - [ ] cron job to cleanup logs
 - [ ] cron job to expire waitlist verifications
-- [ ] all-day multi-day editing is not working (google)
 - [ ] support attendees
 - [ ] support event notifications
 - [ ] add localization for date formatting
 - [ ] share availability
 - [ ] use SSE throughout to improve sync performance
-- [ ] setup a hosted runner on my mac to speed up arm64 builds for the open source project
 - [ ] use database for sysconfig instead of infisical
 
 # CalDAV Implementation
 ## Phase 3: Calendar Synchronization (Pending)
 - [ ] Implement two-way sync with change tracking
-- [ ] all day events are off by a day
 
 ## Phase 4: Advanced Features (Pending)
 - [ ] Support for CalDAV collections
