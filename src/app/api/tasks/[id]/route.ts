@@ -6,6 +6,11 @@ import { newDate } from "@/lib/date-utils";
 import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules";
 import { logger } from "@/lib/logger";
 import { authenticateRequest } from "@/lib/auth/api-auth";
+import {
+  TaskChangeTracker,
+  ChangeType,
+} from "@/lib/task-sync/task-change-tracker";
+import { Task } from "@prisma/client";
 
 const LOG_SOURCE = "task-route";
 export async function GET(
@@ -201,6 +206,24 @@ export async function PUT(
       updates.recurrenceRule = normalizeRecurrenceRule(updates.recurrenceRule);
     }
 
+    // Find the project's task mapping if it exists
+    let mappingId = null;
+    const targetProjectId = projectId || task.projectId;
+
+    if (targetProjectId) {
+      const mapping = await prisma.taskListMapping.findFirst({
+        where: {
+          projectId: targetProjectId,
+        },
+      });
+      if (mapping) {
+        mappingId = mapping.id;
+      }
+    }
+
+    // Save the old task for change tracking
+    const oldTask = { ...task };
+
     const updatedTask = await prisma.task.update({
       where: {
         id: id,
@@ -227,6 +250,34 @@ export async function PUT(
         project: true,
       },
     });
+
+    // Track the update for sync purposes if the task is in a mapped project
+    if (mappingId) {
+      const changeTracker = new TaskChangeTracker();
+      const changes = changeTracker.compareTaskObjects(
+        oldTask,
+        updatedTask as Partial<Task>
+      );
+
+      await changeTracker.trackChange(
+        task.id,
+        "UPDATE" as ChangeType,
+        userId,
+        changes,
+        undefined, // providerId will be set during sync
+        mappingId
+      );
+
+      logger.info(
+        `Tracked UPDATE change for task ${task.id} in mapping ${mappingId}`,
+        {
+          taskId: task.id,
+          mappingId,
+          changes: Object.keys(changes),
+        },
+        LOG_SOURCE
+      );
+    }
 
     return NextResponse.json(updatedTask);
   } catch (error) {
@@ -260,12 +311,60 @@ export async function DELETE(
         // Ensure the task belongs to the current user
         userId,
       },
+      include: {
+        project: true,
+      },
     });
 
     if (!task) {
       return new NextResponse("Task not found", { status: 404 });
     }
 
+    // Check if the task belongs to a mapped project
+    let mappingId = null;
+    if (task.projectId) {
+      const mapping = await prisma.taskListMapping.findFirst({
+        where: {
+          projectId: task.projectId,
+        },
+      });
+      if (mapping) {
+        mappingId = mapping.id;
+      }
+    }
+
+    // Track the deletion for sync purposes if the task was in a mapped project
+    // and had an external ID BEFORE actually deleting the task
+    if (mappingId && task.externalTaskId && task.source) {
+      const changeTracker = new TaskChangeTracker();
+      await changeTracker.trackChange(
+        id,
+        "DELETE" as ChangeType,
+        userId,
+        {
+          externalTaskId: task.externalTaskId,
+          source: task.source,
+          externalListId: task.externalListId,
+          projectId: task.projectId,
+          title: task.title,
+        },
+        undefined, // providerId will be set during sync
+        mappingId
+      );
+
+      logger.info(
+        `Tracked DELETE change for task ${id} in mapping ${mappingId}`,
+        {
+          taskId: id,
+          mappingId,
+          externalTaskId: task.externalTaskId,
+          title: task.title,
+        },
+        LOG_SOURCE
+      );
+    }
+
+    // Now delete the task AFTER tracking the change
     await prisma.task.delete({
       where: {
         id,

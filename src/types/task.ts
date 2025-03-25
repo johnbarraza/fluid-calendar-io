@@ -59,6 +59,11 @@ export interface Task {
   lastScheduled?: Date | null;
   scheduleLocked: boolean;
   postponedUntil?: Date | null;
+  // External sync fields
+  externalTaskId?: string | null;
+  source?: string | null;
+  externalListId?: string | null;
+  lastSyncedAt?: Date | null;
 }
 
 export interface NewTask

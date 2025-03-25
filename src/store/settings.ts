@@ -60,6 +60,7 @@ const defaultSettings: Settings & { accounts: ConnectedAccount[] } = {
   },
   notifications: {
     emailNotifications: true,
+    dailyEmailEnabled: true,
     notifyFor: {
       eventInvites: true,
       eventUpdates: true,
@@ -108,6 +109,7 @@ const defaultSettings: Settings & { accounts: ConnectedAccount[] } = {
     logLevel: "none",
     logRetention: undefined,
     logDestination: "db",
+    disableHomepage: false,
   },
   accounts: [],
 };
@@ -188,6 +190,7 @@ export const useSettingsStore = create<SettingsStore>()(
             },
             body: JSON.stringify({
               emailNotifications: newSettings.emailNotifications,
+              dailyEmailEnabled: newSettings.dailyEmailEnabled,
               eventInvites: newSettings.notifyFor.eventInvites,
               eventUpdates: newSettings.notifyFor.eventUpdates,
               eventCancellations: newSettings.notifyFor.eventCancellations,
@@ -407,6 +410,7 @@ export const useSettingsStore = create<SettingsStore>()(
 
           get().updateNotificationSettings({
             emailNotifications: notificationSettings.emailNotifications,
+            dailyEmailEnabled: notificationSettings.dailyEmailEnabled,
             notifyFor: {
               eventInvites: notificationSettings.eventInvites,
               eventUpdates: notificationSettings.eventUpdates,
@@ -461,6 +465,7 @@ export const useSettingsStore = create<SettingsStore>()(
             logLevel: systemSettings.logLevel as "none" | "debug",
             logRetention: systemSettings.logRetention,
             logDestination: systemSettings.logDestination,
+            disableHomepage: systemSettings.disableHomepage,
           });
         } catch (error) {
           logger.error(

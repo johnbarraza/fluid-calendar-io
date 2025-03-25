@@ -139,7 +139,7 @@ export async function DELETE(
         },
       });
 
-      // Delete the project (this will cascade delete OutlookTaskListMappings due to onDelete: CASCADE)
+      // Delete the project (this will cascade delete TaskListMappings due to onDelete: CASCADE)
       await tx.project.delete({
         where: {
           id,

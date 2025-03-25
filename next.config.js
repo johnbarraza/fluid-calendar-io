@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Disable all development indicators
-  devIndicators: {
-    buildActivity: false,
-    staticPageGenerationInfo: false,
-  },
+  devIndicators: false,
 
   // Enable standalone output for Docker deployment
   output: "standalone",

@@ -25,8 +25,9 @@ model ConnectedAccount {
   caldavUsername String? // Username for Basic Auth
 
   // User relationship
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+  userId       String?
+  user         User?          @relation(fields: [userId], references: [id])
+  TaskProvider TaskProvider[]
 
   @@unique([userId, provider, email])
   @@index([userId])
@@ -80,6 +81,9 @@ model User {
   connectedAccounts    ConnectedAccount[]
   tags                 Tag[]
   JobRecord            JobRecord[]
+  taskProviders        TaskProvider[]
+  TaskChange           TaskChange[]
+  PasswordReset        PasswordReset[]
 }
 
 model VerificationToken {
@@ -154,13 +158,18 @@ model CalendarEvent {
 }
 
 model Project {
-  id              String                   @id @default(cuid())
-  name            String
-  description     String?
-  color           String?
-  status          String                   @default("active") // enum: 'active', 'archived'
-  tasks           Task[]
-  outlookMappings OutlookTaskListMapping[]
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  color            String?
+  status           String            @default("active") // enum: 'active', 'archived'
+  tasks            Task[]
+  taskListMappings TaskListMapping[]
+
+  // External sync fields
+  externalId     String?
+  externalSource String?
+  lastSyncedAt   DateTime?
 
   // User relationship
   userId String?
@@ -172,6 +181,7 @@ model Project {
 
   @@index([status])
   @@index([userId])
+  @@index([externalId, externalSource])
 }
 
 model Task {
@@ -211,6 +221,18 @@ model Task {
   source         String?
   lastSyncedAt   DateTime?
 
+  // Enhanced sync fields
+  externalListId    String? // The external list/folder ID this task belongs to
+  externalCreatedAt DateTime? // When the task was created in the external system
+  externalUpdatedAt DateTime? // When the task was last updated in the external system
+  syncStatus        String? // 'synced', 'pending', 'error', etc.
+  syncError         String? // Error message if sync failed
+  syncHash          String? // Hash of task data for detecting changes
+  skipSync          Boolean   @default(false) // Flag to skip syncing this task
+
+  // Change tracking relation
+  changes TaskChange[]
+
   // User relationship
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
@@ -234,6 +256,9 @@ model Task {
   @@index([source])
   @@index([postponedUntil])
   @@index([userId])
+  @@index([externalTaskId, source])
+  @@index([syncStatus])
+  @@index([externalListId])
 }
 
 model Tag {
@@ -322,6 +347,7 @@ model NotificationSettings {
   userId                String   @unique
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailNotifications    Boolean  @default(true)
+  dailyEmailEnabled     Boolean  @default(true) // Controls whether the user receives daily email updates
   eventInvites          Boolean  @default(true)
   eventUpdates          Boolean  @default(true)
   eventCancellations    Boolean  @default(true)
@@ -373,22 +399,10 @@ model SystemSettings {
   logRetention        Json? // Retention periods per log level
   logDestination      String   @default("db") // db, file, both
   publicSignup        Boolean  @default(false) // Whether public signup is enabled
+  disableHomepage     Boolean  @default(false) // Whether to disable the homepage and redirect to login/calendar
+  resendApiKey        String? // API key for Resend email service
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-}
-
-model OutlookTaskListMapping {
-  id              String   @id @default(cuid())
-  externalListId  String
-  projectId       String
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  lastImported    DateTime
-  name            String
-  isAutoScheduled Boolean  @default(true)
-
-  @@unique([externalListId, projectId])
-  @@index([externalListId])
-  @@index([projectId])
 }
 
 model Log {
@@ -421,24 +435,25 @@ model PendingWaitlist {
 }
 
 model Waitlist {
-  id                   String    @id @default(cuid())
-  email                String    @unique
-  name                 String?
-  status               String    @default("WAITING") // WAITING, INVITED, REGISTERED
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  invitedAt            DateTime?
-  registeredAt         DateTime?
-  invitationToken      String?
-  invitationExpiry     DateTime?
-  referralCode         String    @unique
-  referredBy           String?
-  referralCount        Int       @default(0)
-  priorityScore        Float     @default(0)
-  lastVisitedAt        DateTime?
-  notes                String?
-  lastPosition         Int? // Added to track position changes
-  interestedInLifetime Boolean   @default(false)
+  id                        String    @id @default(cuid())
+  email                     String    @unique
+  name                      String?
+  status                    String    @default("WAITING") // WAITING, INVITED, REGISTERED
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  invitedAt                 DateTime?
+  registeredAt              DateTime?
+  invitationToken           String?
+  invitationExpiry          DateTime?
+  referralCode              String    @unique
+  referredBy                String?
+  referralCount             Int       @default(0)
+  priorityScore             Float     @default(0)
+  lastVisitedAt             DateTime?
+  notes                     String?
+  lastPosition              Int? // Added to track position changes
+  interestedInLifetime      Boolean   @default(false)
+  queueNotificationsEnabled Boolean   @default(true) // Controls whether to send queue position notifications
 
   @@index([status])
   @@index([referredBy])
@@ -495,4 +510,98 @@ enum JobStatus {
   FAILED
   DELAYED
   PAUSED
+}
+
+// New models for task synchronization
+model TaskProvider {
+  id               String            @id @default(cuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             String // 'outlook', 'google', etc.
+  name             String
+  enabled          Boolean           @default(true)
+  syncEnabled      Boolean           @default(true)
+  syncInterval     String            @default("hourly") // 'hourly', 'daily', 'manual'
+  lastSyncedAt     DateTime?
+  accessToken      String?
+  refreshToken     String?
+  expiresAt        DateTime?
+  accountId        String? // References a ConnectedAccount
+  account          ConnectedAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  defaultProjectId String? // Default project for tasks without a list mapping
+  settings         Json? // Provider-specific settings
+  mappings         TaskListMapping[]
+  error            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  TaskChange       TaskChange[]
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@index([type])
+}
+
+model TaskListMapping {
+  id               String       @id @default(cuid())
+  providerId       String
+  provider         TaskProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  projectId        String
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  externalListId   String // ID of the external task list
+  externalListName String // Name of the external task list
+  direction        String       @default("incoming") // 'incoming', 'outgoing', 'bidirectional'
+  isDefault        Boolean      @default(false)
+  syncEnabled      Boolean      @default(true)
+  isAutoScheduled  Boolean      @default(true)
+  lastSyncedAt     DateTime?
+  syncStatus       String?
+  lastError        String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  TaskChange       TaskChange[]
+
+  @@unique([providerId, projectId])
+  @@unique([providerId, externalListId])
+  @@index([providerId])
+  @@index([projectId])
+  @@index([externalListId])
+}
+
+// New model for task change tracking
+model TaskChange {
+  id         String           @id @default(cuid())
+  taskId     String? // ID of the task that changed
+  task       Task?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  providerId String? // ID of the provider if this is related to a sync
+  provider   TaskProvider?    @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  mappingId  String? // ID of the mapping if this is related to a list sync
+  mapping    TaskListMapping? @relation(fields: [mappingId], references: [id], onDelete: SetNull)
+  changeType String // 'CREATE', 'UPDATE', 'DELETE'
+  changeData Json? // The actual changes, as a diff
+  synced     Boolean          @default(false) // Whether this change has been synced
+  timestamp  DateTime         @default(now())
+  userId     String // User who made the change
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime         @default(now())
+
+  @@index([taskId])
+  @@index([providerId])
+  @@index([mappingId])
+  @@index([changeType])
+  @@index([synced])
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
 }

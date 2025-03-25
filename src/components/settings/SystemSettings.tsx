@@ -13,6 +13,7 @@ import {
 import { logger } from "@/lib/logger";
 import AdminOnly from "@/components/auth/AdminOnly";
 import AccessDeniedMessage from "@/components/auth/AccessDeniedMessage";
+import { clearResendInstance } from "@/lib/email/resend";
 
 const LOG_SOURCE = "SystemSettings";
 
@@ -36,6 +37,8 @@ export function SystemSettings() {
           outlookClientSecret: data.outlookClientSecret,
           outlookTenantId: data.outlookTenantId,
           logLevel: data.logLevel,
+          disableHomepage: data.disableHomepage,
+          resendApiKey: data.resendApiKey,
         });
       })
       .catch((error) => {
@@ -56,6 +59,11 @@ export function SystemSettings() {
       });
       const data = await response.json();
       updateSystemSettings(data);
+
+      // Clear Resend instance if the API key was updated
+      if ("resendApiKey" in updates) {
+        clearResendInstance();
+      }
     } catch (error) {
       logger.error(
         "Failed to update system settings",
@@ -217,26 +225,45 @@ export function SystemSettings() {
           </div>
         </SettingRow>
 
-        <SettingRow
-          label="Logging"
-          description="Configure application logging level"
-        >
+        <SettingRow label="Homepage" description="Configure homepage behavior">
           <div className="space-y-2">
-            <Label>Log Level</Label>
+            <Label>Disable Homepage</Label>
             <Select
-              value={system.logLevel || "none"}
+              value={system.disableHomepage ? "true" : "false"}
               onValueChange={(value) =>
-                handleUpdate({ logLevel: value as "none" | "debug" })
+                handleUpdate({ disableHomepage: value === "true" })
               }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="debug">Debug</SelectItem>
+                <SelectItem value="false">Show Homepage</SelectItem>
+                <SelectItem value="true">Redirect to Login/Calendar</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground">
+              When enabled, the homepage (/) will redirect to the login page for
+              unauthenticated users or to the calendar for authenticated users.
+            </p>
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          label="Email Service"
+          description="Configure email service settings"
+        >
+          <div className="space-y-2">
+            <Label>Resend API Key</Label>
+            <Input
+              type="password"
+              value={system.resendApiKey || ""}
+              onChange={(e) => handleUpdate({ resendApiKey: e.target.value })}
+              placeholder="Enter your Resend API key"
+            />
+            <p className="text-sm text-muted-foreground">
+              API key for the Resend email service. Required for sending emails.
+            </p>
           </div>
         </SettingRow>
       </SettingsSection>

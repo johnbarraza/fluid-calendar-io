@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { isPublicSignupEnabledClient } from "@/lib/auth/client-public-signup";
 import { useEffect } from "react";
 import { logger } from "@/lib/logger";
+import { useRouter } from "next/navigation";
 
 const LOG_SOURCE = "SignInForm";
 
@@ -28,6 +29,7 @@ export function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [publicSignupEnabled, setPublicSignupEnabled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const checkPublicSignup = async () => {
@@ -171,6 +173,16 @@ export function SignInForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <div className="text-right">
+                  <Button
+                    variant="link"
+                    className="text-sm text-muted-foreground p-0 h-auto"
+                    onClick={() => router.push("/auth/reset-password")}
+                    type="button"
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}

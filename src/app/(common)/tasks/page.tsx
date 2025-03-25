@@ -31,11 +31,14 @@ export default function TasksPage() {
     createTag,
     scheduleAllTasks,
   } = useTaskStore();
-  const { fetchProjects } = useProjectStore();
+  const { fetchProjects, activeProject } = useProjectStore();
   const { viewMode, setViewMode } = useTaskPageSettings();
   const { isOpen, setOpen } = useTaskModalStore();
 
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
+  const [initialProjectId, setInitialProjectId] = useState<
+    string | null | undefined
+  >(undefined);
 
   // Fetch tasks and tags on mount
   useEffect(() => {
@@ -150,6 +153,16 @@ export default function TasksPage() {
                 data-create-task-button
                 onClick={() => {
                   setSelectedTask(undefined);
+                  // Set initial project ID based on active project
+                  // If viewing "No Project", set to null
+                  // If viewing a specific project, set to that project's ID
+                  // Otherwise, don't set an initial project (undefined)
+                  const projectId = activeProject
+                    ? activeProject.id === "no-project"
+                      ? null
+                      : activeProject.id
+                    : undefined;
+                  setInitialProjectId(projectId);
                   setOpen(true);
                 }}
               >
@@ -195,11 +208,13 @@ export default function TasksPage() {
           onClose={() => {
             setOpen(false);
             setSelectedTask(undefined);
+            setInitialProjectId(undefined);
           }}
           onSave={selectedTask ? handleUpdateTask : handleCreateTask}
           task={selectedTask}
           tags={tags}
           onCreateTag={handleCreateTag}
+          initialProjectId={initialProjectId}
         />
 
         {loading && (

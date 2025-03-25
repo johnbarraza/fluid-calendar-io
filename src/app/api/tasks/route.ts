@@ -6,6 +6,10 @@ import { newDate } from "@/lib/date-utils";
 import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules";
 import { logger } from "@/lib/logger";
 import { authenticateRequest } from "@/lib/auth/api-auth";
+import {
+  TaskChangeTracker,
+  ChangeType,
+} from "@/lib/task-sync/task-change-tracker";
 
 const LOG_SOURCE = "tasks-route";
 
@@ -119,6 +123,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Find the project's task mapping if it exists
+    let mappingId = null;
+    if (taskData.projectId) {
+      const mapping = await prisma.taskListMapping.findFirst({
+        where: {
+          projectId: taskData.projectId,
+        },
+      });
+      if (mapping) {
+        mappingId = mapping.id;
+      }
+    }
+
     const task = await prisma.task.create({
       data: {
         ...taskData,
@@ -137,6 +154,28 @@ export async function POST(request: NextRequest) {
         project: true,
       },
     });
+
+    // Track the creation for sync purposes if the task is in a mapped project
+    if (mappingId) {
+      const changeTracker = new TaskChangeTracker();
+      await changeTracker.trackChange(
+        task.id,
+        "CREATE" as ChangeType,
+        userId,
+        { task },
+        undefined, // providerId will be determined later during sync
+        mappingId
+      );
+
+      logger.info(
+        `Tracked CREATE change for task ${task.id} in mapping ${mappingId}`,
+        {
+          taskId: task.id,
+          mappingId,
+        },
+        LOG_SOURCE
+      );
+    }
 
     return NextResponse.json(task);
   } catch (error) {

@@ -2,8 +2,9 @@
 
 import { useProjectStore } from "@/store/project";
 import { useTaskStore } from "@/store/task";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { HiPlus, HiPencil, HiFolderOpen } from "react-icons/hi";
+import { BsArrowRepeat } from "react-icons/bs";
 import { ProjectStatus, Project } from "@/types/project";
 import { ProjectModal } from "./ProjectModal";
 import { useDroppableProject } from "../dnd/useDragAndDrop";
@@ -11,12 +12,23 @@ import { TaskStatus } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import { isSaasEnabled } from "@/lib/config";
 
 // Special project object to represent "no project" state
 const NO_PROJECT: Partial<Project> = {
   id: "no-project",
   name: "No Project",
 };
+
+// Interface for task list mappings
+interface TaskListMapping {
+  id: string;
+  providerId: string;
+  projectId: string;
+  externalListId: string;
+  externalListName: string;
+}
 
 export function ProjectSidebar() {
   const {
@@ -30,6 +42,12 @@ export function ProjectSidebar() {
   const { tasks } = useTaskStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
+  const [projectMappings, setProjectMappings] = useState<
+    Record<string, TaskListMapping[]>
+  >({});
+  const [syncingProjects, setSyncingProjects] = useState<Set<string>>(
+    new Set()
+  );
 
   const { droppableProps: removeProjectProps, isOver: isOverRemove } =
     useDroppableProject(null);
@@ -37,6 +55,79 @@ export function ProjectSidebar() {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  // Fetch task list mappings for projects
+  useEffect(() => {
+    if (projects.length > 0) {
+      fetchProjectMappings();
+    }
+  }, [projects]);
+
+  const fetchProjectMappings = async () => {
+    try {
+      const response = await fetch("/api/task-sync/mappings");
+      const data = await response.json();
+
+      if (data.mappings) {
+        // Group mappings by project ID
+        const mappingsByProject: Record<string, TaskListMapping[]> = {};
+
+        data.mappings.forEach((mapping: TaskListMapping) => {
+          if (!mappingsByProject[mapping.projectId]) {
+            mappingsByProject[mapping.projectId] = [];
+          }
+          mappingsByProject[mapping.projectId].push(mapping);
+        });
+
+        setProjectMappings(mappingsByProject);
+      }
+    } catch (error) {
+      console.error("Failed to fetch task list mappings:", error);
+    }
+  };
+
+  const handleSyncProject = useCallback(
+    async (projectId: string, mappingId: string) => {
+      if (syncingProjects.has(projectId)) return;
+
+      try {
+        setSyncingProjects((prev) => new Set(prev).add(projectId));
+
+        const response = await fetch("/api/task-sync/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mappingId,
+            direction: "bidirectional",
+          }),
+        });
+
+        if (response.ok) {
+          if (isSaasEnabled) {
+            toast.success("Task sync initiated for project");
+          } else {
+            const { fetchTasks } = useTaskStore.getState();
+            await fetchTasks();
+            toast.success("Sync Completed");
+          }
+        } else {
+          toast.error("Failed to sync tasks for project");
+        }
+      } catch (error) {
+        console.error("Failed to sync project tasks:", error);
+        toast.error("Failed to sync tasks for project");
+      } finally {
+        setSyncingProjects((prev) => {
+          const next = new Set(prev);
+          next.delete(projectId);
+          return next;
+        });
+      }
+    },
+    [syncingProjects]
+  );
 
   const activeProjects = projects.filter(
     (project) => project.status === ProjectStatus.ACTIVE
@@ -114,6 +205,9 @@ export function ProjectSidebar() {
                       project={project}
                       isActive={activeProject?.id === project.id}
                       onEdit={handleEditProject}
+                      mappings={projectMappings[project.id] || []}
+                      isSyncing={syncingProjects.has(project.id)}
+                      onSync={handleSyncProject}
                     />
                   ))}
                 </div>
@@ -130,6 +224,9 @@ export function ProjectSidebar() {
                       project={project}
                       isActive={activeProject?.id === project.id}
                       onEdit={handleEditProject}
+                      mappings={projectMappings[project.id] || []}
+                      isSyncing={syncingProjects.has(project.id)}
+                      onSync={handleSyncProject}
                     />
                   ))}
                 </div>
@@ -176,9 +273,19 @@ interface ProjectItemProps {
   project: Project;
   isActive: boolean;
   onEdit: (project: Project) => void;
+  mappings: TaskListMapping[];
+  isSyncing: boolean;
+  onSync: (projectId: string, mappingId: string) => void;
 }
 
-function ProjectItem({ project, isActive, onEdit }: ProjectItemProps) {
+function ProjectItem({
+  project,
+  isActive,
+  onEdit,
+  mappings,
+  isSyncing,
+  onSync,
+}: ProjectItemProps) {
   const { setActiveProject } = useProjectStore();
   const { tasks } = useTaskStore();
   const { droppableProps, isOver } = useDroppableProject(project);
@@ -188,6 +295,9 @@ function ProjectItem({ project, isActive, onEdit }: ProjectItemProps) {
     (task) =>
       task.projectId === project.id && task.status !== TaskStatus.COMPLETED
   ).length;
+
+  // Check if project has any task mappings
+  const hasMappings = mappings.length > 0;
 
   return (
     <div
@@ -207,6 +317,24 @@ function ProjectItem({ project, isActive, onEdit }: ProjectItemProps) {
       )}
       <span className="truncate flex-1 project-name">{project.name}</span>
       <span className="text-xs text-muted-foreground">{taskCount}</span>
+
+      {hasMappings && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          disabled={isSyncing}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSync(project.id, mappings[0].id);
+          }}
+        >
+          <BsArrowRepeat
+            className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")}
+          />
+        </Button>
+      )}
+
       <Button
         variant="ghost"
         size="icon"

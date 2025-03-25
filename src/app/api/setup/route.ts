@@ -133,44 +133,31 @@ export async function POST(request: Request) {
         },
       }),
 
-      // Ensure only one SystemSettings record exists
+      // Check if SystemSettings record exists and fail if it does
       prisma.$transaction(async (tx) => {
         // Check if any SystemSettings record exists
         const existingSettings = await tx.systemSettings.findFirst();
 
         if (existingSettings) {
-          // Update the existing record
-          return tx.systemSettings.update({
-            where: { id: existingSettings.id },
-            data: {
-              logLevel: "error",
-              logDestination: "db",
-              logRetention: {
-                error: 30,
-                warn: 14,
-                info: 7,
-                debug: 3,
-              },
-              publicSignup: false,
-            },
-          });
-        } else {
-          // Create a new record with default ID
-          return tx.systemSettings.create({
-            data: {
-              id: "default",
-              logLevel: "error",
-              logDestination: "db",
-              logRetention: {
-                error: 30,
-                warn: 14,
-                info: 7,
-                debug: 3,
-              },
-              publicSignup: false,
-            },
-          });
+          throw new Error("SystemSettings record already exists");
         }
+
+        // Create a new record with default ID
+        return tx.systemSettings.create({
+          data: {
+            id: "default",
+            logLevel: "error",
+            logDestination: "db",
+            logRetention: {
+              error: 30,
+              warn: 14,
+              info: 7,
+              debug: 3,
+            },
+            publicSignup: false,
+            resendApiKey: process.env.RESEND_API_KEY || null,
+          },
+        });
       }),
     ]);
 
@@ -188,6 +175,20 @@ export async function POST(request: Request) {
       },
       LOG_SOURCE
     );
+
+    // Return a more specific error message if it's about existing SystemSettings
+    if (
+      error instanceof Error &&
+      error.message === "SystemSettings record already exists"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Setup has already been completed. System settings already exist.",
+        },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
       { error: "Failed to complete setup" },

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ interface TaskModalProps {
   task?: Task;
   tags: Tag[];
   onCreateTag: (name: string, color?: string) => Promise<Tag>;
+  initialProjectId?: string | null;
 }
 
 //TODO: move to utils
@@ -58,6 +59,7 @@ export function TaskModal({
   task,
   tags,
   onCreateTag,
+  initialProjectId,
 }: TaskModalProps) {
   const { projects } = useProjectStore();
   const [title, setTitle] = useState("");
@@ -73,7 +75,7 @@ export function TaskModal({
   const [newTagColor, setNewTagColor] = useState("#E5E7EB");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [projectId, setProjectId] = useState<string | null | undefined>(
-    task?.projectId
+    initialProjectId || task?.projectId
   );
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState<string | undefined>();
@@ -88,7 +90,7 @@ export function TaskModal({
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setTitle("");
     setDescription("");
     setStatus(TaskStatus.TODO);
@@ -100,20 +102,20 @@ export function TaskModal({
     setSelectedTagIds([]);
     setNewTagName("");
     setNewTagColor("#E5E7EB");
-    setProjectId(null);
+    setProjectId(initialProjectId ?? null);
     setIsRecurring(false);
     setRecurrenceRule(undefined);
     setIsAutoScheduled(true);
     setScheduleLocked(false);
     setPriority(null);
-  };
+  }, [initialProjectId]);
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       resetForm();
     }
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
 
   // Populate form with task data when editing
   useEffect(() => {
@@ -147,7 +149,7 @@ export function TaskModal({
     } else if (!task && isOpen) {
       resetForm();
     }
-  }, [task, isOpen]);
+  }, [task, isOpen, initialProjectId, resetForm]);
 
   // Focus title input when modal opens
   useEffect(() => {

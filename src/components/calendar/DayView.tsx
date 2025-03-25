@@ -230,7 +230,7 @@ export function DayView({ currentDate, onDateClick }: DayViewProps) {
   );
 
   return (
-    <div className="h-full [&_.fc-timegrid-slot]:!h-[25px] [&_.fc-timegrid-axis-cushion]:!py-1 [&_.fc-timegrid-slot-label]:!py-1 [&_.fc-daygrid-day-frame]:!min-h-0 [&_.fc-daygrid-day-events]:!min-h-0">
+    <div className="h-full [&_.fc-timegrid-slot]:!h-[35px] [&_.fc-timegrid-axis-cushion]:!py-1 [&_.fc-timegrid-slot-label]:!py-1 [&_.fc-daygrid-day-frame]:!min-h-0 [&_.fc-daygrid-day-events]:!min-h-0">
       <FullCalendar
         ref={calendarRef}
         plugins={[timeGridPlugin, interactionPlugin]}

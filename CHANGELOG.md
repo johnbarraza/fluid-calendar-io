@@ -1,7 +1,57 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [unreleased]
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [1.3.0] 2025-03-25
+
+### Added
+- Comprehensive bidirectional task synchronization system with support for Outlook
+  - Field mapping system for consistent task property synchronization
+  - Recurrence rule conversion for recurring tasks
+  - Intelligent conflict resolution based on timestamps
+  - Support for task priorities and status synchronization
+- Password reset functionality with email support for both SAAS and open source versions
+- Smart email service with queued (SAAS) and direct (open source) delivery options
+- System setting to optionally disable homepage and redirect to login/calendar
+- Daily email updates for upcoming meetings and tasks (configurable)
+- Resend API key management through SystemSettings
+
+### Changed
+- Enhanced task sync manager for true bidirectional synchronization
+- Improved date and timezone handling across calendar and task systems
+- Moved sensitive credentials from environment variables to SystemSettings
+- Replaced Google Fonts CDN with self-hosted Inter font
+- Updated API routes to follow NextJS 15 conventions
+- Split task sync route into SAAS and open source versions
+  - Moved background job-based sync to `route.saas.ts`
+  - Created synchronous version in `route.open.ts` for open source edition
+
+### Fixed
+- Multiple task synchronization issues:
+  - Prevented duplicate task creation in Outlook
+  - Fixed task deletion synchronization
+  - Resolved bidirectional sync conflicts
+  - Fixed task mapping and direction issues
+- All-day events timezone and display issues
+- Various TypeScript and linter errors throughout the task sync system
+
+### Removed
+- Legacy one-way Outlook task import system and related components
+- OutlookTaskListMapping model in favor of new TaskListMapping
+- RESEND_API_KEY from environment variables
 
 ## [1.2.3]
 ### Added
@@ -17,18 +67,23 @@ All notable changes to this project will be documented in this file.
 - Added "Resend Invitation" button to individual user actions in waitlist management
 
 ### Changed
-- Replaced Google Fonts CDN with self-hosted Inter font to fix intermittent build failures
-- Updated waitlist entries sorting to include secondary sorting by priorityScore and createdAt
+- Updated email templates to use "FluidCalendar" instead of "Fluid Calendar" for consistent branding
+- Refactored task scheduling logic into a common service to reduce code duplication
+  - Created `TaskSchedulingService` with shared scheduling functionality
+  - Updated both API route and background job processor to use the common service
+- Improved SAAS/open source code separation
+  - Moved SAAS-specific API routes to use `.saas.ts` extension
+  - Renamed NotificationProvider to NotificationProvider.saas.tsx
+  - Relocated NotificationProvider to SAAS layout for better code organization
+  - Updated client-side code to use the correct endpoints based on version
 
 ### Fixed
-- Fixed all-day events appearing on the wrong day for Google Calendar events due to timezone handling issues
-- Fixed Outlook all-day event creation that was failing due to Outlook requiring exact midnight UTC times
-- Fixed Outlook all-day events requiring a minimum 24-hour duration by automatically extending single-day events to end on the next day at midnight
-- Fixed Outlook all-day events displaying on the wrong day in the calendar due to incorrect date conversion during sync
-- Fixed startDate handling for recurring tasks, ensuring the time interval between start date and due date is preserved when creating new instances
-- Fixed timezone inconsistency in task list display for start dates and due dates
-- Fixed DatePicker showing incorrect dates (off by one day) when inline editing due dates and start dates
-- Fixed CalDAV all-day event creation failing with "invalid date-time value" error by properly using ICAL.Time.fromDateString instead of raw string dates
+- Fixed type errors in the job retry API by using the correct compound unique key (queueName + jobId)
+- Fixed database connection exhaustion issue in task scheduling:
+  - Refactored SchedulingService to use the global Prisma instance instead of creating new connections
+  - Updated CalendarServiceImpl and TimeSlotManagerImpl to use the global Prisma instance
+  - Added proper cleanup of resources in task scheduling API route
+  - Resolved "Too many database connections" errors in production
 
 ## [1.2.2] 2025-03-18
 ### Added
@@ -39,8 +94,7 @@ All notable changes to this project will be documented in this file.
 - Added lifetime subscription interest tracking to waitlist system
   - Implemented `interestedInLifetime` flag in Waitlist and PendingWaitlist models
   - Added admin notification emails when users express interest in lifetime subscription
-  - Updated waitlist API to handle lifetime subscription interest
-- Added background task scheduling system with real-time notifications
+  - Added background task scheduling system with real-time notifications
   - Implemented task scheduling queue with BullMQ for asynchronous processing
   - Added debouncing mechanism to prevent duplicate scheduling jobs
   - Created SSE (Server-Sent Events) endpoint with Redis-backed notifications
@@ -71,6 +125,17 @@ All notable changes to this project will be documented in this file.
   - Updated CalendarServiceImpl and TimeSlotManagerImpl to use the global Prisma instance
   - Added proper cleanup of resources in task scheduling API route
   - Resolved "Too many database connections" errors in production
+
+### Technical Debt
+- Added proper TypeScript types to replace `any` types
+- Added eslint-disable comments only where absolutely necessary
+- Fixed linter and TypeScript compiler errors
+- Improved code maintainability with better type definitions
+- Added documentation for the job processing system
+- Standardized error handling across the codebase
+
+### Removed
+- Separate one-way sync methods in favor of a more efficient bidirectional approach
 
 ## [1.2.1] 2025-03-13
 ### Added
@@ -154,11 +219,3 @@ All notable changes to this project will be documented in this file.
 - Enhanced admin interface with better job visualization
 - Refactored all direct email sending to use the queue system
 - Updated waitlist email functions to use the new email service
-
-### Technical Debt
-- Added proper TypeScript types to replace `any` types
-- Added eslint-disable comments only where absolutely necessary
-- Fixed linter and TypeScript compiler errors
-- Improved code maintainability with better type definitions
-- Added documentation for the job processing system
-- Standardized error handling across the codebase
