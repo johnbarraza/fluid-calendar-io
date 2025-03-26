@@ -134,6 +134,12 @@ export async function GET(request: NextRequest) {
       // Fetch available calendars
       const calendars = await fetchCalDAVCalendars(client);
 
+      // Process calendars to ensure proper type handling
+      const processedCalendars = calendars.map((calendar) => ({
+        ...calendar,
+        syncToken: calendar.syncToken ? String(calendar.syncToken) : null,
+      }));
+
       // Get existing calendars for this account
       const existingCalendars = await prisma.calendarFeed.findMany({
         where: {
@@ -149,7 +155,7 @@ export async function GET(request: NextRequest) {
       const existingUrls = new Set(existingCalendars.map((cal) => cal.url));
 
       // Format the calendars for the response
-      const formattedCalendars = calendars.map((cal) => ({
+      const formattedCalendars = processedCalendars.map((cal) => ({
         id: cal.url, // Use url as id to match other providers
         url: cal.url,
         name: cal.displayName || "Unnamed Calendar",
