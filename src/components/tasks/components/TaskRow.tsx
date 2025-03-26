@@ -8,6 +8,7 @@ import {
   HiPencil,
   HiRefresh,
   HiTrash,
+  HiCloud,
 } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,8 +167,13 @@ export function TaskRow({
               title="Schedule locked"
             />
           )}
+          {task.externalTaskId && (
+            <HiCloud
+              className="h-4 w-4 text-sky-500 shrink-0"
+              title={`Synced from ${task.source}`}
+            />
+          )}
         </div>
-
       </td>
       <td className="px-3 py-2 whitespace-nowrap">
         <EditableCell

@@ -1,5 +1,5 @@
 import { RecurrenceConverter } from "./recurrence-converter";
-import { OutlookRecurrence } from "./recurrence-types";
+import { OutlookTaskRecurrence } from "./recurrence-types";
 
 /**
  * OutlookRecurrenceConverter
@@ -13,7 +13,7 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
    * @param rrule The recurrence rule in RRule format
    * @returns Outlook recurrence format
    */
-  convertFromRRule(rrule: string): OutlookRecurrence {
+  convertFromRRule(rrule: string): OutlookTaskRecurrence {
     // Parse the RRule string into components
     const parts = this.parseRRule(rrule);
 
@@ -22,49 +22,23 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
     const interval = parseInt(parts.INTERVAL as string, 10) || 1;
 
     // Initialize pattern with basic properties
-    const pattern: OutlookRecurrence["pattern"] = {
+    const pattern: OutlookTaskRecurrence["pattern"] = {
       type: this.mapFrequencyToOutlook(freq),
       interval,
     };
 
-    // Handle day of week (for weekly or monthly patterns)
-    if (parts.BYDAY) {
+    // Handle day of week for weekly patterns only
+    if (freq === "WEEKLY" && parts.BYDAY) {
       // Handle both array and string formats
       const byDays = Array.isArray(parts.BYDAY)
         ? parts.BYDAY
         : [parts.BYDAY as string];
 
-      // Check if this is a relative monthly pattern (e.g., 1MO = first Monday)
-      if (freq === "MONTHLY" && byDays.some((day) => /^[0-9-]/.test(day))) {
-        // This is a relative monthly rule (like "1st Monday")
-        pattern.type = "relativemonthly";
-
-        // Extract the position (1, 2, 3, 4, -1) and day
-        const relativeDay = byDays[0] as string;
-        const position = relativeDay.match(/^(-?\d+)([A-Z]+)$/);
-
-        if (position) {
-          const pos = parseInt(position[1], 10);
-          const day = position[2];
-
-          // Set the index (first, second, third, fourth, last)
-          pattern.index = this.getWeekdayPosition(pos);
-
-          // Set the day of week
-          pattern.daysOfWeek = [this.getOutlookDayOfWeek(day)];
-        }
-      } else {
-        // Regular weekly or monthly pattern
-        pattern.daysOfWeek = byDays.map((day) => {
-          // Remove any position prefix if present
-          const cleanDay = day.replace(/^-?\d+/, "");
-          return this.getOutlookDayOfWeek(cleanDay);
-        });
-      }
+      pattern.daysOfWeek = byDays.map((day) => this.getOutlookDayOfWeek(day));
     }
 
     // Handle day of month for monthly patterns
-    if (parts.BYMONTHDAY) {
+    if (freq === "MONTHLY" && parts.BYMONTHDAY) {
       pattern.dayOfMonth = parseInt(
         Array.isArray(parts.BYMONTHDAY)
           ? parts.BYMONTHDAY[0]
@@ -73,20 +47,40 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
       );
     }
 
-    // Handle month for yearly patterns
-    if (parts.BYMONTH) {
-      pattern.month = parseInt(
-        Array.isArray(parts.BYMONTH)
-          ? parts.BYMONTH[0]
-          : (parts.BYMONTH as string),
-        10
-      );
+    // Handle month and day for yearly patterns
+    if (freq === "YEARLY") {
+      if (parts.BYMONTH) {
+        pattern.month = parseInt(
+          Array.isArray(parts.BYMONTH)
+            ? parts.BYMONTH[0]
+            : (parts.BYMONTH as string),
+          10
+        );
+      }
+      if (parts.BYMONTHDAY) {
+        pattern.dayOfMonth = parseInt(
+          Array.isArray(parts.BYMONTHDAY)
+            ? parts.BYMONTHDAY[0]
+            : (parts.BYMONTHDAY as string),
+          10
+        );
+      }
     }
 
-    // Initialize range
-    const range: OutlookRecurrence["range"] = {
+    // Initialize range with startDate
+    // If DTSTART is not provided, use the current date
+    let startDate: string;
+    if (parts.DTSTART) {
+      startDate = this.formatOutlookDate(parts.DTSTART as string);
+    } else {
+      // Use current date in YYYY-MM-DD format
+      const today = new Date();
+      startDate = today.toISOString().split("T")[0];
+    }
+
+    const range: OutlookTaskRecurrence["range"] = {
       type: "noEnd",
-      startDate: this.formatOutlookDate(parts.DTSTART as string),
+      startDate: startDate,
     };
 
     // Set end condition
@@ -107,7 +101,7 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
    * @param recurrence Outlook recurrence format
    * @returns RRule format string
    */
-  convertToRRule(recurrence: OutlookRecurrence): string {
+  convertToRRule(recurrence: OutlookTaskRecurrence): string {
     // Convert Outlook's relativemonthly to standard monthly with BYDAY
     let freq = recurrence.pattern.type.toUpperCase();
     if (freq === "RELATIVEMONTHLY") {
@@ -156,25 +150,28 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
       parts.BYMONTH = recurrence.pattern.month;
     }
 
-    // Add COUNT or UNTIL for end date
-    if (
-      recurrence.range.type === "numbered" &&
-      recurrence.range.numberOfOccurrences
-    ) {
-      parts.COUNT = recurrence.range.numberOfOccurrences;
-    } else if (
-      recurrence.range.type === "endDate" &&
-      recurrence.range.endDate
-    ) {
-      // Convert the date to YYYYMMDD format without hyphens
-      const untilDate = recurrence.range.endDate.replace(/-/g, "");
-      parts.UNTIL = `${untilDate}T235959Z`;
-    }
+    // Handle range properties if range exists
+    if (recurrence.range) {
+      // Add COUNT or UNTIL for end date
+      if (
+        recurrence.range.type === "numbered" &&
+        recurrence.range.numberOfOccurrences
+      ) {
+        parts.COUNT = recurrence.range.numberOfOccurrences;
+      } else if (
+        recurrence.range.type === "endDate" &&
+        recurrence.range.endDate
+      ) {
+        // Convert the date to YYYYMMDD format without hyphens
+        const untilDate = recurrence.range.endDate.replace(/-/g, "");
+        parts.UNTIL = `${untilDate}T235959Z`;
+      }
 
-    // Add DTSTART
-    if (recurrence.range.startDate) {
-      const dtstart = recurrence.range.startDate.replace(/-/g, "");
-      parts.DTSTART = `${dtstart}T000000Z`;
+      // Add DTSTART
+      if (recurrence.range.startDate) {
+        const dtstart = recurrence.range.startDate.replace(/-/g, "");
+        parts.DTSTART = `${dtstart}T000000Z`;
+      }
     }
 
     // Build and return the RRule string
@@ -182,20 +179,21 @@ export class OutlookRecurrenceConverter extends RecurrenceConverter {
   }
 
   /**
-   * Convert RRule frequency to Outlook recurrence type
+   * Map RRule frequency to Outlook recurrence pattern type
+   * Note: Our system only supports basic monthly and yearly patterns
    */
   private mapFrequencyToOutlook(freq: string): string {
-    switch (freq) {
+    switch (freq.toUpperCase()) {
       case "DAILY":
         return "daily";
       case "WEEKLY":
         return "weekly";
       case "MONTHLY":
-        return "monthly";
+        return "absoluteMonthly"; // Default to absolute monthly pattern
       case "YEARLY":
-        return "yearly";
+        return "absoluteYearly"; // Default to absolute yearly pattern
       default:
-        return "daily";
+        throw new Error(`Unsupported frequency: ${freq}`);
     }
   }
 

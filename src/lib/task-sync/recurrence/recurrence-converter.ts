@@ -32,30 +32,51 @@ export class RecurrenceConverter {
   }
 
   /**
+   * Convert from RRule string to standard RRule format
+   * This is useful when receiving RRule strings from external sources that might use non-standard formats
+   *
+   * @param rruleString The RRule string to convert
+   * @returns Standard RRule format string
+   */
+  convertFromString(rruleString: string): string {
+    // Base implementation just returns the string as-is
+    // Provider-specific converters should override this if they need special handling
+    return rruleString;
+  }
+
+  /**
    * Parse a RRule string into its components
    *
-   * @param rrule RRule string (RRULE:FREQ=...)
+   * @param rrule RRule string (can include DTSTART and RRULE parts)
    * @returns Object with parsed components
    */
   parseRRule(rrule: string): Record<string, string | string[]> {
-    // Remove 'RRULE:' prefix if present
-    const ruleText = rrule.startsWith("RRULE:") ? rrule.substring(6) : rrule;
-
-    // Split the rule into parts separated by semicolons
-    const parts = ruleText.split(";");
-
-    // Initialize result object
     const result: Record<string, string | string[]> = {};
 
-    // Parse each part (e.g., "FREQ=DAILY")
-    for (const part of parts) {
-      const [key, value] = part.split("=");
+    // Split into lines in case there's a DTSTART
+    const lines = rrule.split("\n");
 
-      // Handle arrays (like BYDAY=MO,TU,WE)
-      if (value && value.includes(",")) {
-        result[key] = value.split(",");
-      } else {
-        result[key] = value || "";
+    for (const line of lines) {
+      if (line.startsWith("DTSTART:")) {
+        result["DTSTART"] = line.substring(8);
+        continue;
+      }
+
+      if (line.startsWith("RRULE:")) {
+        const ruleText = line.substring(6);
+        const parts = ruleText.split(";");
+
+        for (const part of parts) {
+          const [key, value] = part.split("=");
+          if (!key || !value) continue;
+
+          // Handle arrays (like BYDAY=MO,TU,WE)
+          if (value.includes(",")) {
+            result[key] = value.split(",");
+          } else {
+            result[key] = value;
+          }
+        }
       }
     }
 

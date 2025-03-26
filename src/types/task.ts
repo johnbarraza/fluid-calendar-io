@@ -1,3 +1,4 @@
+import { ChangeType } from "@/lib/task-sync/task-change-tracker";
 import { Project } from "./project";
 
 export enum TaskStatus {
@@ -104,4 +105,11 @@ export interface TaskFilters {
 export interface TaskWithRelations extends Task {
   tags: Tag[];
   project: Project | null;
+}
+
+export interface TaskChange {
+  id: string;
+  taskId: string;
+  changeType: ChangeType;
+  changeData: Record<string, unknown>;
 }

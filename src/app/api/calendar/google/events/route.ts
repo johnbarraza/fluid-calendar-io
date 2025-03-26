@@ -319,6 +319,7 @@ export async function DELETE(request: NextRequest) {
     // Delete from Google Calendar
     await deleteGoogleEvent(
       validatedEvent.feed.accountId,
+      userId,
       validatedEvent.feed.url,
       validatedEvent.externalEventId,
       mode

@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
           userId,
           enabled: true,
           lastSync: formatISO(new Date()),
-          syncToken: calendar.syncToken,
+          syncToken: calendar.syncToken ? String(calendar.syncToken) : null,
         },
       });
 

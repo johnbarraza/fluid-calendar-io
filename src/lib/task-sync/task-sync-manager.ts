@@ -298,86 +298,6 @@ export class TaskSyncManager {
   ): Promise<void> {
     try {
       // Step 1: Fetch tasks from both sources
-      const externalTasks = await provider.getTasks(mapping.externalListId);
-
-      // Get all DELETE changes specifically (both synced and unsynced)
-      // These need special handling since the tasks might already be gone
-      const deleteChanges = await prisma.taskChange.findMany({
-        where: {
-          mappingId: mapping.id,
-          changeType: "DELETE",
-          // Only look for recent changes
-          timestamp: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-          },
-        },
-        orderBy: {
-          timestamp: "desc",
-        },
-      });
-
-      // Create a set of external IDs that were recently deleted locally
-      const recentlyDeletedExternalIds = new Set<string>();
-
-      // Process any unsynced DELETE changes immediately
-      const deleteSuccessIds: string[] = [];
-
-      for (const change of deleteChanges) {
-        if (change.changeData) {
-          const changeData = change.changeData as Record<string, unknown>;
-          const externalTaskId = changeData.externalTaskId as
-            | string
-            | undefined;
-          const externalListId = changeData.externalListId as
-            | string
-            | undefined;
-
-          if (externalTaskId) {
-            // Add to our tracking set regardless of sync status
-            recentlyDeletedExternalIds.add(externalTaskId);
-
-            // Process unsynced changes immediately
-            if (!change.synced && externalListId) {
-              try {
-                // Try to delete the task from the external system
-                await provider.deleteTask(externalListId, externalTaskId);
-
-                // Mark this change as successfully processed
-                deleteSuccessIds.push(change.id);
-                result.deleted++;
-              } catch (error) {
-                // Log error but continue - we'll try again next sync if needed
-                logger.error(
-                  `Failed to delete task in external system from DELETE change`,
-                  {
-                    changeId: change.id,
-                    taskId: change.taskId,
-                    externalTaskId,
-                    error:
-                      error instanceof Error ? error.message : "Unknown error",
-                  },
-                  LOG_SOURCE
-                );
-              }
-            }
-          }
-        }
-      }
-
-      // Mark successful DELETE changes as synced
-      if (deleteSuccessIds.length > 0) {
-        await tracker.markAsSynced(deleteSuccessIds);
-      }
-
-      logger.info(
-        `Processed ${deleteSuccessIds.length} DELETE changes and collected ${recentlyDeletedExternalIds.size} deleted task IDs`,
-        {
-          processedCount: deleteSuccessIds.length,
-          deletedIdsCount: recentlyDeletedExternalIds.size,
-        },
-        LOG_SOURCE
-      );
-
       const localTasks = (
         await prisma.task.findMany({
           where: {
@@ -438,7 +358,7 @@ export class TaskSyncManager {
               );
               result.updated++;
             } else if (change.changeType === "DELETE") {
-              await this.processDeleteChange(change.taskId, provider, mapping);
+              await this.processDeleteChange(change, provider);
               result.deleted++;
             }
 
@@ -496,48 +416,10 @@ export class TaskSyncManager {
         }
       }
 
+      const externalTasks = await provider.getTasks(mapping.externalListId);
       // Step 3: Process each external task
       for (const externalTask of externalTasks) {
         try {
-          // Skip if this task was deleted locally recently
-          if (recentlyDeletedExternalIds.has(externalTask.id)) {
-            logger.info(
-              `Skipping external task that was deleted locally: ${externalTask.id}`,
-              {
-                externalTaskId: externalTask.id,
-                title: externalTask.title,
-              },
-              LOG_SOURCE
-            );
-
-            // Try to delete it from external system (again, to be sure)
-            try {
-              await provider.deleteTask(
-                mapping.externalListId,
-                externalTask.id
-              );
-
-              logger.info(
-                `Deleted task from external system that was deleted locally: ${externalTask.id}`,
-                { externalTaskId: externalTask.id },
-                LOG_SOURCE
-              );
-              continue; // Skip further processing
-            } catch (error) {
-              logger.error(
-                `Failed to delete task from external system: ${externalTask.id}`,
-                {
-                  externalTaskId: externalTask.id,
-                  error:
-                    error instanceof Error ? error.message : "Unknown error",
-                },
-                LOG_SOURCE
-              );
-              // Even if deletion fails, skip further processing
-              continue;
-            }
-          }
-
           // Find corresponding local task
           const localTask = localTaskByExternalId.get(externalTask.id);
 
@@ -684,11 +566,29 @@ export class TaskSyncManager {
 
       for (const externalId of deletedTaskExternalIds) {
         const localTask = localTaskByExternalId.get(externalId);
-
         if (!localTask) continue;
 
         try {
-          // Delete the local task
+          // Check if this task was recently modified locally
+          const recentChanges = await prisma.taskChange.findMany({
+            where: {
+              taskId: localTask.id,
+              timestamp: {
+                gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+              },
+            },
+            orderBy: {
+              timestamp: "desc",
+            },
+          });
+
+          // If we have recent local changes, don't delete the task
+          // This means the task was actively being used in FC
+          if (recentChanges.length > 0) {
+            continue;
+          }
+
+          // Delete the local task only if no recent changes
           await prisma.task.delete({
             where: { id: localTask.id },
           });
@@ -725,6 +625,7 @@ export class TaskSyncManager {
     mapping: TaskListMapping & { provider: DbTaskProvider },
     fieldMapper: FieldMapper
   ): Promise<void> {
+    if (taskId === null) return; // This can happen if the task was deleted
     // Get the task details
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -793,6 +694,7 @@ export class TaskSyncManager {
     mapping: TaskListMapping & { provider: DbTaskProvider },
     fieldMapper: FieldMapper
   ): Promise<void> {
+    if (taskId === null) return; // This can happen if the task was deleted
     // Get the task details
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -854,158 +756,36 @@ export class TaskSyncManager {
    * Process a DELETE change
    */
   private async processDeleteChange(
-    taskId: string,
-    provider: TaskProviderInterface,
-    mapping: TaskListMapping & { provider: DbTaskProvider }
+    change: {
+      id: string;
+      taskId: string | null;
+      changeData?: Record<string, unknown> | null;
+    },
+    provider: TaskProviderInterface
   ): Promise<void> {
-    // Get the task details - for DELETE changes, the task might already be deleted
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-      include: {
-        tags: true,
-        project: true,
-      },
-    });
-
-    // If the task is already deleted from the local database,
-    // check if we have the externalTaskId and externalListId in the change data
-    if (!task) {
-      // Try to get the change record to find the external IDs
-      const change = await prisma.taskChange.findFirst({
-        where: {
-          taskId: taskId,
-          changeType: "DELETE",
-          synced: false,
-        },
-        orderBy: {
-          timestamp: "desc",
-        },
-      });
-
-      if (!change || !change.changeData) {
-        logger.warn(
-          `Task ${taskId} not found and no change data available for DELETE change`,
-          { taskId },
-          LOG_SOURCE
-        );
-        return;
-      }
-
-      // Parse the change data to get the external IDs
-      // Use a properly typed approach to avoid 'any'
-      const changeData = change.changeData as Record<string, unknown>;
-      const externalTaskId = changeData.externalTaskId as string | undefined;
-      const source = changeData.source as string | undefined;
-      const externalListId = changeData.externalListId as string | undefined;
-
-      // Validate that we have the required data and it's for this provider
-      if (
-        !externalTaskId ||
-        source !== mapping.provider.type ||
-        !externalListId
-      ) {
-        logger.warn(
-          `Cannot delete task in external system: missing external ID, list ID, or incorrect source`,
-          {
-            taskId,
-            externalTaskId: externalTaskId || "undefined",
-            externalListId: externalListId || "undefined",
-            source: source || "undefined",
-            providerType: mapping.provider.type,
-          },
-          LOG_SOURCE
-        );
-        return;
-      }
-
-      try {
-        // Delete the task from the external system using the externalListId from change data
-        await provider.deleteTask(externalListId, externalTaskId);
-
-        logger.info(
-          `Deleted task in external system (task already deleted locally)`,
-          {
-            taskId,
-            externalTaskId,
-            externalListId,
-          },
-          LOG_SOURCE
-        );
-      } catch (error) {
-        // Log but don't throw, as we want to mark the change as synced anyway
-        logger.error(
-          `Failed to delete task in external system`,
-          {
-            taskId,
-            externalTaskId,
-            error: error instanceof Error ? error.message : "Unknown error",
-          },
-          LOG_SOURCE
-        );
-      }
-
-      return;
-    }
-
-    // Convert to TaskWithSync
-    const taskWithSync = {
-      ...task,
-      tags: task.tags || [],
-      project: task.project || null,
-      isRecurring: task.isRecurring || false,
-      isAutoScheduled: task.isAutoScheduled || false,
-      scheduleLocked: task.scheduleLocked || false,
-    } as unknown as TaskWithSync;
-
+    const changeData = change.changeData as Record<string, unknown>;
+    const externalTaskId = changeData.externalTaskId as string | undefined;
+    const externalListId = changeData.externalListId as string | undefined;
     // Skip tasks that don't have an external ID for this provider
-    if (
-      !taskWithSync.externalTaskId ||
-      taskWithSync.source !== mapping.provider.type ||
-      !taskWithSync.externalListId
-    ) {
-      logger.warn(
-        `Task ${taskId} has no external ID or list ID for this provider, skipping deletion`,
-        {
-          taskId,
-          externalTaskId: taskWithSync.externalTaskId || "undefined",
-          source: taskWithSync.source || "undefined",
-          providerType: mapping.provider.type,
-          externalListId: taskWithSync.externalListId || "undefined",
-        },
-        LOG_SOURCE
-      );
+    if (!externalTaskId || !externalListId) {
       return;
     }
 
+    // Delete the task from the external system
     try {
-      // Delete the task from the external system
-      await provider.deleteTask(
-        taskWithSync.externalListId,
-        taskWithSync.externalTaskId as string
-      );
-
-      logger.info(
-        `Deleted task in external system`,
-        {
-          taskId,
-          externalTaskId: taskWithSync.externalTaskId,
-          externalListId: taskWithSync.externalListId,
-        },
-        LOG_SOURCE
-      );
+      await provider.deleteTask(externalListId, externalTaskId);
     } catch (error) {
+      if (error instanceof Error && error.message.includes("Item not found")) {
+        // The task was already deleted, so we don't need to do anything
+        return;
+      }
       logger.error(
         `Failed to delete task in external system`,
-        {
-          taskId,
-          externalTaskId: taskWithSync.externalTaskId,
-          error: error instanceof Error ? error.message : "Unknown error",
-        },
+        { error: error instanceof Error ? error.message : "Unknown error" },
         LOG_SOURCE
       );
-      throw error; // Re-throw to mark this change as failed
+      throw error;
     }
-
     // Note: We don't delete the local task here because it should have already
     // been deleted when the DELETE change was tracked
   }

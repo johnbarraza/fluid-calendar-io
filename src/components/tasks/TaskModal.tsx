@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RecurrenceConverterFactory } from "@/lib/task-sync/recurrence/recurrence-converter-factory";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -51,6 +52,27 @@ const formatEnumValue = (value: string) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 };
+
+// Helper function to convert external recurrence rule to RRule format
+function getStandardRRule(task?: Task): RRule {
+  if (!task?.recurrenceRule) {
+    return new RRule({
+      freq: RRule.WEEKLY,
+      interval: 1,
+      byweekday: [RRule.MO],
+    });
+  }
+
+  // If the task has a source (e.g., OUTLOOK), use the appropriate converter
+  if (task.source) {
+    const converter = RecurrenceConverterFactory.getConverter(task.source);
+    const standardRule = converter.convertFromString(task.recurrenceRule);
+    return RRule.fromString(standardRule);
+  }
+
+  // If no source or internal task, assume it's already in RRule format
+  return RRule.fromString(task.recurrenceRule);
+}
 
 export function TaskModal({
   isOpen,
@@ -530,14 +552,19 @@ export function TaskModal({
                       min="1"
                       value={
                         recurrenceRule
-                          ? RRule.fromString(recurrenceRule).options.interval ||
-                            1
+                          ? getStandardRRule({
+                              recurrenceRule,
+                              source: task?.source,
+                            } as Task).options.interval || 1
                           : 1
                       }
                       onChange={(e) => {
                         const interval = parseInt(e.target.value) || 1;
                         const currentRule = recurrenceRule
-                          ? RRule.fromString(recurrenceRule)
+                          ? getStandardRRule({
+                              recurrenceRule,
+                              source: task?.source,
+                            } as Task)
                           : new RRule({
                               freq: RRule.WEEKLY,
                               interval: 1,
@@ -555,15 +582,19 @@ export function TaskModal({
                     <Select
                       value={
                         recurrenceRule
-                          ? RRule.fromString(
-                              recurrenceRule
-                            ).options.freq.toString()
+                          ? getStandardRRule({
+                              recurrenceRule,
+                              source: task?.source,
+                            } as Task).options.freq.toString()
                           : RRule.WEEKLY.toString()
                       }
                       onValueChange={(value) => {
                         const freq = parseInt(value);
                         const currentRule = recurrenceRule
-                          ? RRule.fromString(recurrenceRule)
+                          ? getStandardRRule({
+                              recurrenceRule,
+                              source: task?.source,
+                            } as Task)
                           : new RRule({
                               freq: RRule.WEEKLY,
                               interval: 1,

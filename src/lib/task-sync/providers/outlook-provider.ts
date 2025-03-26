@@ -360,6 +360,7 @@ export class OutlookTaskProvider implements TaskProviderInterface {
           outlookUpdates.recurrence = recurrenceConverter.convertFromRRule(
             updates.recurrenceRule
           ) as OutlookTaskRecurrence;
+          outlookUpdates.recurrence.range = null; // DO NOT REMOVE.  API BREAKS IF YOU SEND range with the patch request
         } else {
           // If recurrenceRule is null, remove recurrence
           outlookUpdates.recurrence = null;

@@ -406,10 +406,14 @@ export function EventModal({
               <div className="space-y-2">
                 <Label htmlFor="start">Start</Label>
                 <Input
-                  type="datetime-local"
+                  type={isAllDay ? "date" : "datetime-local"}
                   id="start"
                   data-testid="event-start-date"
-                  value={formatToLocalISOString(startDate)}
+                  value={
+                    isAllDay
+                      ? formatToLocalISOString(startDate).split("T")[0]
+                      : formatToLocalISOString(startDate)
+                  }
                   onChange={(e) => setStartDate(newDate(e.target.value))}
                   className={cn(
                     "cursor-pointer px-3 py-2",
@@ -429,10 +433,14 @@ export function EventModal({
               <div className="space-y-2">
                 <Label htmlFor="end">End</Label>
                 <Input
-                  type="datetime-local"
+                  type={isAllDay ? "date" : "datetime-local"}
                   id="end"
                   data-testid="event-end-date"
-                  value={formatToLocalISOString(endDate)}
+                  value={
+                    isAllDay
+                      ? formatToLocalISOString(endDate).split("T")[0]
+                      : formatToLocalISOString(endDate)
+                  }
                   onChange={(e) => setEndDate(newDate(e.target.value))}
                   className={cn(
                     "cursor-pointer px-3 py-2",

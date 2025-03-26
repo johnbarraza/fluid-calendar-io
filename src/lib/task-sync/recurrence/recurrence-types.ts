@@ -27,31 +27,9 @@ export interface OutlookRecurrenceRange {
 }
 
 /**
- * Interface for Outlook recurrence
- */
-export interface OutlookRecurrence {
-  pattern: OutlookRecurrencePattern;
-  range: OutlookRecurrenceRange;
-}
-
-/**
- * Generic interface for mapping from OutlookTask
+ * Interface for Outlook task recurrence
  */
 export interface OutlookTaskRecurrence {
-  pattern: {
-    type: string;
-    interval: number;
-    month?: number;
-    dayOfMonth?: number;
-    daysOfWeek?: string[];
-    firstDayOfWeek?: string;
-    index?: string;
-  };
-  range: {
-    type: string;
-    startDate: string;
-    endDate?: string;
-    numberOfOccurrences?: number;
-    recurrenceTimeZone?: string;
-  };
+  pattern: OutlookRecurrencePattern;
+  range: OutlookRecurrenceRange | null;
 }

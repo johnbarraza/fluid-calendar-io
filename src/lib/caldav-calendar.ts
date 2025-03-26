@@ -484,11 +484,12 @@ export class CalDAVCalendarService {
       // const result = await this.processEvents(events, existingEvents, feed.id);
 
       const result = await this.createAllEvents(events, feed.id);
-      // Update the feed's last sync time
+      // Update the feed's last sync time and sync token
       await prisma.calendarFeed.update({
         where: { id: feed.id, userId },
         data: {
           lastSync: newDate(),
+          syncToken: feed.syncToken ? String(feed.syncToken) : null,
         },
       });
 

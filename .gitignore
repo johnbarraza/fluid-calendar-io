@@ -57,3 +57,4 @@ data/*
 # SAAS-specific code (private)
 /src/saas/
 /dist
+scripts/test-outlook-task-api.sh
