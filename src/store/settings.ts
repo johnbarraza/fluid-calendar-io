@@ -478,6 +478,18 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "calendar-settings",
+      partialize: (state) => ({
+        ...state,
+        system: {
+          ...state.system,
+          googleClientId: undefined,
+          googleClientSecret: undefined,
+          outlookClientId: undefined,
+          outlookClientSecret: undefined,
+          outlookTenantId: undefined,
+          resendApiKey: undefined,
+        },
+      }),
     }
   )
 );

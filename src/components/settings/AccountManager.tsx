@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSettingsStore } from "@/store/settings";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,16 +13,48 @@ import { AvailableCalendars } from "./AvailableCalendars";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { CalDAVAccountForm } from "./CalDAVAccountForm";
+import { logger } from "@/lib/logger";
+
+const LOG_SOURCE = "AccountManager";
+
+interface IntegrationStatus {
+  google: { configured: boolean };
+  outlook: { configured: boolean };
+}
 
 export function AccountManager() {
   const { accounts, refreshAccounts, removeAccount } = useSettingsStore();
-  const { system } = useSettingsStore();
   const [showAvailableFor, setShowAvailableFor] = useState<string | null>(null);
   const [showCalDAVForm, setShowCalDAVForm] = useState(false);
+  const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus>(
+    {
+      google: { configured: false },
+      outlook: { configured: false },
+    }
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     refreshAccounts();
   }, [refreshAccounts]);
+
+  useEffect(() => {
+    // Fetch integration status
+    fetch("/api/integration-status")
+      .then((res) => res.json())
+      .then((data) => {
+        setIntegrationStatus(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        logger.error(
+          "Failed to fetch integration status",
+          { error: error instanceof Error ? error.message : "Unknown error" },
+          LOG_SOURCE
+        );
+        setIsLoading(false);
+      });
+  }, []);
 
   const handleConnect = (provider: "GOOGLE" | "OUTLOOK") => {
     if (provider === "GOOGLE") {
@@ -47,12 +78,6 @@ export function AccountManager() {
     );
   }, []);
 
-  const showGoogleCredentialsWarning =
-    !system.googleClientId || !system.googleClientSecret;
-
-  const showOutlookCredentialsWarning =
-    !system.outlookClientId || !system.outlookClientSecret;
-
   const handleCalDAVSuccess = () => {
     setShowCalDAVForm(false);
     refreshAccounts();
@@ -68,24 +93,24 @@ export function AccountManager() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {showGoogleCredentialsWarning && (
+          {!integrationStatus.google.configured && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Missing Google Credentials</AlertTitle>
               <AlertDescription>
-                Please go to the System Settings tab and configure your Google
-                Client ID and Secret before connecting Google Calendar.
+                Please contact your administrator to configure Google Calendar
+                integration.
               </AlertDescription>
             </Alert>
           )}
 
-          {showOutlookCredentialsWarning && (
+          {!integrationStatus.outlook.configured && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Missing Outlook Credentials</AlertTitle>
               <AlertDescription>
-                Please go to the System Settings tab and configure your Outlook
-                Client ID and Secret before connecting Outlook Calendar.
+                Please contact your administrator to configure Outlook Calendar
+                integration.
               </AlertDescription>
             </Alert>
           )}
@@ -93,13 +118,13 @@ export function AccountManager() {
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={() => handleConnect("GOOGLE")}
-              disabled={showGoogleCredentialsWarning}
+              disabled={!integrationStatus.google.configured || isLoading}
             >
               Connect Google Calendar
             </Button>
             <Button
               onClick={() => handleConnect("OUTLOOK")}
-              disabled={showOutlookCredentialsWarning}
+              disabled={!integrationStatus.outlook.configured || isLoading}
             >
               Connect Outlook Calendar
             </Button>

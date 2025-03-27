@@ -1,6 +1,8 @@
 # IMPORTANT
-- recurring tasks broken for outlook sync
+- pending waitlist - need a way to resend emails with new tokens or for users that signup again to get a new email
 - synced tasks are not set to auto-schedule by default
+- hide upcoming tasks not working
+- project sidebar edit/sync not shown properly in production when project name is too long
 - check out this comment https://www.reddit.com/r/selfhosted/comments/1irj353/comment/mjgcajo/?%24deep_link=true&correlation_id=ca91f555-ee0e-5331-bd75-473ac484ff09&ref=email_comment_reply&ref_campaign=email_comment_reply&ref_source=email&%243p=e_as&_branch_match_id=1262094978557361170&utm_medium=Email+Amazon+SES&_branch_referrer=H4sIAAAAAAAAA32O0WqEMBBFv8Z9U1djut2ClELb3wjZZKJjYxImEelLv70j9bkwgZs75zJ3LiXll7YlsBZLo1NqPIavVqTXqh9EGkHpfGEZCScM2quN%2FDgfqUq8Vf0nz77vzZk3cWWD%2BGXwbo65gOUP2yuEkll2SIuQgpXzG1qjPQSrSWFWIe4qJggqx40MMLIuk9FLPM4IviT7wQIkdTSsxHuhjaEnE4nA64IxKLTsG33vnJSyBrhCLYXo6oe9yXq4CW2G58G5651zBI5hWDV6dRZUBMl%2F%2F%2B2U0WvSOIV%2FobPqiVx%2B2AMiDJN6UNwz0PhhJ%2FgFVuHGA2YBAAA%3D
 - 
 
