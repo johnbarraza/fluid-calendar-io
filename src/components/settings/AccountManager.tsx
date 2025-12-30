@@ -98,7 +98,7 @@ export function AccountManager() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!integrationStatus.google.configured && (
+          {!isLoading && !integrationStatus.google.configured && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Missing Google Credentials</AlertTitle>
@@ -109,7 +109,7 @@ export function AccountManager() {
             </Alert>
           )}
 
-          {!integrationStatus.outlook.configured && (
+          {!isLoading && !integrationStatus.outlook.configured && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Missing Outlook Credentials</AlertTitle>

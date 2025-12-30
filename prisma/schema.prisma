@@ -85,6 +85,13 @@ model User {
   taskProviders        TaskProvider[]
   TaskChange           TaskChange[]
   PasswordReset        PasswordReset[]
+
+  // ADHD-friendly features
+  habits               Habit[]
+  moodEntries          MoodEntry[]
+  pomodoroSessions     PomodoroSession[]
+  scheduleSuggestions  ScheduleSuggestion[]
+  journalEntries       JournalEntry[]
 }
 
 model VerificationToken {
@@ -234,6 +241,13 @@ model Task {
   // Change tracking relation
   changes TaskChange[]
 
+  // ADHD-friendly additions
+  emoji              String?
+  estimatedPomodoros Int?
+  actualPomodoros    Int                  @default(0)
+  pomodoroSessions   PomodoroSession[]
+  scheduleSuggestions ScheduleSuggestion[]
+
   // User relationship
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
@@ -301,6 +315,15 @@ model AutoScheduleSettings {
 
   // Project Settings
   groupByProject Boolean @default(false)
+
+  // ADHD-friendly: Break Protection
+  enforceBreaks        Boolean @default(true)
+  minBreakDuration     Int     @default(10) // minutes
+  maxConsecutiveHours  Int     @default(3)  // hours
+
+  // ADHD-friendly: Suggestion Preferences
+  enableSuggestions    Boolean @default(true)
+  autoApplySuggestions Boolean @default(false)
 
   // Metadata
   createdAt DateTime @default(now())
@@ -633,4 +656,164 @@ model Subscription {
 
   @@index([stripeCustomerId])
   @@index([stripePaymentIntentId])
+}
+
+// ============================================================================
+// ADHD-FRIENDLY FEATURES
+// ============================================================================
+
+// Habit Tracking
+model Habit {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  icon        String? // Emoji
+  color       String?
+  category    String? // "health", "work", "personal"
+
+  // Frequency settings
+  frequency         String @default("daily") // "daily", "weekly", "custom"
+  targetDaysPerWeek Int?   @default(7)
+  customSchedule    String? // JSON: weekday booleans
+
+  // Streak tracking
+  currentStreak    Int @default(0)
+  longestStreak    Int @default(0)
+  totalCompletions Int @default(0)
+
+  // Reminders
+  reminderEnabled Boolean @default(false)
+  reminderTime    String? // HH:mm format
+
+  isActive Boolean     @default(true)
+  logs     HabitLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model HabitLog {
+  id      String @id @default(cuid())
+  habitId String
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  completedAt DateTime @default(now())
+  date        DateTime // Date component only (for grouping)
+  note        String? // Optional journal entry
+  mood        String? // "great", "good", "okay", "bad"
+
+  @@unique([habitId, date]) // One completion per day per habit
+  @@index([habitId])
+  @@index([date])
+}
+
+// Mood & Energy Tracking
+model MoodEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  timestamp DateTime @default(now())
+
+  // ADHD-specific tracking
+  mood        String // "very_positive", "positive", "neutral", "negative", "very_negative"
+  energyLevel String // "high", "medium", "low"
+  focus       Int? // 1-10 scale
+  anxiety     Int? // 1-10 scale
+
+  note String?
+  tags String? // JSON array of context tags
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+// Pomodoro Sessions
+model PomodoroSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String?
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  workDuration  Int    @default(25) // minutes
+  breakDuration Int    @default(5) // minutes
+  type          String // "work", "short_break", "long_break"
+
+  completed       Boolean @default(false)
+  interrupted     Boolean @default(false)
+  interruptReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([startedAt])
+}
+
+// Re-schedule Suggestions
+model ScheduleSuggestion {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Suggestion details
+  suggestionType String // "conflict", "deadline_proximity", "energy_mismatch", "overload"
+  reason         String // Human-readable explanation
+  confidence     Float // 0.0-1.0 confidence score
+
+  // Proposed changes
+  currentStart   DateTime?
+  currentEnd     DateTime?
+  suggestedStart DateTime?
+  suggestedEnd   DateTime?
+
+  // User action
+  status      String    @default("pending") // "pending", "accepted", "rejected", "dismissed"
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime // Auto-expire old suggestions
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Daily Journal
+model JournalEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date    DateTime // Date component only
+  content String   @db.Text
+
+  // Structured reflections
+  gratitude  String? @db.Text // 3 things grateful for
+  wins       String? @db.Text // Daily wins
+  challenges String? @db.Text // What was hard
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
 }

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test ADHD API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        button {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #4338CA;
+        }
+        .result {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-color: #10b981; background: #f0fdf4; }
+        .error { border-color: #ef4444; background: #fef2f2; }
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test ADHD API Endpoints</h1>
+        <p>Make sure you're logged in at <a href="/">http://localhost:3002</a> first!</p>
+
+        <div class="section">
+            <h2>📋 Habits</h2>
+            <button onclick="createHabit()">Create Habit</button>
+            <button onclick="getHabits()">Get All Habits</button>
+            <div id="habitResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>😊 Mood/Energy</h2>
+            <button onclick="logMood()">Log Mood</button>
+            <button onclick="getMood()">Get Mood Entries</button>
+            <button onclick="getBestTimes()">Get Best Work Times</button>
+            <div id="moodResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🍅 Pomodoro</h2>
+            <button onclick="startPomodoro()">Start Session</button>
+            <button onclick="getPomodoros()">Get Sessions</button>
+            <button onclick="getPomodoroStats()">Get Stats</button>
+            <button onclick="interruptActiveSessions()" style="background: #ef4444;">Interrupt Active Sessions</button>
+            <div id="pomodoroResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Suggestions</h2>
+            <button onclick="generateSuggestions()">Generate Suggestions</button>
+            <button onclick="getSuggestions()">Get Suggestions</button>
+            <div id="suggestionResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/adhd';
+
+        function showResult(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = JSON.stringify(data, null, 2);
+            el.style.display = 'block';
+            el.className = 'result ' + (isError ? 'error' : 'success');
+        }
+
+        async function apiCall(url, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { data, status: response.status, ok: response.ok };
+            } catch (error) {
+                return { data: { error: error.message }, status: 0, ok: false };
+            }
+        }
+
+        // Habits
+        async function createHabit() {
+            const result = await apiCall(`${API_BASE}/habits`, 'POST', {
+                name: 'Meditación matutina',
+                description: '10 minutos de meditación',
+                icon: '🧘',
+                color: '#4F46E5',
+                frequency: 'daily',
+            });
+            showResult('habitResult', result.data, !result.ok);
+        }
+
+        async function getHabits() {
+            const result = await apiCall(`${API_BASE}/habits`);
+            showResult('habitResult', result.data, !result.ok);
+        }
+
+        // Mood
+        async function logMood() {
+            const result = await apiCall(`${API_BASE}/mood`, 'POST', {
+                mood: 'positive',
+                energyLevel: 'high',
+                focus: 8,
+                anxiety: 2,
+                note: 'Día productivo!',
+            });
+            showResult('moodResult', result.data, !result.ok);
+        }
+
+        async function getMood() {
+            const result = await apiCall(`${API_BASE}/mood?days=7`);
+            showResult('moodResult', result.data, !result.ok);
+        }
+
+        async function getBestTimes() {
+            const result = await apiCall(`${API_BASE}/mood/best-times`);
+            showResult('moodResult', result.data, !result.ok);
+        }
+
+        // Pomodoro
+        async function startPomodoro() {
+            const result = await apiCall(`${API_BASE}/pomodoro`, 'POST', {
+                taskId: null, // Optional - can be null for general focus session
+                workDuration: 25,
+                breakDuration: 5,
+                type: 'work',
+            });
+            showResult('pomodoroResult', result.data, !result.ok);
+        }
+
+        async function getPomodoros() {
+            const result = await apiCall(`${API_BASE}/pomodoro?days=7`);
+            showResult('pomodoroResult', result.data, !result.ok);
+        }
+
+        async function getPomodoroStats() {
+            const result = await apiCall(`${API_BASE}/pomodoro/stats`);
+            showResult('pomodoroResult', result.data, !result.ok);
+        }
+
+        async function interruptActiveSessions() {
+            // First, get all recent sessions
+            const sessionsResult = await apiCall(`${API_BASE}/pomodoro?days=1`);
+
+            if (!sessionsResult.ok) {
+                showResult('pomodoroResult', { error: 'Failed to fetch sessions' }, true);
+                return;
+            }
+
+            // Find active sessions (not completed and not interrupted)
+            const activeSessions = sessionsResult.data.filter(s => !s.completed && !s.interrupted);
+
+            if (activeSessions.length === 0) {
+                showResult('pomodoroResult', { message: 'No active sessions found' }, false);
+                return;
+            }
+
+            // Interrupt each active session
+            let interrupted = 0;
+            for (const session of activeSessions) {
+                const result = await apiCall(
+                    `${API_BASE}/pomodoro/${session.id}/interrupt`,
+                    'POST',
+                    { reason: 'Manual cleanup from test interface' }
+                );
+                if (result.ok) interrupted++;
+            }
+
+            showResult('pomodoroResult', {
+                message: `Interrupted ${interrupted} active session(s)`,
+                sessions: activeSessions.map(s => ({ id: s.id, type: s.type, startedAt: s.startedAt }))
+            }, false);
+        }
+
+        // Suggestions
+        async function generateSuggestions() {
+            const result = await apiCall(`${API_BASE}/suggestions`, 'POST');
+            showResult('suggestionResult', result.data, !result.ok);
+        }
+
+        async function getSuggestions() {
+            const result = await apiCall(`${API_BASE}/suggestions?status=pending`);
+            showResult('suggestionResult', result.data, !result.ok);
+        }
+    </script>
+</body>
+</html>
