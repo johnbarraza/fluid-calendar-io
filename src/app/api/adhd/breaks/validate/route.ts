@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { authenticateRequest } from "@/lib/auth/api-auth";
+import { logger } from "@/lib/logger";
+import { BreakProtectionService } from "@/services/adhd/BreakProtectionService";
+import { prisma } from "@/lib/prisma";
+
+const LOG_SOURCE = "BreakValidationAPI";
+
+// POST /api/adhd/breaks/validate - Validate schedule for break violations
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await authenticateRequest(request, LOG_SOURCE);
+    if ("response" in auth) {
+      return auth.response;
+    }
+
+    const body = await request.json();
+    const { taskIds, date } = body;
+
+    // Get tasks and settings
+    const tasks = await prisma.task.findMany({
+      where: {
+        id: { in: taskIds },
+        userId: auth.userId,
+      },
+    });
+
+    const settings = await prisma.autoScheduleSettings.findUnique({
+      where: { userId: auth.userId },
+    });
+
+    if (!settings) {
+      return NextResponse.json(
+        { error: "Auto-schedule settings not found" },
+        { status: 404 }
+      );
+    }
+
+    const breakService = new BreakProtectionService();
+    const violations = await breakService.validateScheduleBreaks(
+      tasks,
+      settings
+    );
+
+    return NextResponse.json({ violations });
+  } catch (error) {
+    logger.error(
+      "Failed to validate breaks",
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      LOG_SOURCE
+    );
+    return NextResponse.json(
+      { error: "Failed to validate breaks" },
+      { status: 500 }
+    );
+  }
+}

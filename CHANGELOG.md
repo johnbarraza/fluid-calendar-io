@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADHD-Friendly Features (Phase 1: Backend & API)** - Open Source
+  - Added comprehensive database schema for ADHD features including Habits, Mood/Energy tracking, Pomodoro sessions, Schedule suggestions, Break protection, and Journaling
+  - Implemented 5 backend services for ADHD functionality:
+    - `HabitTrackingService`: Habit creation, logging, streak calculation, and statistics
+    - `MoodEnergyService`: Mood/energy logging, pattern analysis, and best work time recommendations
+    - `PomodoroService`: Pomodoro session management with productivity statistics
+    - `RescheduleSuggestionService`: Intelligent schedule suggestions based on conflicts, deadlines, energy levels, and break violations
+    - `BreakProtectionService`: Break enforcement and compliance tracking
+  - Created 19 API endpoints for ADHD features:
+    - `/api/adhd/habits/*`: CRUD operations, logging, and statistics for habits
+    - `/api/adhd/mood/*`: Mood/energy logging and pattern analysis endpoints
+    - `/api/adhd/pomodoro/*`: Pomodoro session management and stats endpoints
+    - `/api/adhd/suggestions/*`: Schedule suggestion generation and management
+    - `/api/adhd/breaks/*`: Break validation and compliance endpoints
+  - Extended existing models with ADHD-friendly fields (Task: emoji, estimatedPomodoros, actualPomodoros)
+  - Added test interface at `/public/test-adhd.html` for API testing
+- **Docker Development Environment**
+  - Added `docker-compose.dev.yml` for local development with hot reload
+  - Created comprehensive Docker guide (`DOCKER_GUIDE.md`) with troubleshooting and best practices
+  - Configured volume mounting for instant code updates without rebuilding
 - Added a button to mark tasks as completed directly from the task quick view popup
 - Added visual indicator for externally synced tasks in task list view
 - Added Stripe configuration file (`src/lib/stripe.saas.ts`) for SAAS payment processing
