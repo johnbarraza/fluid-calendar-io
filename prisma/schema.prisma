@@ -92,6 +92,8 @@ model User {
   pomodoroSessions     PomodoroSession[]
   scheduleSuggestions  ScheduleSuggestion[]
   journalEntries       JournalEntry[]
+  routines             Routine[]
+  routineCompletions   RoutineCompletion[]
 }
 
 model VerificationToken {
@@ -761,6 +763,84 @@ model PomodoroSession {
   @@index([userId])
   @@index([taskId])
   @@index([startedAt])
+}
+
+// Routines System
+model Routine {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  icon        String? // Emoji
+  category    String? // "mañana", "noche", "ejercicio", "estudio", "relajación"
+
+  startTime String  // HH:MM format
+  isActive  Boolean @default(true)
+  order     Int     @default(0)
+
+  tasks       RoutineTask[]
+  completions RoutineCompletion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model RoutineTask {
+  id        String  @id @default(cuid())
+  routineId String
+  routine   Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  name         String
+  icon         String? // Emoji
+  duration     Int // Minutes
+  order        Int // Task order in routine
+  autoContinue Boolean @default(true)
+  notes        String? // Optional instructions/context
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([routineId])
+  @@index([order])
+}
+
+// Routine Completion Tracking
+model RoutineCompletion {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineId String
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  status      String   @default("in_progress") // "in_progress", "completed", "abandoned"
+
+  // Task completion tracking
+  completedTasks Int @default(0)
+  totalTasks     Int
+
+  // Total duration
+  totalDuration     Int // Expected duration in minutes
+  actualDuration    Int? // Actual duration in minutes
+  currentTaskIndex  Int  @default(0) // Index of current task
+  currentTaskStatus String? // "active", "paused"
+
+  notes String? // Optional notes about the session
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([routineId])
+  @@index([startedAt])
+  @@index([status])
 }
 
 // Re-schedule Suggestions

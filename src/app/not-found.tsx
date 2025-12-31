@@ -24,28 +24,18 @@ export default function NotFound() {
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta
-          name="description"
-          content="The page you're looking for doesn't exist or has been moved."
-        />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-          <h1 className="mb-4 text-4xl font-bold">404 - Page Not Found</h1>
-          <p className="mb-6">
-            The page you&apos;re looking for doesn&apos;t exist or has been
-            moved.
-          </p>
-          <Link
-            href="/"
-            className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-          >
-            Return Home
-          </Link>
-        </div>
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
+      <h1 className="mb-4 text-4xl font-bold">404 - Page Not Found</h1>
+      <p className="mb-6">
+        The page you&apos;re looking for doesn&apos;t exist or has been
+        moved.
+      </p>
+      <Link
+        href="/"
+        className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+      >
+        Return Home
+      </Link>
+    </div>
   );
 }

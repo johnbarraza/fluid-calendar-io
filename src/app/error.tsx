@@ -32,30 +32,23 @@ export default function Error({
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="description" content="An error occurred" />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-          <h1 className="mb-4 text-4xl font-bold">Something went wrong!</h1>
-          <p className="mb-6">An unexpected error has occurred.</p>
-          <div className="flex space-x-4">
-            <button
-              onClick={reset}
-              className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-            >
-              Try again
-            </button>
-            <Link
-              href="/"
-              className="rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
-            >
-              Return Home
-            </Link>
-          </div>
-        </div>
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
+      <h1 className="mb-4 text-4xl font-bold">Something went wrong!</h1>
+      <p className="mb-6">An unexpected error has occurred.</p>
+      <div className="flex space-x-4">
+        <button
+          onClick={reset}
+          className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+        >
+          Try again
+        </button>
+        <Link
+          href="/"
+          className="rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+        >
+          Return Home
+        </Link>
+      </div>
+    </div>
   );
 }
