@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { BsListTask, BsCalendar } from "react-icons/bs";
 import { HiOutlineLightBulb, HiOutlineSearch } from "react-icons/hi";
 import { RiKeyboardLine } from "react-icons/ri";
+import { LuTarget } from "react-icons/lu";
 
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function AppNav({ className }: AppNavProps) {
     { href: "/calendar", label: "Calendar", icon: BsCalendar },
     { href: "/tasks", label: "Tasks", icon: BsListTask },
     { href: "/focus", label: "Focus", icon: HiOutlineLightBulb },
+    { href: "/adhd", label: "ADHD", icon: LuTarget },
   ];
 
   return (
@@ -67,7 +69,7 @@ export function AppNav({ className }: AppNavProps) {
             </Link>
             {links.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href;
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
 
               return (
                 <Link

@@ -65,3 +65,5 @@ data/*
 /dist
 scripts/test-outlook-task-api.sh
 .env.local.example
+client_secret_REDACTED_CLIENT_ID.json
+gcp-oauth.keys.json

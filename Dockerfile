@@ -14,9 +14,8 @@ ENV NODE_ENV=development
 COPY . .
 COPY package*.json ./
 RUN npm install --legacy-peer-deps --ignore-scripts
-RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["npm", "run", "dev"]
+# No ENTRYPOINT in development - let docker-compose.dev.yml control startup
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
 
 # Production builder stage
 FROM base AS builder

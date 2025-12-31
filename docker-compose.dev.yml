@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       target: development
     ports:
-      - "3000:3000"
+      - "3005:3000"  # Docker en puerto 3005
     env_file:
       - .env
     environment:
@@ -20,7 +20,7 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    command: npm run dev
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
 
   db:
     image: postgres:16-alpine
