@@ -64,3 +64,4 @@ data/*
 /src/saas/
 /dist
 scripts/test-outlook-task-api.sh
+.env.local.example
