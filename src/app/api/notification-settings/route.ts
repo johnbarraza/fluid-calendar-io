@@ -1,8 +1,10 @@
+import { db, notificationSettings } from "@/db";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "NotificationSettingsAPI";
 
@@ -16,20 +18,27 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get the notification settings or create default ones if they don't exist
-    const settings = await prisma.notificationSettings.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-        emailNotifications: true,
-        dailyEmailEnabled: true,
-        eventInvites: true,
-        eventUpdates: true,
-        eventCancellations: true,
-        eventReminders: true,
-        defaultReminderTiming: "[30]",
-      },
+    let settings = await db.query.notificationSettings.findFirst({
+      where: (notificationSettings, { eq }) => eq(notificationSettings.userId, userId),
     });
+
+    if (!settings) {
+      // Create default settings
+      [settings] = await db
+        .insert(notificationSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          emailNotifications: true,
+          dailyEmailEnabled: true,
+          eventInvites: true,
+          eventUpdates: true,
+          eventCancellations: true,
+          eventReminders: true,
+          defaultReminderTiming: "[30]",
+        })
+        .returning();
+    }
 
     // Transform the response to match the store's structure
     return NextResponse.json({
@@ -67,26 +76,47 @@ export async function PATCH(request: NextRequest) {
     const updates = await request.json();
 
     // Transform the updates to match the database schema
-    const dbUpdates = {
-      emailNotifications: updates.emailNotifications,
-      dailyEmailEnabled: updates.dailyEmailEnabled,
-      eventInvites: updates.eventInvites,
-      eventUpdates: updates.eventUpdates,
-      eventCancellations: updates.eventCancellations,
-      eventReminders: updates.eventReminders,
-      defaultReminderTiming: updates.defaultReminderTiming
-        ? JSON.stringify(updates.defaultReminderTiming)
-        : undefined,
-    };
+    const dbUpdates: Record<string, any> = {};
+    if (updates.emailNotifications !== undefined) dbUpdates.emailNotifications = updates.emailNotifications;
+    if (updates.dailyEmailEnabled !== undefined) dbUpdates.dailyEmailEnabled = updates.dailyEmailEnabled;
+    if (updates.eventInvites !== undefined) dbUpdates.eventInvites = updates.eventInvites;
+    if (updates.eventUpdates !== undefined) dbUpdates.eventUpdates = updates.eventUpdates;
+    if (updates.eventCancellations !== undefined) dbUpdates.eventCancellations = updates.eventCancellations;
+    if (updates.eventReminders !== undefined) dbUpdates.eventReminders = updates.eventReminders;
+    if (updates.defaultReminderTiming !== undefined) {
+      dbUpdates.defaultReminderTiming = JSON.stringify(updates.defaultReminderTiming);
+    }
 
-    const settings = await prisma.notificationSettings.upsert({
-      where: { userId },
-      update: dbUpdates,
-      create: {
-        userId,
-        ...dbUpdates,
-      },
+    // Check if settings exist
+    let settings = await db.query.notificationSettings.findFirst({
+      where: (notificationSettings, { eq }) => eq(notificationSettings.userId, userId),
     });
+
+    if (settings) {
+      // Update existing settings
+      [settings] = await db
+        .update(notificationSettings)
+        .set(dbUpdates)
+        .where(eq(notificationSettings.userId, userId))
+        .returning();
+    } else {
+      // Create new settings with updates
+      [settings] = await db
+        .insert(notificationSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          emailNotifications: true,
+          dailyEmailEnabled: true,
+          eventInvites: true,
+          eventUpdates: true,
+          eventCancellations: true,
+          eventReminders: true,
+          defaultReminderTiming: "[30]",
+          ...dbUpdates,
+        })
+        .returning();
+    }
 
     // Transform the response to match the store's structure
     return NextResponse.json({

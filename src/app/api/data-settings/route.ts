@@ -1,8 +1,10 @@
+import { db, dataSettings } from "@/db";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "DataSettingsAPI";
 
@@ -16,13 +18,22 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get the data settings or create default ones if they don't exist
-    const settings = await prisma.dataSettings.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-      },
+    let settings = await db.query.dataSettings.findFirst({
+      where: (dataSettings, { eq }) => eq(dataSettings.userId, userId),
     });
+
+    if (!settings) {
+      // Create default settings
+      [settings] = await db
+        .insert(dataSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          retentionDays: 90,
+          autoCleanup: true,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {
@@ -49,14 +60,31 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json();
 
-    const settings = await prisma.dataSettings.upsert({
-      where: { userId },
-      update: updates,
-      create: {
-        userId,
-        ...updates,
-      },
+    // Check if settings exist
+    let settings = await db.query.dataSettings.findFirst({
+      where: (dataSettings, { eq }) => eq(dataSettings.userId, userId),
     });
+
+    if (settings) {
+      // Update existing settings
+      [settings] = await db
+        .update(dataSettings)
+        .set(updates)
+        .where(eq(dataSettings.userId, userId))
+        .returning();
+    } else {
+      // Create new settings with updates
+      [settings] = await db
+        .insert(dataSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          retentionDays: 90,
+          autoCleanup: true,
+          ...updates,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {

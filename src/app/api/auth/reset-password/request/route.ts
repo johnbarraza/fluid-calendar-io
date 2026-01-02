@@ -1,10 +1,12 @@
+import { db, users, passwordResets, accounts } from "@/db";
+import { eq, and } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import crypto from "crypto";
 
 import { sendPasswordResetEmail } from "@/lib/email/password-reset";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "ResetPasswordRequestAPI";
 
@@ -22,21 +24,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the user
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        accounts: {
-          where: {
-            provider: "credentials",
-          },
-        },
-      },
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, email),
     });
 
     // Don't reveal if the user exists or not
-    if (!user || !user.accounts || user.accounts.length === 0) {
+    if (!user) {
       logger.info(
         "Password reset requested for non-existent user",
+        { email },
+        LOG_SOURCE
+      );
+      return NextResponse.json({
+        message:
+          "If an account exists, you will receive a password reset email",
+      });
+    }
+
+    // Check if user has a credentials account
+    const credentialsAccount = await db.query.accounts.findFirst({
+      where: (accounts, { and, eq }) =>
+        and(eq(accounts.userId, user.id), eq(accounts.provider, "credentials")),
+    });
+
+    if (!credentialsAccount) {
+      logger.info(
+        "Password reset requested for user without credentials",
         { email },
         LOG_SOURCE
       );
@@ -51,12 +64,11 @@ export async function POST(request: NextRequest) {
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
     // Store the reset token
-    await prisma.passwordReset.create({
-      data: {
-        userId: user.id,
-        token: resetToken,
-        expiresAt: resetTokenExpiry,
-      },
+    await db.insert(passwordResets).values({
+      id: crypto.randomUUID(),
+      userId: user.id,
+      token: resetToken,
+      expiresAt: resetTokenExpiry,
     });
 
     // Send the password reset email

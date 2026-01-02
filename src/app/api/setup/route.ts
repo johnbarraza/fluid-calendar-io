@@ -1,9 +1,11 @@
+import { db, users, userSettings, calendarSettings, notificationSettings, integrationSettings, dataSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { hash } from "bcrypt";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 import { migrateExistingData } from "@/lib/setup-migration";
 
 const LOG_SOURCE = "SetupAPI";
@@ -15,7 +17,8 @@ const LOG_SOURCE = "SetupAPI";
 export async function POST(request: Request) {
   try {
     // Check if any users already exist
-    const userCount = await prisma.user.count();
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+    const userCount = result[0]?.count || 0;
 
     if (userCount > 0) {
       logger.warn("Setup attempted when users already exist", {}, LOG_SOURCE);
@@ -46,8 +49,8 @@ export async function POST(request: Request) {
     const hashedPassword = await hash(password, 10);
 
     // Create the admin user
-    const adminUser = await prisma.user.create({
-      data: {
+    const adminUser = await db.insert(users).values({
+        id: crypto.randomUUID(),
         name,
         email,
         role: "admin",
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
           },
         },
       },
-    });
+    }).returning();
 
     logger.info("Created admin user", { userId: adminUser.id }, LOG_SOURCE);
 
@@ -73,8 +76,8 @@ export async function POST(request: Request) {
     // Create default settings for the admin user
     await Promise.all([
       // Create user settings
-      prisma.userSettings.create({
-        data: {
+      db.insert(userSettings).values({
+        id: crypto.randomUUID(),
           userId: adminUser.id,
           theme: "system",
           defaultView: "week",
@@ -85,8 +88,8 @@ export async function POST(request: Request) {
       }),
 
       // Create calendar settings
-      prisma.calendarSettings.create({
-        data: {
+      db.insert(calendarSettings).values({
+        id: crypto.randomUUID(),
           userId: adminUser.id,
           workingHoursEnabled: true,
           workingHoursStart: "09:00",
@@ -100,8 +103,8 @@ export async function POST(request: Request) {
       }),
 
       // Create notification settings
-      prisma.notificationSettings.create({
-        data: {
+      db.insert(notificationSettings).values({
+        id: crypto.randomUUID(),
           userId: adminUser.id,
           emailNotifications: true,
           eventInvites: true,
@@ -113,8 +116,8 @@ export async function POST(request: Request) {
       }),
 
       // Create integration settings
-      prisma.integrationSettings.create({
-        data: {
+      db.insert(integrationSettings).values({
+        id: crypto.randomUUID(),
           userId: adminUser.id,
           googleCalendarEnabled: true,
           googleCalendarAutoSync: true,
@@ -126,8 +129,8 @@ export async function POST(request: Request) {
       }),
 
       // Create data settings
-      prisma.dataSettings.create({
-        data: {
+      db.insert(dataSettings).values({
+        id: crypto.randomUUID(),
           userId: adminUser.id,
           autoBackup: true,
           backupInterval: 7,
@@ -136,9 +139,9 @@ export async function POST(request: Request) {
       }),
 
       // Check if SystemSettings record exists and fail if it does
-      prisma.$transaction(async (tx) => {
+      db.transaction(async (tx) => {
         // Check if any SystemSettings record exists
-        const existingSettings = await tx.systemSettings.findFirst();
+        const existingSettings = await tx.systemSettings.findFirst().returning();
 
         if (existingSettings) {
           throw new Error("SystemSettings record already exists");

@@ -1,8 +1,10 @@
+import { db, calendarSettings } from "@/db";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "CalendarSettingsAPI";
 
@@ -16,13 +18,23 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get the calendar settings or create default ones if they don't exist
-    const settings = await prisma.calendarSettings.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-      },
+    let settings = await db.query.calendarSettings.findFirst({
+      where: (calendarSettings, { eq }) => eq(calendarSettings.userId, userId),
     });
+
+    if (!settings) {
+      // Create default settings
+      [settings] = await db
+        .insert(calendarSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          defaultCalendarId: null,
+          defaultDuration: 30,
+          defaultReminder: 15,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {
@@ -49,14 +61,32 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json();
 
-    const settings = await prisma.calendarSettings.upsert({
-      where: { userId },
-      update: updates,
-      create: {
-        userId,
-        ...updates,
-      },
+    // Check if settings exist
+    let settings = await db.query.calendarSettings.findFirst({
+      where: (calendarSettings, { eq }) => eq(calendarSettings.userId, userId),
     });
+
+    if (settings) {
+      // Update existing settings
+      [settings] = await db
+        .update(calendarSettings)
+        .set(updates)
+        .where(eq(calendarSettings.userId, userId))
+        .returning();
+    } else {
+      // Create new settings with updates
+      [settings] = await db
+        .insert(calendarSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          defaultCalendarId: null,
+          defaultDuration: 30,
+          defaultReminder: 15,
+          ...updates,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {

@@ -1,11 +1,11 @@
+import { db, logs as logsTable } from "@/db";
+import { eq, and, or, like, gte, lte, lt, sql, count } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-
-import { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth/api-auth";
 import { newDate, subDays } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "LogsAPI";
 
@@ -38,44 +38,48 @@ export async function GET(request: NextRequest) {
       LOG_SOURCE
     );
 
-    // Build where clause
-    const where: Prisma.LogWhereInput = {};
-    if (level) where.level = level;
-    if (source) where.source = source;
-    if (from || to) {
-      where.timestamp = {};
-      if (from) where.timestamp.gte = new Date(from);
-      if (to) where.timestamp.lte = new Date(to);
-    }
+    // Build where conditions
+    const conditions = [];
+    if (level) conditions.push(eq(logsTable.level, level));
+    if (source) conditions.push(eq(logsTable.source, source));
+    if (from) conditions.push(gte(logsTable.timestamp, new Date(from)));
+    if (to) conditions.push(lte(logsTable.timestamp, new Date(to)));
     if (search) {
-      where.OR = [
-        { message: { contains: search, mode: "insensitive" } },
-        { source: { contains: search, mode: "insensitive" } },
-      ];
+      conditions.push(
+        or(
+          like(logsTable.message, `%${search}%`),
+          like(logsTable.source, `%${search}%`)
+        )
+      );
     }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count for pagination
-    const total = await prisma.log.count({ where });
+    const [{ value: total }] = await db
+      .select({ value: count() })
+      .from(logsTable)
+      .where(whereClause);
 
     // Get logs with pagination
-    const logs = await prisma.log.findMany({
-      where,
-      orderBy: { timestamp: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
+    const logsList = await db.query.logs.findMany({
+      where: whereClause,
+      orderBy: (logs, { desc }) => [desc(logs.timestamp)],
+      offset: (page - 1) * limit,
+      limit: limit,
     });
 
     logger.debug(
       "Successfully fetched logs",
       {
         totalLogs: String(total),
-        returnedLogs: String(logs.length),
+        returnedLogs: String(logsList.length),
       },
       LOG_SOURCE
     );
 
     return NextResponse.json({
-      logs,
+      logs: logsList,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -117,40 +121,46 @@ export async function DELETE(request: NextRequest) {
       LOG_SOURCE
     );
 
-    const where: Prisma.LogWhereInput = {};
+    // Build where conditions for deletion
+    const deleteConditions = [];
 
     // Delete logs older than specified days
     if (olderThan) {
-      where.timestamp = {
-        lt: subDays(newDate(), parseInt(olderThan)),
-      };
+      deleteConditions.push(
+        lt(logsTable.timestamp, subDays(newDate(), parseInt(olderThan)))
+      );
     }
 
     // Delete logs of specific level
     if (level) {
-      where.level = level;
+      deleteConditions.push(eq(logsTable.level, level));
     }
 
     // Delete expired logs if no filters provided
     if (!olderThan && !level) {
-      where.expiresAt = {
-        lt: newDate(),
-      };
+      deleteConditions.push(lt(logsTable.expiresAt, newDate()));
     }
 
-    const { count } = await prisma.log.deleteMany({ where });
+    const whereClause = deleteConditions.length > 0 ? and(...deleteConditions) : undefined;
+
+    const result = await db
+      .delete(logsTable)
+      .where(whereClause)
+      .returning();
+
+    const deletedCount = result.length;
 
     logger.info(
       "Successfully deleted logs",
       {
-        deletedCount: String(count),
+        deletedCount: String(deletedCount),
       },
       LOG_SOURCE
     );
 
     return NextResponse.json({
-      message: `Deleted ${count} logs`,
-      count,
+      message: `Deleted ${deletedCount} logs`,
+      count: deletedCount,
     });
   } catch (error) {
     logger.error(

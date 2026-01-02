@@ -1,8 +1,10 @@
+import { db, autoScheduleSettings } from "@/db";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "AutoScheduleSettingsAPI";
 
@@ -16,16 +18,30 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get the auto schedule settings or create default ones if they don't exist
-    const settings = await prisma.autoScheduleSettings.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-        workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
-        workHourStart: 9, // 9 AM
-        workHourEnd: 17, // 5 PM
-      },
+    let settings = await db.query.autoScheduleSettings.findFirst({
+      where: (autoScheduleSettings, { eq }) =>
+        eq(autoScheduleSettings.userId, userId),
     });
+
+    if (!settings) {
+      // Create default settings
+      [settings] = await db
+        .insert(autoScheduleSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
+          workHourStart: 9, // 9 AM
+          workHourEnd: 17, // 5 PM
+          bufferTimeBefore: 0,
+          bufferTimeAfter: 0,
+          minTaskDuration: 15,
+          maxTaskDuration: 240,
+          breakDuration: 15,
+          breakInterval: 120,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {
@@ -52,17 +68,39 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json();
 
-    const settings = await prisma.autoScheduleSettings.upsert({
-      where: { userId },
-      update: updates,
-      create: {
-        userId,
-        workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
-        workHourStart: 9, // 9 AM
-        workHourEnd: 17, // 5 PM
-        ...updates,
-      },
+    // Check if settings exist
+    let settings = await db.query.autoScheduleSettings.findFirst({
+      where: (autoScheduleSettings, { eq }) =>
+        eq(autoScheduleSettings.userId, userId),
     });
+
+    if (settings) {
+      // Update existing settings
+      [settings] = await db
+        .update(autoScheduleSettings)
+        .set(updates)
+        .where(eq(autoScheduleSettings.userId, userId))
+        .returning();
+    } else {
+      // Create new settings with updates
+      [settings] = await db
+        .insert(autoScheduleSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
+          workHourStart: 9, // 9 AM
+          workHourEnd: 17, // 5 PM
+          bufferTimeBefore: 0,
+          bufferTimeAfter: 0,
+          minTaskDuration: 15,
+          maxTaskDuration: 240,
+          breakDuration: 15,
+          breakInterval: 120,
+          ...updates,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {
