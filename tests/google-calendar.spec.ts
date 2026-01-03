@@ -1,16 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 import getGoogleEvent from "@/lib/google-calendar";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { eq, and } from "drizzle-orm";
 
 // Helper function to get Test Calendar information
 async function getTestCalendarInfo() {
-  const feed = await prisma.calendarFeed.findFirst({
-    where: {
-      name: "Test Calendar",
-      type: "GOOGLE",
-    },
-    include: {
+  const feed = await db.query.calendarFeeds.findFirst({
+    where: (feeds, { eq, and }) => and(
+      eq(feeds.name, "Test Calendar"),
+      eq(feeds.type, "GOOGLE")
+    ),
+    with: {
       account: true,
     },
   });
@@ -169,11 +170,11 @@ test.describe("Google Calendar Integration", () => {
     await expect(eventElement).toBeVisible();
 
     // Get the event ID from the database
-    const event = await prisma.calendarEvent.findFirst({
-      where: {
-        feedId: testCalendar.feedId,
-        title: eventTitle,
-      },
+    const event = await db.query.calendarEvents.findFirst({
+      where: (calendarEvents, { eq, and }) => and(
+        eq(calendarEvents.feedId, testCalendar.feedId),
+        eq(calendarEvents.title, eventTitle)
+      ),
     });
     if (!event || !event.externalEventId) {
       throw new Error("Could not find event in database");
@@ -212,13 +213,13 @@ test.describe("Google Calendar Integration", () => {
     await expect(eventElement).not.toBeVisible();
 
     // Verify event is deleted from database
-    const deletedEvent = await prisma.calendarEvent.findFirst({
-      where: {
-        feedId: testCalendar.feedId,
-        title: eventTitle,
-      },
+    const deletedEvent = await db.query.calendarEvents.findFirst({
+      where: (calendarEvents, { eq, and }) => and(
+        eq(calendarEvents.feedId, testCalendar.feedId),
+        eq(calendarEvents.title, eventTitle)
+      ),
     });
-    expect(deletedEvent).toBeNull();
+    expect(deletedEvent).toBeUndefined();
 
     // Verify event is deleted in Google Calendar API with retries
     console.log("Verifying event deletion in Google Calendar API...");
@@ -319,11 +320,11 @@ test.describe("Google Calendar Integration", () => {
     await expect(eventElement).toBeVisible();
 
     // Get the event ID from the database
-    const event = await prisma.calendarEvent.findFirst({
-      where: {
-        feedId: testCalendar.feedId,
-        title: eventTitle,
-      },
+    const event = await db.query.calendarEvents.findFirst({
+      where: (calendarEvents, { eq, and }) => and(
+        eq(calendarEvents.feedId, testCalendar.feedId),
+        eq(calendarEvents.title, eventTitle)
+      ),
     });
     if (!event || !event.externalEventId || !event.recurringEventId) {
       throw new Error("Could not find event in database");
@@ -349,12 +350,12 @@ test.describe("Google Calendar Integration", () => {
     console.log("Verifying recurring event and instances in database...");
 
     // Verify instances were created after sync
-    const instances = await prisma.calendarEvent.findMany({
-      where: {
-        feedId: testCalendar.feedId,
-        title: eventTitle,
-        isMaster: false,
-      },
+    const instances = await db.query.calendarEvents.findMany({
+      where: (calendarEvents, { eq, and }) => and(
+        eq(calendarEvents.feedId, testCalendar.feedId),
+        eq(calendarEvents.title, eventTitle),
+        eq(calendarEvents.isMaster, false)
+      )
     });
     expect(instances.length).toBeGreaterThan(0);
     console.log(`Found ${instances.length} instances of the recurring event`);
@@ -378,13 +379,13 @@ test.describe("Google Calendar Integration", () => {
     });
 
     // Verify event is deleted from database
-    const deletedEvent = await prisma.calendarEvent.findFirst({
-      where: {
-        feedId: testCalendar.feedId,
-        title: eventTitle,
-      },
+    const deletedEvent = await db.query.calendarEvents.findFirst({
+      where: (calendarEvents, { eq, and }) => and(
+        eq(calendarEvents.feedId, testCalendar.feedId),
+        eq(calendarEvents.title, eventTitle)
+      ),
     });
-    expect(deletedEvent).toBeNull();
+    expect(deletedEvent).toBeUndefined();
 
     // Verify event is deleted in Google Calendar API with retries
     console.log("Verifying event deletion in Google Calendar API...");

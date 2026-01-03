@@ -74,10 +74,13 @@ export async function GET(req: NextRequest) {
     const tempAccount = {
       id: "temp",
       provider: "OUTLOOK",
+      providerAccountId: null,
+      scope: tokenData.scope || null,
       email: "",
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresAt,
+      tokenType: tokenData.token_type || null,
       createdAt: newDate(),
       updatedAt: newDate(),
       caldavUrl: null,

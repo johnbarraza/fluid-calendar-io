@@ -43,10 +43,12 @@ type DbTaskWithRelations = {
   postponedUntil: Date | null;
   userId: string;
   tags: {
-    id: string;
-    name: string;
-    color: string | null;
-    userId: string | null;
+    tag: {
+      id: string;
+      name: string;
+      color: string | null;
+      userId: string | null;
+    }
   }[];
   project: {
     id: string;
@@ -72,16 +74,16 @@ function convertDbTaskToTaskWithRelations(
     priority: dbTask.priority as Priority | null,
     energyLevel: dbTask.energyLevel as EnergyLevel | null,
     preferredTime: dbTask.preferredTime as TimePreference | null,
-    tags: dbTask.tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      color: tag.color || undefined,
+    tags: dbTask.tags.map((t) => ({
+      id: t.tag.id,
+      name: t.tag.name,
+      color: t.tag.color || undefined,
     })),
     project: dbTask.project
       ? {
-          ...dbTask.project,
-          status: dbTask.project.status as ProjectStatus,
-        }
+        ...dbTask.project,
+        status: dbTask.project.status as ProjectStatus,
+      }
       : null,
   };
 }
@@ -105,7 +107,8 @@ export async function scheduleAllTasksForUser(
     logger.info("Starting task scheduling for user", { userId }, LOG_SOURCE);
 
     // If settings are not provided, fetch them from the database
-    const userSettings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
+    const userSettings = await db.query.autoScheduleSettings.findFirst({
+      where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     });
 
     if (!userSettings) {
@@ -114,37 +117,37 @@ export async function scheduleAllTasksForUser(
 
     // Get all tasks marked for auto-scheduling that are not locked
     const tasksToSchedule = await db.query.tasks.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduleLocked: false,
-        status: {
-          not: {
-            in: [TaskStatus.COMPLETED, TaskStatus.IN_PROGRESS],
-          },
-        },
-        userId,
-      },
+      where: (tasks, { eq, and, not, inArray }) => and(
+        eq(tasks.isAutoScheduled, true),
+        eq(tasks.scheduleLocked, false),
+        not(inArray(tasks.status, [TaskStatus.COMPLETED, TaskStatus.IN_PROGRESS])),
+        eq(tasks.userId, userId)
+      ),
       with: {
         project: true,
-        tags: true,
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
       },
     });
 
     // Get locked tasks (we'll keep their schedules)
     const lockedTasks = await db.query.tasks.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduleLocked: true,
-        status: {
-          not: {
-            in: [TaskStatus.COMPLETED, TaskStatus.IN_PROGRESS],
-          },
-        },
-        userId,
-      },
+      where: (tasks, { eq, and, not, inArray }) => and(
+        eq(tasks.isAutoScheduled, true),
+        eq(tasks.scheduleLocked, true),
+        not(inArray(tasks.status, [TaskStatus.COMPLETED, TaskStatus.IN_PROGRESS])),
+        eq(tasks.userId, userId)
+      ),
       with: {
         project: true,
-        tags: true,
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -161,19 +164,16 @@ export async function scheduleAllTasksForUser(
     const schedulingService = new SchedulingService(userSettings);
 
     // Clear existing schedules for non-locked tasks
-    await prisma.task.updateMany({
-      where: {
-        id: {
-          in: tasksToSchedule.map((task) => task.id),
-        },
-        userId,
-      },
-      data: {
+    await db.update(tasks)
+      .set({
         scheduledStart: null,
         scheduledEnd: null,
         scheduleScore: null,
-      },
-    });
+      })
+      .where(and(
+        inArray(tasks.id, tasksToSchedule.map((task) => task.id)),
+        eq(tasks.userId, userId)
+      ));
 
     // Schedule all tasks
     const updatedTasks = await schedulingService.scheduleMultipleTasks(
@@ -182,27 +182,22 @@ export async function scheduleAllTasksForUser(
     );
 
     // Update the lastScheduled timestamp for all tasks
-    await prisma.task.updateMany({
-      where: {
-        id: {
-          in: updatedTasks.map((task) => task.id),
-        },
-      },
-      data: {
-        lastScheduled: new Date(),
-      },
-    });
+    await db.update(tasks)
+      .set({ lastScheduled: new Date() })
+      .where(inArray(tasks.id, updatedTasks.map((task) => task.id)));
 
     // Fetch the tasks again with their relations to return
     const dbTasks = (await db.query.tasks.findMany({
-      where: {
-        id: {
-          in: updatedTasks.map((task) => task.id),
-        },
-        userId,
-      },
+      where: (tasks, { eq, and, inArray }) => and(
+        inArray(tasks.id, updatedTasks.map((task) => task.id)),
+        eq(tasks.userId, userId)
+      ),
       with: {
-        tags: true,
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
         project: true,
       },
     })) as DbTaskWithRelations[];

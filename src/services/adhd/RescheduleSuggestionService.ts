@@ -2,7 +2,7 @@ import { db, calendarEvents, tasks, autoScheduleSettings, scheduleSuggestions } 
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger"
-import { Task, ScheduleSuggestion, AutoScheduleSettings } from "@prisma/client"
+import type { Task, ScheduleSuggestion, AutoScheduleSettings } from "@/db/types"
 
 const LOG_SOURCE = "RescheduleSuggestionService"
 
@@ -28,7 +28,8 @@ export class RescheduleSuggestionService {
 
     try {
       // Get user settings, create default if not exists
-      let settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
+      let settings = await db.query.autoScheduleSettings.findFirst({
+        where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
       })
 
       if (!settings) {
@@ -67,12 +68,10 @@ export class RescheduleSuggestionService {
 
       // Get all tasks that are scheduled or should be scheduled
       const tasks = await db.query.tasks.findMany({
-        where: {
-          userId,
-          status: {
-            not: "completed",
-          },
-        },
+        where: (tasks, { eq, and, not }) => and(
+          eq(tasks.userId, userId),
+          not(eq(tasks.status, "completed"))
+        ),
       })
 
       // Get all calendar events for conflict detection
@@ -286,7 +285,7 @@ export class RescheduleSuggestionService {
   ): boolean {
     // Check calendar events
     for (const event of calendarEvents) {
-      const eventStart = event.start instanceof Date ? event.start : new Date(String(event.start)).returning();
+      const eventStart = event.start instanceof Date ? event.start : new Date(String(event.start));
       const eventEnd = event.end instanceof Date ? event.end : new Date(String(event.end));
       if (this.timesOverlap(start, end, eventStart, eventEnd)) {
         return true
@@ -450,7 +449,7 @@ export class RescheduleSuggestionService {
 
           // Make sure slot doesn't extend past work hours
           if (slotEnd.getHours() < settings.workHourEnd ||
-              (slotEnd.getHours() === settings.workHourEnd && slotEnd.getMinutes() === 0)) {
+            (slotEnd.getHours() === settings.workHourEnd && slotEnd.getMinutes() === 0)) {
             slots.push({ start: slotStart, end: slotEnd })
           }
         }
@@ -521,7 +520,7 @@ export class RescheduleSuggestionService {
       const expectedEnergy = this.getExpectedEnergyLevel(hour, settings)
 
       if (expectedEnergy === task.energyLevel &&
-          !this.detectConflict(slot.start, slot.end, calendarEvents, allTasks)) {
+        !this.detectConflict(slot.start, slot.end, calendarEvents, allTasks)) {
         return slot
       }
     }
@@ -543,15 +542,11 @@ export class RescheduleSuggestionService {
     futureDate.setDate(futureDate.getDate() + 30)
 
     return db.query.calendarEvents.findMany({
-      where: {
-        feedId: {
-          in: calendarIds,
-        },
-        start: {
-          gte: now,
-          lte: futureDate,
-        },
-      },
+      where: (calendarEvents, { inArray, and, gte, lte }) => and(
+        inArray(calendarEvents.feedId, calendarIds),
+        gte(calendarEvents.start, now),
+        lte(calendarEvents.start, futureDate)
+      ),
     })
   }
 
@@ -592,10 +587,10 @@ export class RescheduleSuggestionService {
     logger.info("Accepting suggestion", { suggestionId, userId }, LOG_SOURCE)
 
     try {
-      const suggestion = await prisma.scheduleSuggestion.findUnique({
-        where: { id: suggestionId },
+      const suggestion = await db.query.scheduleSuggestions.findFirst({
+        where: (table, { eq }) => eq(table.id, suggestionId),
         with: { task: true },
-      })
+      });
 
       if (!suggestion || suggestion.userId !== userId) {
         throw new Error("Suggestion not found or unauthorized")
@@ -607,23 +602,30 @@ export class RescheduleSuggestionService {
 
       // Update task with suggested times
       const updatedTask = await db.transaction(async (tx) => {
-        await tx.scheduleSuggestion.update({
-          where: { id: suggestionId },
-          data: {
+        await tx.update(scheduleSuggestions)
+          .set({
             status: "accepted",
             respondedAt: new Date(),
-          },
-        })
+          })
+          .where(eq(scheduleSuggestions.id, suggestionId));
 
-        return tx.task.update({
-          where: { id: suggestion.taskId },
-          data: {
+        await tx.update(tasks)
+          .set({
             scheduledStart: suggestion.suggestedStart,
             scheduledEnd: suggestion.suggestedEnd,
             isAutoScheduled: true,
-          },
-        })
-      })
+          })
+          .where(eq(tasks.id, suggestion.taskId));
+
+        const foundTask = await tx.query.tasks.findFirst({
+          where: (table, { eq }) => eq(table.id, suggestion.taskId),
+        });
+
+        if (!foundTask) {
+          throw new Error("Task not found after suggestion acceptance");
+        }
+        return foundTask;
+      });
 
       logger.info("Suggestion accepted", { suggestionId }, LOG_SOURCE)
       return updatedTask
@@ -643,21 +645,20 @@ export class RescheduleSuggestionService {
   async rejectSuggestion(suggestionId: string, userId: string): Promise<void> {
     logger.info("Rejecting suggestion", { suggestionId, userId }, LOG_SOURCE)
 
-    const suggestion = await prisma.scheduleSuggestion.findUnique({
-      where: { id: suggestionId },
-    })
+    const suggestion = await db.query.scheduleSuggestions.findFirst({
+      where: (table, { eq }) => eq(table.id, suggestionId),
+    });
 
     if (!suggestion || suggestion.userId !== userId) {
       throw new Error("Suggestion not found or unauthorized")
     }
 
-    await prisma.scheduleSuggestion.update({
-      where: { id: suggestionId },
-      data: {
+    await db.update(scheduleSuggestions)
+      .set({
         status: "rejected",
         respondedAt: new Date(),
-      },
-    })
+      })
+      .where(eq(scheduleSuggestions.id, suggestionId));
   }
 
   /**
@@ -666,21 +667,20 @@ export class RescheduleSuggestionService {
   async dismissSuggestion(suggestionId: string, userId: string): Promise<void> {
     logger.info("Dismissing suggestion", { suggestionId, userId }, LOG_SOURCE)
 
-    const suggestion = await prisma.scheduleSuggestion.findUnique({
-      where: { id: suggestionId },
-    })
+    const suggestion = await db.query.scheduleSuggestions.findFirst({
+      where: (table, { eq }) => eq(table.id, suggestionId),
+    });
 
     if (!suggestion || suggestion.userId !== userId) {
       throw new Error("Suggestion not found or unauthorized")
     }
 
-    await prisma.scheduleSuggestion.update({
-      where: { id: suggestionId },
-      data: {
+    await db.update(scheduleSuggestions)
+      .set({
         status: "dismissed",
         respondedAt: new Date(),
-      },
-    })
+      })
+      .where(eq(scheduleSuggestions.id, suggestionId));
   }
 
   /**
@@ -690,27 +690,25 @@ export class RescheduleSuggestionService {
     userId: string,
     status: "pending" | "accepted" | "rejected"
   ): Promise<ScheduleSuggestion[]> {
-    const where: Record<string, unknown> = {
-      userId,
-      status,
-    }
-
-    // Only filter by expiration for pending suggestions
-    if (status === "pending") {
-      where.expiresAt = {
-        gt: new Date(),
-      }
-    }
-
     return db.query.scheduleSuggestions.findMany({
-      where,
+      where: (scheduleSuggestions, { eq, and, gt }) => {
+        const conditions = [
+          eq(scheduleSuggestions.userId, userId),
+          eq(scheduleSuggestions.status, status)
+        ];
+
+        // Only filter by expiration for pending suggestions
+        if (status === "pending") {
+          conditions.push(gt(scheduleSuggestions.expiresAt, new Date()));
+        }
+
+        return and(...conditions);
+      },
       with: {
         task: true,
       },
-      orderBy: {
-        confidence: "desc",
-      },
-      take: status === "pending" ? 5 : 20,
+      orderBy: (table, { desc }) => [desc(table.confidence)],
+      limit: status === "pending" ? 5 : 20,
     })
   }
 
@@ -728,19 +726,22 @@ export class RescheduleSuggestionService {
   async cleanupExpiredSuggestions(): Promise<number> {
     logger.info("Cleaning up expired suggestions", {}, LOG_SOURCE)
 
-    const result = await prisma.scheduleSuggestion.updateMany({
-      where: {
-        status: "pending",
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-      data: {
-        status: "dismissed",
-      },
-    })
+    await db.update(scheduleSuggestions)
+      .set({ status: "dismissed" })
+      .where(and(
+        eq(scheduleSuggestions.status, "pending"),
+        lte(scheduleSuggestions.expiresAt, new Date())
+      ));
 
-    logger.info(`Cleaned up ${result.count} expired suggestions`, {}, LOG_SOURCE)
-    return result.count
+    const countResult = await db.select({ count: sql<number>`count(*)::int` })
+      .from(scheduleSuggestions)
+      .where(and(
+        eq(scheduleSuggestions.status, "dismissed"),
+        lte(scheduleSuggestions.expiresAt, new Date())
+      ));
+
+    const count = countResult[0]?.count || 0;
+    logger.info(`Cleaned up ${count} expired suggestions`, {}, LOG_SOURCE)
+    return count
   }
 }

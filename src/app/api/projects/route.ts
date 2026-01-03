@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Create the project
     const [newProject] = await db.insert(projects).values({
+      id: crypto.randomUUID(),
       name: json.name,
       description: json.description,
       color: json.color,

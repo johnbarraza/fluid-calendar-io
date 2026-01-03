@@ -6,7 +6,7 @@ import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "dr
  * Service to track changes to tasks for efficient synchronization.
  * Phase 2 implementation with database persistence.
  */
-import { Task } from "@prisma/client";
+import type { Task } from "@/db/types";
 
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
@@ -144,16 +144,17 @@ export class TaskChangeTracker {
 
       // Query the database for changes
       const changes = await db.query.taskChanges.findMany({
-        where: {
-          mappingId,
-          timestamp: {
-            gte: since,
-          },
-          ...(onlySynced ? { synced: true } : {}),
+        where: (taskChanges, { eq, and, gte }) => {
+          const conditions = [
+            eq(taskChanges.mappingId, mappingId),
+            gte(taskChanges.timestamp, since)
+          ];
+          if (onlySynced) {
+            conditions.push(eq(taskChanges.synced, true));
+          }
+          return and(...conditions);
         },
-        orderBy: {
-          timestamp: "asc",
-        },
+        orderBy: (changes, { asc }) => [asc(changes.timestamp)],
       });
 
       return changes as TaskChange[];
@@ -188,13 +189,11 @@ export class TaskChangeTracker {
 
       // Query the database for unsynced changes
       const changes = await db.query.taskChanges.findMany({
-        where: {
-          mappingId,
-          synced: false,
-        },
-        orderBy: {
-          timestamp: "asc",
-        },
+        where: (taskChanges, { eq, and }) => and(
+          eq(taskChanges.mappingId, mappingId),
+          eq(taskChanges.synced, false)
+        ),
+        orderBy: (changes, { asc }) => [asc(changes.timestamp)],
       });
 
       return changes as TaskChange[];
@@ -229,16 +228,9 @@ export class TaskChangeTracker {
       );
 
       // Update the database records
-      await prisma.taskChange.updateMany({
-        where: {
-          id: {
-            in: changeIds,
-          },
-        },
-        data: {
-          synced: true,
-        },
-      });
+      await db.update(taskChanges)
+        .set({ synced: true })
+        .where(inArray(taskChanges.id, changeIds));
     } catch (error) {
       logger.error(
         `Failed to mark changes as synced`,

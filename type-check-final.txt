@@ -1,0 +1,8 @@
+﻿
+> fluid-calendar@0.1.0 type-check
+> tsc --noEmit
+
+src/app/api/calendar/google/available/route.ts(75,38): error TS2339: Property 'some' does not exist on type 'never'.
+src/app/api/calendar/google/available/route.ts(75,44): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/api/calendar/outlook/available/route.ts(75,53): error TS2339: Property 'some' does not exist on type 'never'.
+src/app/api/calendar/outlook/available/route.ts(75,59): error TS7006: Parameter 'f' implicitly has an 'any' type.

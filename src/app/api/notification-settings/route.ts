@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
     const updates = await request.json();
 
     // Transform the updates to match the database schema
-    const dbUpdates: Record<string, any> = {};
+    const dbUpdates: Partial<typeof notificationSettings.$inferInsert> = {};
     if (updates.emailNotifications !== undefined) dbUpdates.emailNotifications = updates.emailNotifications;
     if (updates.dailyEmailEnabled !== undefined) dbUpdates.dailyEmailEnabled = updates.dailyEmailEnabled;
     if (updates.eventInvites !== undefined) dbUpdates.eventInvites = updates.eventInvites;

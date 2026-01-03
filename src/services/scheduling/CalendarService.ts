@@ -1,4 +1,4 @@
-import { CalendarEvent } from "@prisma/client";
+import type { CalendarEvent } from "@/db/types";
 
 import { Conflict, TimeSlot } from "@/types/scheduling";
 

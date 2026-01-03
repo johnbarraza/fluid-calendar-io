@@ -870,3 +870,112 @@ export const fitbitAccountsRelations = relations(fitbitAccounts, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const passwordResetsRelations = relations(passwordResets, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResets.userId],
+    references: [users.id],
+  }),
+}));
+export const taskProvidersRelations = relations(taskProviders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [taskProviders.userId],
+    references: [users.id],
+  }),
+  account: one(connectedAccounts, {
+    fields: [taskProviders.accountId],
+    references: [connectedAccounts.id],
+  }),
+  mappings: many(taskListMappings),
+}));
+
+export const taskListMappingsRelations = relations(taskListMappings, ({ one }) => ({
+  provider: one(taskProviders, {
+    fields: [taskListMappings.providerId],
+    references: [taskProviders.id],
+  }),
+  project: one(projects, {
+    fields: [taskListMappings.projectId],
+    references: [projects.id],
+  }),
+}));
+
+export const habitsRelations = relations(habits, ({ one, many }) => ({
+  user: one(users, {
+    fields: [habits.userId],
+    references: [users.id],
+  }),
+  logs: many(habitLogs),
+}));
+
+export const habitLogsRelations = relations(habitLogs, ({ one }) => ({
+  habit: one(habits, {
+    fields: [habitLogs.habitId],
+    references: [habits.id],
+  }),
+}));
+
+export const pomodoroSessionsRelations = relations(pomodoroSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [pomodoroSessions.userId],
+    references: [users.id],
+  }),
+  task: one(tasks, {
+    fields: [pomodoroSessions.taskId],
+    references: [tasks.id],
+  }),
+}));
+
+export const routinesRelations = relations(routines, ({ one, many }) => ({
+  user: one(users, {
+    fields: [routines.userId],
+    references: [users.id],
+  }),
+  tasks: many(routineTasks),
+  completions: many(routineCompletions),
+}));
+
+export const routineTasksRelations = relations(routineTasks, ({ one }) => ({
+  routine: one(routines, {
+    fields: [routineTasks.routineId],
+    references: [routines.id],
+  }),
+}));
+
+export const routineCompletionsRelations = relations(routineCompletions, ({ one }) => ({
+  user: one(users, {
+    fields: [routineCompletions.userId],
+    references: [users.id],
+  }),
+  routine: one(routines, {
+    fields: [routineCompletions.routineId],
+    references: [routines.id],
+  }),
+}));
+
+export const scheduleSuggestionsRelations = relations(scheduleSuggestions, ({ one }) => ({
+  user: one(users, {
+    fields: [scheduleSuggestions.userId],
+    references: [users.id],
+  }),
+  task: one(tasks, {
+    fields: [scheduleSuggestions.taskId],
+    references: [tasks.id],
+  }),
+}));
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+  user: one(users, {
+    fields: [journalEntries.userId],
+    references: [users.id],
+  }),
+}));
+
+export const jobRecordsRelations = relations(jobRecords, ({ one }) => ({
+  user: one(users, {
+    fields: [jobRecords.userId],
+    references: [users.id],
+  }),
+}));
+
+

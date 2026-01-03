@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const profile = await getFitbitProfile(tokens.access_token);
 
     // Store tokens in database (upsert pattern)
-    let fitbitAccount = await db.query.fitbitAccounts.findFirst({
+    const fitbitAccount = await db.query.fitbitAccounts.findFirst({
       where: (accounts, { eq }) => eq(accounts.userId, userId),
     });
 

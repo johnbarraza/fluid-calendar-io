@@ -13,6 +13,8 @@ export default function NotFound() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Valid pattern for Next.js hydration - setting state on mount to prevent hydration mismatches
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Set document title on the client side
     document.title = "404 - Page Not Found";

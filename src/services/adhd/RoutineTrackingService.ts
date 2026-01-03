@@ -2,7 +2,7 @@ import { db, routines, routineCompletions } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger";
-import { RoutineCompletion } from "@prisma/client";
+import type { RoutineCompletion } from "@/db/types";
 
 const LOG_SOURCE = "RoutineTrackingService";
 
@@ -31,7 +31,10 @@ export class RoutineTrackingService {
     try {
       // Get routine with tasks to calculate total duration
       const routine = await db.query.routines.findFirst({
-        where: { id: input.routineId, userId },
+        where: (routines, { eq, and }) => and(
+          eq(routines.id, input.routineId),
+          eq(routines.userId, userId)
+        ),
         with: { tasks: true },
       });
 
@@ -46,11 +49,11 @@ export class RoutineTrackingService {
 
       // Check if there's already an in-progress session for this routine
       const existingSession = await db.query.routineCompletions.findFirst({
-        where: {
-          userId,
-          routineId: input.routineId,
-          status: "in_progress",
-        },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.userId, userId),
+          eq(routineCompletions.routineId, input.routineId),
+          eq(routineCompletions.status, "in_progress")
+        ),
       });
 
       if (existingSession) {
@@ -103,20 +106,26 @@ export class RoutineTrackingService {
     try {
       // Verify ownership
       const existing = await db.query.routineCompletions.findFirst({
-        where: { id: sessionId, userId },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.id, sessionId),
+          eq(routineCompletions.userId, userId)
+        ),
       });
 
       if (!existing) {
         throw new Error("Session not found or access denied");
       }
 
-      const session = await prisma.routineCompletion.update({
-        where: { id: sessionId },
-        data: {
+      await db.update(routineCompletions)
+        .set({
           currentTaskIndex: input.currentTaskIndex,
           currentTaskStatus: input.currentTaskStatus,
           completedTasks: input.completedTasks,
-        },
+        })
+        .where(eq(routineCompletions.id, sessionId));
+
+      const session = await db.query.routineCompletions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
       });
 
       logger.info(
@@ -129,6 +138,9 @@ export class RoutineTrackingService {
         LOG_SOURCE
       );
 
+      if (!session) {
+        throw new Error("Failed to retrieve updated session");
+      }
       return session;
     } catch (error) {
       logger.error(
@@ -150,7 +162,10 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion> {
     try {
       const existing = await db.query.routineCompletions.findFirst({
-        where: { id: sessionId, userId },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.id, sessionId),
+          eq(routineCompletions.userId, userId)
+        ),
       });
 
       if (!existing) {
@@ -162,15 +177,18 @@ export class RoutineTrackingService {
         (now.getTime() - existing.startedAt.getTime()) / (1000 * 60)
       );
 
-      const session = await prisma.routineCompletion.update({
-        where: { id: sessionId },
-        data: {
+      await db.update(routineCompletions)
+        .set({
           status: "completed",
           completedAt: now,
           actualDuration,
           completedTasks: existing.totalTasks,
           notes: input.notes,
-        },
+        })
+        .where(eq(routineCompletions.id, sessionId));
+
+      const session = await db.query.routineCompletions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
       });
 
       logger.info(
@@ -179,6 +197,9 @@ export class RoutineTrackingService {
         LOG_SOURCE
       );
 
+      if (!session) {
+        throw new Error("Failed to retrieve updated session");
+      }
       return session;
     } catch (error) {
       logger.error(
@@ -200,7 +221,10 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion> {
     try {
       const existing = await db.query.routineCompletions.findFirst({
-        where: { id: sessionId, userId },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.id, sessionId),
+          eq(routineCompletions.userId, userId)
+        ),
       });
 
       if (!existing) {
@@ -212,18 +236,24 @@ export class RoutineTrackingService {
         (now.getTime() - existing.startedAt.getTime()) / (1000 * 60)
       );
 
-      const session = await prisma.routineCompletion.update({
-        where: { id: sessionId },
-        data: {
+      await db.update(routineCompletions)
+        .set({
           status: "abandoned",
           completedAt: now,
           actualDuration,
           notes: reason,
-        },
+        })
+        .where(eq(routineCompletions.id, sessionId));
+
+      const session = await db.query.routineCompletions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
       });
 
       logger.info("Abandoned routine session", { sessionId }, LOG_SOURCE);
 
+      if (!session) {
+        throw new Error("Failed to retrieve updated session");
+      }
       return session;
     } catch (error) {
       logger.error(
@@ -244,15 +274,15 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion | null> {
     try {
       const session = await db.query.routineCompletions.findFirst({
-        where: {
-          userId,
-          routineId,
-          status: "in_progress",
-        },
-        orderBy: { startedAt: "desc" },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.userId, userId),
+          eq(routineCompletions.routineId, routineId),
+          eq(routineCompletions.status, "in_progress")
+        ),
+        orderBy: (table, { desc }) => [desc(table.startedAt)],
       });
 
-      return session;
+      return session || null;
     } catch (error) {
       logger.error(
         "Failed to get active session",
@@ -273,13 +303,13 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion[]> {
     try {
       const completions = await db.query.routineCompletions.findMany({
-        where: {
-          userId,
-          routineId,
-          status: { in: ["completed", "abandoned"] },
-        },
-        orderBy: { startedAt: "desc" },
-        take: limit,
+        where: (routineCompletions, { eq, and, inArray }) => and(
+          eq(routineCompletions.userId, userId),
+          eq(routineCompletions.routineId, routineId),
+          inArray(routineCompletions.status, ["completed", "abandoned"])
+        ),
+        orderBy: (table, { desc }) => [desc(table.startedAt)],
+        limit: limit,
       });
 
       return completions;
@@ -299,11 +329,11 @@ export class RoutineTrackingService {
   async getRoutineStats(userId: string, routineId: string) {
     try {
       const completions = await db.query.routineCompletions.findMany({
-        where: {
-          userId,
-          routineId,
-          status: "completed",
-        },
+        where: (routineCompletions, { eq, and }) => and(
+          eq(routineCompletions.userId, userId),
+          eq(routineCompletions.routineId, routineId),
+          eq(routineCompletions.status, "completed")
+        ),
       });
 
       if (completions.length === 0) {

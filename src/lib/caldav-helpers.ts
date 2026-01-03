@@ -1,4 +1,4 @@
-import { CalendarEvent } from "@prisma/client";
+import type { CalendarEvent } from "@/db/types";
 import ICAL from "ical.js";
 
 import { ICalRRule } from "./caldav-interfaces";

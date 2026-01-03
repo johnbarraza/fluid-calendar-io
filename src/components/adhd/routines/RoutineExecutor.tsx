@@ -31,6 +31,8 @@ export function RoutineExecutor({
     routine.tasks[0]?.duration * 60 || 0
   ); // seconds
   const [completedTasks, setCompletedTasks] = React.useState(0);
+  // Valid: Date.now() called only once during component initialization
+  // eslint-disable-next-line react-hooks/purity
   const [sessionStartTime] = React.useState(Date.now());
 
   const currentTask = routine.tasks[currentTaskIndex];
@@ -100,6 +102,8 @@ export function RoutineExecutor({
   };
 
   const getElapsedTime = (): string => {
+    // Timer functionality requires Date.now() - this is intentional
+    // eslint-disable-next-line react-hooks/purity
     const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
     return formatTime(elapsed);
   };

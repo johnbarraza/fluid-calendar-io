@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
               where: (feeds, { eq, and }) =>
                 and(
                   eq(feeds.type, "GOOGLE"),
-                  eq(feeds.url, cal.id),
+                  eq(feeds.url, cal.id ?? ""),
                   eq(feeds.accountId, accountId),
                   eq(feeds.userId, userId)
                 ),
@@ -298,17 +298,17 @@ export async function POST(request: NextRequest) {
             start: isAllDay
               ? createAllDayDate(masterEventData.start?.date || "")
               : newDate(
-                  masterEventData.start?.dateTime ||
-                    masterEventData.start?.date ||
-                    ""
-                ),
+                masterEventData.start?.dateTime ||
+                masterEventData.start?.date ||
+                ""
+              ),
             end: isAllDay
               ? createAllDayDate(masterEventData.end?.date || "")
               : newDate(
-                  masterEventData.end?.dateTime ||
-                    masterEventData.end?.date ||
-                    ""
-                ),
+                masterEventData.end?.dateTime ||
+                masterEventData.end?.date ||
+                ""
+              ),
             location: masterEventData.location,
             isRecurring: true,
             isMaster: true,
@@ -316,8 +316,8 @@ export async function POST(request: NextRequest) {
               masterEventData.recurrence,
               newDate(
                 masterEventData.start?.dateTime ||
-                  masterEventData.start?.date ||
-                  ""
+                masterEventData.start?.date ||
+                ""
               )
             ),
             recurringEventId: masterEventData.recurringEventId,
@@ -332,9 +332,9 @@ export async function POST(request: NextRequest) {
               : undefined,
             organizer: masterEventData.organizer
               ? {
-                  name: masterEventData.organizer.displayName,
-                  email: masterEventData.organizer.email,
-                }
+                name: masterEventData.organizer.displayName,
+                email: masterEventData.organizer.email,
+              }
               : undefined,
             attendees: masterEventData.attendees?.map(
               (a: calendar_v3.Schema$EventAttendee) => ({
@@ -359,13 +359,13 @@ export async function POST(request: NextRequest) {
         for (const event of events) {
           const masterEvent = event.recurringEventId
             ? await tx.query.calendarEvents.findFirst({
-                where: (events, { eq, and }) =>
-                  and(
-                    eq(events.feedId, feed.id),
-                    eq(events.externalEventId, event.recurringEventId),
-                    eq(events.isMaster, true)
-                  ),
-              })
+              where: (events, { eq, and }) =>
+                and(
+                  eq(events.feedId, feed.id),
+                  eq(events.externalEventId, event.recurringEventId!),
+                  eq(events.isMaster, true)
+                ),
+            })
             : null;
 
           const isAllDay = event.start ? !event.start.dateTime : false;
@@ -374,7 +374,7 @@ export async function POST(request: NextRequest) {
             where: (events, { eq, and }) =>
               and(
                 eq(events.feedId, feed.id),
-                eq(events.externalEventId, event.id)
+                eq(events.externalEventId, event.id ?? "")
               ),
           });
 
@@ -398,11 +398,11 @@ export async function POST(request: NextRequest) {
             recurrenceRule: masterEvent
               ? undefined
               : processRecurrenceRule(
-                  event.recurrence,
-                  event.start
-                    ? newDate(event.start?.dateTime || event.start?.date || "")
-                    : undefined
-                ),
+                event.recurrence,
+                event.start
+                  ? newDate(event.start?.dateTime || event.start?.date || "")
+                  : undefined
+              ),
             allDay: isAllDay,
             status: event.status,
             sequence: event.sequence,
@@ -410,9 +410,9 @@ export async function POST(request: NextRequest) {
             lastModified: event.updated ? newDate(event.updated) : undefined,
             organizer: event.organizer
               ? {
-                  name: event.organizer.displayName,
-                  email: event.organizer.email,
-                }
+                name: event.organizer.displayName,
+                email: event.organizer.email,
+              }
               : undefined,
             attendees: event.attendees?.map((a) => ({
               name: a.displayName,
@@ -430,7 +430,7 @@ export async function POST(request: NextRequest) {
             await tx.insert(calendarEvents).values(eventRecord);
           }
         }
-      }, {timeout: 30000});
+      });
     }
 
     return NextResponse.json(feed);
@@ -570,9 +570,9 @@ export async function PUT(request: NextRequest) {
           lastModified: event.updated ? newDate(event.updated) : undefined,
           organizer: event.organizer
             ? {
-                name: event.organizer.displayName,
-                email: event.organizer.email,
-              }
+              name: event.organizer.displayName,
+              email: event.organizer.email,
+            }
             : undefined,
           attendees: event.attendees?.map(
             (a: calendar_v3.Schema$EventAttendee) => ({
@@ -592,7 +592,7 @@ export async function PUT(request: NextRequest) {
           error: null,
         })
         .where(and(eq(calendarFeeds.id, feedId), eq(calendarFeeds.userId, userId)));
-    }, {timeout: 30000});
+    });
 
     console.log("Successfully synced calendar:", feedId);
     return NextResponse.json({ success: true });

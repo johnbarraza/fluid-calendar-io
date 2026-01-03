@@ -19,9 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Get accounts filtered by the current user's ID
     const accounts = await db.query.connectedAccounts.findMany({
-      where: {
-        userId,
-      },
+      where: (accounts, { eq }) => eq(accounts.userId, userId),
       with: {
         calendars: {
           columns: {
@@ -73,11 +71,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if the account belongs to the current user
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {
@@ -90,20 +88,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     // First delete all calendar feeds associated with this account
-    await prisma.calendarFeed.deleteMany({
-      where: {
-        accountId,
-        userId,
-      },
-    });
+    await db.delete(calendarFeeds)
+      .where(and(eq(calendarFeeds.accountId, accountId), eq(calendarFeeds.userId, userId)));
 
     // Then delete the account
-    await prisma.connectedAccount.delete({
-      where: {
-        id: accountId,
-        userId,
-      },
-    });
+    await db.delete(connectedAccounts)
+      .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

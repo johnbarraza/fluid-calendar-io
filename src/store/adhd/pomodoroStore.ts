@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { PomodoroSession } from "@prisma/client";
+import type { PomodoroSession } from "@/db/types";
 
 /**
  * Pomodoro configuration

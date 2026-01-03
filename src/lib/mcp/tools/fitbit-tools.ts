@@ -37,13 +37,11 @@ export async function getActivity(
     date.setHours(0, 0, 0, 0);
 
     // Try to get from database first
-    let activity = await prisma.fitbitActivity.findUnique({
-      where: {
-        userId_date: {
-          userId,
-          date,
-        },
-      },
+    let activity = await db.query.fitbitActivities.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.userId, userId),
+        eq(table.date, date)
+      ),
     });
 
     // If not found, sync from Fitbit
@@ -57,13 +55,11 @@ export async function getActivity(
       const syncService = new FitbitSyncService();
       await syncService.syncDailyActivity(userId, date);
 
-      activity = await prisma.fitbitActivity.findUnique({
-        where: {
-          userId_date: {
-            userId,
-            date,
-          },
-        },
+      activity = await db.query.fitbitActivities.findFirst({
+        where: (table, { eq, and }) => and(
+          eq(table.userId, userId),
+          eq(table.date, date)
+        ),
       });
     }
 
@@ -81,7 +77,6 @@ export async function getActivity(
       calories: activity.calories,
       activeMinutes: activity.activeMinutes,
       floors: activity.floors,
-      elevation: activity.elevation,
     };
   } catch (error) {
     logger.error(
@@ -112,16 +107,12 @@ export async function getSleep(
     endDate.setHours(23, 59, 59, 999);
 
     let sleepData = await db.query.fitbitSleep.findMany({
-      where: {
-        userId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        date: "asc",
-      },
+      where: (table, { eq, and, gte, lte }) => and(
+        eq(table.userId, userId),
+        gte(table.date, startDate),
+        lte(table.date, endDate)
+      ),
+      orderBy: (table, { asc }) => [asc(table.date)],
     });
 
     // If no data, try to sync
@@ -136,16 +127,12 @@ export async function getSleep(
       await syncService.syncSleep(userId, startDate);
 
       sleepData = await db.query.fitbitSleep.findMany({
-        where: {
-          userId,
-          date: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
-        orderBy: {
-          date: "asc",
-        },
+        where: (table, { eq, and, gte, lte }) => and(
+          eq(table.userId, userId),
+          gte(table.date, startDate),
+          lte(table.date, endDate)
+        ),
+        orderBy: (table, { asc }) => [asc(table.date)],
       });
     }
 
@@ -153,19 +140,22 @@ export async function getSleep(
       startDate: params.startDate,
       endDate: params.endDate,
       count: sleepData.length,
-      sleepSessions: sleepData.map((sleep) => ({
-        date: sleep.date.toISOString().split("T")[0],
-        startTime: sleep.startTime.toISOString(),
-        endTime: sleep.endTime.toISOString(),
-        duration: sleep.duration,
-        efficiency: sleep.efficiency,
-        minutesAsleep: sleep.minutesAsleep,
-        minutesAwake: sleep.minutesAwake,
-        timeInBed: sleep.timeInBed,
-        deepSleep: sleep.deepSleep,
-        lightSleep: sleep.lightSleep,
-        remSleep: sleep.remSleep,
-      })),
+      sleepSessions: sleepData.map((sleep) => {
+        const stages = sleep.sleepStages as Record<string, number> | null;
+        return {
+          date: sleep.date.toISOString().split("T")[0],
+          startTime: sleep.startTime.toISOString(),
+          endTime: sleep.endTime.toISOString(),
+          duration: sleep.duration,
+          efficiency: sleep.efficiency,
+          minutesAsleep: sleep.minutesAsleep,
+          minutesAwake: sleep.minutesAwake,
+          timeInBed: sleep.timeInBed,
+          deepSleep: stages?.deep || 0,
+          lightSleep: stages?.light || 0,
+          remSleep: stages?.rem || 0,
+        };
+      }),
     };
   } catch (error) {
     logger.error(
@@ -197,13 +187,11 @@ export async function getHeartRate(
     const date = new Date(params.date);
     date.setHours(0, 0, 0, 0);
 
-    let heartRate = await prisma.fitbitHeartRate.findUnique({
-      where: {
-        userId_date: {
-          userId,
-          date,
-        },
-      },
+    let heartRate = await db.query.fitbitHeartRate.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.userId, userId),
+        eq(table.date, date)
+      ),
     });
 
     // If not found, sync from Fitbit
@@ -217,13 +205,11 @@ export async function getHeartRate(
       const syncService = new FitbitSyncService();
       await syncService.syncHeartRate(userId, date);
 
-      heartRate = await prisma.fitbitHeartRate.findUnique({
-        where: {
-          userId_date: {
-            userId,
-            date,
-          },
-        },
+      heartRate = await db.query.fitbitHeartRate.findFirst({
+        where: (table, { eq, and }) => and(
+          eq(table.userId, userId),
+          eq(table.date, date)
+        ),
       });
     }
 
@@ -237,10 +223,7 @@ export async function getHeartRate(
     return {
       date: params.date,
       restingHeartRate: heartRate.restingHeartRate,
-      averageHeartRate: heartRate.averageHeartRate,
-      maxHeartRate: heartRate.maxHeartRate,
-      minHeartRate: heartRate.minHeartRate,
-      zones: heartRate.zones,
+      zones: heartRate.heartRateZones,
     };
   } catch (error) {
     logger.error(
@@ -273,22 +256,18 @@ export async function getRecentActivity(
     startDate.setHours(0, 0, 0, 0);
 
     const activities = await db.query.fitbitActivities.findMany({
-      where: {
-        userId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        date: "desc",
-      },
+      where: (table, { eq, and, gte, lte }) => and(
+        eq(table.userId, userId),
+        gte(table.date, startDate),
+        lte(table.date, endDate)
+      ),
+      orderBy: (table, { desc }) => [desc(table.date)],
     });
 
     // Calculate totals and averages
-    const totalSteps = activities.reduce((sum, a) => sum + a.steps, 0);
-    const totalDistance = activities.reduce((sum, a) => sum + a.distance, 0);
-    const totalCalories = activities.reduce((sum, a) => sum + a.calories, 0);
+    const totalSteps = activities.reduce((sum, a) => sum + (a.steps || 0), 0);
+    const totalDistance = activities.reduce((sum, a) => sum + (a.distance || 0), 0);
+    const totalCalories = activities.reduce((sum, a) => sum + (a.calories || 0), 0);
     const avgSteps = activities.length > 0 ? Math.round(totalSteps / activities.length) : 0;
 
     return {

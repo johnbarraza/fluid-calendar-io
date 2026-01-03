@@ -19,6 +19,9 @@ export default function Error({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // This is a valid pattern for Next.js hydration - we need to set state once on mount
+    // to prevent hydration mismatches between server and client
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Set document title on the client side
     document.title = "Error - FluidCalendar";

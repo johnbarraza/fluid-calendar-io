@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
     );
 
     // Check if the feed belongs to the current user
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id: feedId,
-        userId,
-      },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) => and(
+        eq(feeds.id, feedId),
+        eq(feeds.userId, userId)
+      ),
       with: {
         account: true,
       },
@@ -178,11 +178,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get the account
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: validatedEvent.feed.accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, validatedEvent.feed.accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {
@@ -293,11 +293,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get the account
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: validatedEvent.feed.accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, validatedEvent.feed.accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {

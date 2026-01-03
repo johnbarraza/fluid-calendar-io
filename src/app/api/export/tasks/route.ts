@@ -23,38 +23,32 @@ export async function GET(request: NextRequest) {
 
     // Fetch all tasks for the user
     const tasks = await db.query.tasks.findMany({
-      where: {
-        userId,
-        // Filter out completed tasks if includeCompleted is false
-        ...(includeCompleted ? {} : { status: { not: "completed" } }),
+      where: (table, { eq, and, ne }) => {
+        if (includeCompleted) {
+          return eq(table.userId, userId);
+        }
+        return and(
+          eq(table.userId, userId),
+          ne(table.status, "completed")
+        );
       },
       with: {
         tags: true,
         project: true,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: (table, { asc }) => [asc(table.createdAt)],
     });
 
     // Fetch all projects for the user
     const projects = await db.query.projects.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        name: "asc",
-      },
+      where: (table, { eq }) => eq(table.userId, userId),
+      orderBy: (table, { asc }) => [asc(table.name)],
     });
 
     // Fetch all tags for the user
     const tags = await db.query.tags.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        name: "asc",
-      },
+      where: (table, { eq }) => eq(table.userId, userId),
+      orderBy: (table, { asc }) => [asc(table.name)],
     });
 
     // Create the export data structure

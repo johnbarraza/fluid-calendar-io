@@ -141,6 +141,8 @@ export default function SettingsPage() {
 
   // Set hydrated state after mount
   useEffect(() => {
+    // Valid pattern for Next.js hydration - setting state on mount to prevent hydration mismatches
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsHydrated(true);
   }, []);
 

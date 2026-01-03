@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { ScheduleSuggestion, Task } from "@prisma/client";
+import type { ScheduleSuggestion, Task } from "@/db/types";
 
 /**
  * Extended suggestion with task details

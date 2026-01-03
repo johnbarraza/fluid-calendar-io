@@ -8,13 +8,15 @@ import { newDate } from "@/lib/date-utils";
 export async function POST() {
   try {
     // Delete all expired logs
-    const { count } = await prisma.log.deleteMany({
-      where: {
-        expiresAt: {
-          lt: newDate(),
-        },
-      },
-    });
+    await db.delete(logs)
+      .where(lte(logs.expiresAt, newDate()));
+
+    // Count deleted logs
+    const countResult = await db.select({ count: sql<number>`count(*)::int` })
+      .from(logs)
+      .where(lte(logs.expiresAt, newDate()));
+
+    const count = countResult[0]?.count || 0;
 
     return NextResponse.json({
       message: `Cleaned up ${count} expired logs`,

@@ -52,30 +52,29 @@ export async function POST(request: NextRequest) {
 
     // Find the reset token
     const resetRequest = await db.query.passwordResets.findFirst({
-      where: {
-        token,
-        expiresAt: {
-          gt: new Date(),
-        },
-        usedAt: null,
-      },
+      where: (table, { eq, and, gt, isNull }) => and(
+        eq(table.token, token),
+        gt(table.expiresAt, new Date()),
+        isNull(table.usedAt)
+      ),
       with: {
         user: {
           with: {
-            accounts: {
-              where: {
-                provider: "credentials",
-              },
-            },
+            accounts: true,
           },
         },
       },
     });
 
+    // Filter accounts to find credentials account
+    const credentialsAccount = resetRequest?.user?.accounts?.find(
+      (acc) => acc.provider === "credentials"
+    );
+
     if (
       !resetRequest ||
       !resetRequest.user ||
-      !resetRequest.user.accounts?.[0]
+      !credentialsAccount
     ) {
       logger.warn("Invalid or expired reset token used", { token }, LOG_SOURCE);
       return NextResponse.json(
@@ -88,24 +87,15 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(password, 10);
 
     // Update the password and mark token as used
-    await db.transaction([
-      prisma.account.update({
-        where: {
-          id: resetRequest.user.accounts[0].id,
-        },
-        data: {
-          id_token: hashedPassword,
-        },
-      }),
-      prisma.passwordReset.update({
-        where: {
-          id: resetRequest.id,
-        },
-        data: {
-          usedAt: new Date(),
-        },
-      }),
-    ]);
+    await db.transaction(async (tx) => {
+      await tx.update(accounts)
+        .set({ id_token: hashedPassword })
+        .where(eq(accounts.id, credentialsAccount.id));
+
+      await tx.update(passwordResets)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResets.id, resetRequest.id));
+    });
 
     logger.info(
       "Password reset successful",

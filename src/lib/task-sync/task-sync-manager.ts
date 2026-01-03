@@ -10,10 +10,10 @@ import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "dr
  * - Handling task operations that trigger syncs
  * - Resolving conflicts between local and remote tasks
  */
-import {
+import type {
   TaskProvider as DbTaskProvider,
   TaskListMapping,
-} from "@prisma/client";
+} from "@/db/types";
 
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
@@ -73,8 +73,8 @@ export class TaskSyncManager {
    */
   async getProvider(providerId: string): Promise<TaskProviderInterface> {
     // Fetch provider details from database
-    const dbProvider = await prisma.taskProvider.findUnique({
-      where: { id: providerId },
+    const dbProvider = await db.query.taskProviders.findFirst({
+      where: (table, { eq }) => eq(table.id, providerId),
       with: {
         // We need to check the account schema
         account: true,
@@ -127,8 +127,8 @@ export class TaskSyncManager {
 
     // If mappingId is a string, fetch the mapping with its provider
     if (typeof mappingId === "string") {
-      const foundMapping = await prisma.taskListMapping.findUnique({
-        where: { id: mappingId },
+      const foundMapping = await db.query.taskListMappings.findFirst({
+        where: (table, { eq }) => eq(table.id, mappingId),
         with: { provider: true },
       });
 
@@ -161,13 +161,12 @@ export class TaskSyncManager {
 
     try {
       // Update the mapping status
-      await prisma.taskListMapping.update({
-        where: { id: mapping.id },
-        data: {
+      await db.update(taskListMappings)
+        .set({
           syncStatus: "SYNCING",
           lastError: null,
-        },
-      });
+        })
+        .where(eq(taskListMappings.id, mapping.id));
 
       // Get the tracker instance
       const tracker = new TaskChangeTracker();
@@ -182,14 +181,13 @@ export class TaskSyncManager {
       );
 
       // Update the mapping with success status
-      await prisma.taskListMapping.update({
-        where: { id: mapping.id },
-        data: {
+      await db.update(taskListMappings)
+        .set({
           lastSyncedAt: newDate(),
           syncStatus: "OK",
           lastError: null,
-        },
-      });
+        })
+        .where(eq(taskListMappings.id, mapping.id));
 
       result.success = true;
 
@@ -208,13 +206,12 @@ export class TaskSyncManager {
       );
 
       // Update the mapping with error status
-      await prisma.taskListMapping.update({
-        where: { id: mapping.id },
-        data: {
+      await db.update(taskListMappings)
+        .set({
           syncStatus: "ERROR",
           lastError: errorMessage,
-        },
-      });
+        })
+        .where(eq(taskListMappings.id, mapping.id));
 
       result.errors.push({
         taskId: "general",
@@ -235,16 +232,15 @@ export class TaskSyncManager {
 
     try {
       // Get all active mappings for the user
-      const mappings = await db.query.taskListMappings.findMany({
-        where: {
-          provider: {
-            userId,
-            enabled: true,
-            syncEnabled: true,
-          },
-        },
+      // Note: Drizzle relational queries don't support nested relation filtering
+      // We fetch mappings with providers and filter manually
+      const allMappings = await db.query.taskListMappings.findMany({
         with: { provider: true },
       });
+
+      const mappings = allMappings.filter(
+        (m) => m.provider?.userId === userId && m.provider?.enabled === true && m.provider?.syncEnabled === true
+      );
 
       // Sync each mapping
       for (const mapping of mappings) {
@@ -315,9 +311,7 @@ export class TaskSyncManager {
       // Step 1: Fetch tasks from both sources
       const localTasks = (
         await db.query.tasks.findMany({
-          where: {
-            projectId: mapping.projectId,
-          },
+          where: (tasks, { eq }) => eq(tasks.projectId, mapping.projectId),
           with: {
             tags: true,
             project: true,
@@ -396,11 +390,7 @@ export class TaskSyncManager {
         if (processedTaskIds.size > 0) {
           // Get the updated task data for tasks we just processed
           const refreshedTasks = await db.query.tasks.findMany({
-            where: {
-              id: {
-                in: Array.from(processedTaskIds),
-              },
-            },
+            where: (tasks, { inArray }) => inArray(tasks.id, Array.from(processedTaskIds)),
             with: {
               tags: true,
               project: true,
@@ -541,9 +531,8 @@ export class TaskSyncManager {
           );
 
           // Update local task with external reference
-          await prisma.task.update({
-            where: { id: localTask.id },
-            data: {
+          await db.update(tasks)
+            .set({
               externalTaskId: createdTask.id,
               externalListId: mapping.externalListId,
               source: mapping.provider.type,
@@ -555,8 +544,8 @@ export class TaskSyncManager {
                   ? newDate(createdTask.lastModifiedDateTime)
                   : new Date(),
               syncHash: tracker.generateTaskHash(localTask),
-            },
-          });
+            })
+            .where(eq(tasks.id, localTask.id));
 
           result.imported++;
         } catch (error) {
@@ -585,15 +574,11 @@ export class TaskSyncManager {
         try {
           // Check if this task was recently modified locally
           const recentChanges = await db.query.taskChanges.findMany({
-            where: {
-              taskId: localTask.id,
-              timestamp: {
-                gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
-              },
-            },
-            orderBy: {
-              timestamp: "desc",
-            },
+            where: (taskChanges, { eq, and, gte }) => and(
+              eq(taskChanges.taskId, localTask.id),
+              gte(taskChanges.timestamp, new Date(Date.now() - 24 * 60 * 60 * 1000)) // Last 24 hours
+            ),
+            orderBy: (changes, { desc }) => [desc(changes.timestamp)],
           });
 
           // If we have recent local changes, don't delete the task
@@ -603,9 +588,8 @@ export class TaskSyncManager {
           }
 
           // Delete the local task only if no recent changes
-          await prisma.task.delete({
-            where: { id: localTask.id },
-          });
+          await db.delete(tasks)
+            .where(eq(tasks.id, localTask.id));
 
           result.deleted++;
         } catch (error) {
@@ -641,8 +625,8 @@ export class TaskSyncManager {
   ): Promise<void> {
     if (taskId === null) return; // This can happen if the task was deleted
     // Get the task details
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
+    const task = await db.query.tasks.findFirst({
+      where: (table, { eq }) => eq(table.id, taskId),
       with: {
         tags: true,
         project: true,
@@ -681,9 +665,8 @@ export class TaskSyncManager {
     );
 
     // Update the local task with the external ID
-    await prisma.task.update({
-      where: { id: task.id },
-      data: {
+    await db.update(tasks)
+      .set({
         externalTaskId: createdTask.id,
         externalListId: mapping.externalListId,
         source: mapping.provider.type,
@@ -695,8 +678,8 @@ export class TaskSyncManager {
         lastSyncedAt: newDate(),
         syncStatus: "SYNCED",
         syncHash: new TaskChangeTracker().generateTaskHash(taskWithSync),
-      },
-    });
+      })
+      .where(eq(tasks.id, task.id));
   }
 
   /**
@@ -710,8 +693,8 @@ export class TaskSyncManager {
   ): Promise<void> {
     if (taskId === null) return; // This can happen if the task was deleted
     // Get the task details
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
+    const task = await db.query.tasks.findFirst({
+      where: (table, { eq }) => eq(table.id, taskId),
       with: {
         tags: true,
         project: true,
@@ -751,9 +734,8 @@ export class TaskSyncManager {
     );
 
     // Update the local task with sync metadata
-    await prisma.task.update({
-      where: { id: task.id },
-      data: {
+    await db.update(tasks)
+      .set({
         externalUpdatedAt: updatedTask.lastModified
           ? newDate(updatedTask.lastModified)
           : updatedTask.lastModifiedDateTime
@@ -762,8 +744,8 @@ export class TaskSyncManager {
         lastSyncedAt: newDate(),
         syncStatus: "SYNCED",
         syncHash: new TaskChangeTracker().generateTaskHash(taskWithSync),
-      },
-    });
+      })
+      .where(eq(tasks.id, task.id));
   }
 
   /**
@@ -842,9 +824,8 @@ export class TaskSyncManager {
     mapping: TaskListMapping & { provider: DbTaskProvider },
     providerType: string
   ): Promise<void> {
-    await prisma.task.update({
-      where: { id: localTask.id },
-      data: {
+    await db.update(tasks)
+      .set({
         externalTaskId: externalTask.id,
         externalListId: mapping.externalListId,
         source: providerType,
@@ -855,8 +836,8 @@ export class TaskSyncManager {
           : externalTask.lastModifiedDateTime
             ? newDate(externalTask.lastModifiedDateTime)
             : new Date(),
-      },
-    });
+      })
+      .where(eq(tasks.id, localTask.id));
   }
 
   /**
@@ -902,17 +883,16 @@ export class TaskSyncManager {
       const { tags, project, ...updateData } = mergedData;
 
       // Update local task with the merged data
-      await prisma.task.update({
-        where: { id: localTask.id },
-        data: {
+      await db.update(tasks)
+        .set({
           // Use type assertion to handle the TaskUpdateInput type
           ...updateData,
           externalUpdatedAt: externalUpdatedAt,
           lastSyncedAt: newDate(),
           syncStatus: "SYNCED",
           syncHash: new TaskChangeTracker().generateTaskHash(localTask),
-        },
-      });
+        })
+        .where(eq(tasks.id, localTask.id));
     } else if (localUpdatedAt > (localTask.externalUpdatedAt || new Date(0))) {
       // Local is newer - update external with local data
       logger.debug(
@@ -934,9 +914,8 @@ export class TaskSyncManager {
       );
 
       // Update local task's external metadata
-      await prisma.task.update({
-        where: { id: localTask.id },
-        data: {
+      await db.update(tasks)
+        .set({
           externalUpdatedAt: updatedTask.lastModified
             ? newDate(updatedTask.lastModified)
             : updatedTask.lastModifiedDateTime
@@ -945,8 +924,8 @@ export class TaskSyncManager {
           lastSyncedAt: newDate(),
           syncStatus: "SYNCED",
           syncHash: new TaskChangeTracker().generateTaskHash(localTask),
-        },
-      });
+        })
+        .where(eq(tasks.id, localTask.id));
     }
     // If timestamps are equal, no update needed
   }

@@ -15,6 +15,7 @@ export const withUserId = <T extends PgTable>(
   userId: string,
   table: T
 ): SQL => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return eq((table as any).userId, userId);
 };
 
@@ -27,8 +28,11 @@ export async function verifyOwnership<T extends PgTable>(
   tableName: string,
   id: string,
   userId: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const record = await (db.query as any)[tableName].findFirst({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     where: and(eq((table as any).id, id), eq((table as any).userId, userId)),
   });
 

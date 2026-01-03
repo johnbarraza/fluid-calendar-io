@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
     const { feedId, ...eventData } = await request.json();
 
     // Check if the feed belongs to the current user
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id: feedId,
-        userId,
-      },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) => and(
+        eq(feeds.id, feedId),
+        eq(feeds.userId, userId)
+      ),
       with: {
         account: true,
       },
@@ -85,10 +85,10 @@ export async function POST(request: NextRequest) {
 
     // Get the created event from database
     const createdEvent = await db.query.calendarEvents.findFirst({
-      where: {
-        feedId: feed.id,
-        externalEventId: outlookEvent.id,
-      },
+      where: (events, { eq, and }) => and(
+        eq(events.feedId, feed.id),
+        eq(events.externalEventId, outlookEvent.id)
+      ),
     });
 
     if (!createdEvent) {
@@ -158,14 +158,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // Delete existing event and any related instances from our database
-    await prisma.calendarEvent.deleteMany({
-      where: {
-        OR: [
-          { id: validatedEvent.id },
-          { recurringEventId: validatedEvent.externalEventId },
-        ],
-      },
-    });
+    await db.delete(calendarEvents)
+      .where(or(
+        eq(calendarEvents.id, validatedEvent.id),
+        eq(calendarEvents.recurringEventId, validatedEvent.externalEventId)
+      ));
 
     // Get the updated event and its instances
     const client = await getOutlookClient(
@@ -179,9 +176,7 @@ export async function PUT(request: NextRequest) {
     );
 
     const record = await db.query.calendarEvents.findFirst({
-      where: {
-        externalEventId: outlookEvent.id,
-      },
+      where: (events, { eq }) => eq(events.externalEventId, outlookEvent.id),
     });
     return NextResponse.json(record);
   } catch (error) {

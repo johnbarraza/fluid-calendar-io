@@ -1,7 +1,6 @@
 import { db, tasks } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
-import { AutoScheduleSettings } from "@prisma/client";
-import { Task } from "@prisma/client";
+import type { AutoScheduleSettings, Task } from "@/db/types";
 
 import { parseSelectedCalendars, parseWorkDays } from "@/lib/autoSchedule";
 import {
@@ -64,13 +63,13 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
   async updateScheduledTasks(userId: string): Promise<void> {
     // Fetch all scheduled tasks
     const scheduledTasks = await db.query.tasks.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduledStart: { not: null },
-        scheduledEnd: { not: null },
-        projectId: { not: null },
-        userId,
-      },
+      where: (tasks, { eq, and, isNotNull }) => and(
+        eq(tasks.isAutoScheduled, true),
+        isNotNull(tasks.scheduledStart),
+        isNotNull(tasks.scheduledEnd),
+        isNotNull(tasks.projectId),
+        eq(tasks.userId, userId)
+      ),
     });
 
     // Update the slot scorer with the latest scheduled tasks

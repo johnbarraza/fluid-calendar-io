@@ -4,7 +4,10 @@ import { LogLevel, LogMetadata, LogStorageConfig } from "./types";
 class Logger {
   private static instance: Logger;
   private clientLogger: ClientLogger | null = null;
-  private serverLogger: any | null = null; // Type as 'any' to avoid importing server-only code
+  // Intentionally typed as 'any' to avoid importing server-only code in client bundles
+  // The ServerLogger is dynamically imported only on the server side
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private serverLogger: any | null = null;
   private isClient: boolean;
 
   private constructor(config?: Partial<LogStorageConfig>) {

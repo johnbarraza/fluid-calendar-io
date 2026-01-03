@@ -27,6 +27,8 @@ export function FocusMode() {
 
   // This effect will only run on the client
   useEffect(() => {
+    // Valid pattern for Next.js hydration - setting state on mount to prevent hydration mismatches
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

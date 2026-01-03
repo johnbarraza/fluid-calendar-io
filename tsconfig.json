@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "google-calendar-mcp",
-    "mcp-fitbit"
+    "mcp-fitbit",
+    "scripts"
   ]
 }

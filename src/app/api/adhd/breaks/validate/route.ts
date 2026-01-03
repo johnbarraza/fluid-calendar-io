@@ -21,14 +21,14 @@ export async function POST(request: NextRequest) {
 
     // Get tasks and settings
     const tasks = await db.query.tasks.findMany({
-      where: {
-        id: { in: taskIds },
-        userId: auth.userId,
-      },
+      where: (table, { eq, and, inArray }) => and(
+        inArray(table.id, taskIds),
+        eq(table.userId, auth.userId)
+      ),
     });
 
-    const settings = await prisma.autoScheduleSettings.findUnique({
-      where: { userId: auth.userId },
+    const settings = await db.query.autoScheduleSettings.findFirst({
+      where: (table, { eq }) => eq(table.userId, auth.userId),
     });
 
     if (!settings) {

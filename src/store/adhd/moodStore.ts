@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { MoodEntry } from "@prisma/client";
+import type { MoodEntry } from "@/db/types";
 
 /**
  * New mood entry data

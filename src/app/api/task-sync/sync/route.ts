@@ -96,41 +96,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (mappingId) {
         // If mappingId is provided, sync that specific mapping
         const mapping = await db.query.taskListMappings.findFirst({
-          where: {
-            id: mappingId,
-            provider: {
-              userId,
-            },
-          },
-          with: { provider: true },
+          where: (table, { eq }) => eq(table.id, mappingId),
+          with: { provider: true }
         });
 
         if (!mapping) {
           return NextResponse.json(
             {
               error: "Not found",
-              message: "Task list mapping not found or does not belong to you",
+              message: "Task list mapping not found",
             },
             { status: 404 }
           );
         }
 
-        // Use the mapping's direction if not explicitly provided
+        if (!mapping.provider) {
+          return NextResponse.json(
+            {
+              error: "Invalid state",
+              message: "Mapping provider not found",
+            },
+            { status: 500 }
+          );
+        }
+
+        if (mapping.provider.userId !== userId) {
+          return NextResponse.json(
+            {
+              error: "Not found",
+              message: "Task list mapping does not belong to you",
+            },
+            { status: 404 }
+          );
+        }
+
         if (!direction) {
-          direction = mapping.direction as
-            | "incoming"
-            | "outgoing"
-            | "bidirectional";
+          direction = mapping.direction as "incoming" | "outgoing" | "bidirectional";
         }
 
         result = await syncManager.syncTaskList(mapping);
       } else if (providerId) {
         // If providerId is provided, sync all mappings for that provider
         const provider = await db.query.taskProviders.findFirst({
-          where: {
-            id: providerId,
-            userId,
-          },
+          where: (table, { eq, and }) => and(
+            eq(table.id, providerId),
+            eq(table.userId, userId)
+          ),
         });
 
         if (!provider) {
@@ -145,7 +156,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Get all mappings for this provider
         const mappings = await db.query.taskListMappings.findMany({
-          where: { providerId },
+          where: (table, { eq }) => eq(table.providerId, providerId),
           with: { provider: true },
         });
 
@@ -153,6 +164,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const results = [];
         for (const mapping of mappings) {
           try {
+            if (!mapping.provider) continue;
             const mappingResult = await syncManager.syncTaskList(mapping);
             results.push(mappingResult);
           } catch (error) {

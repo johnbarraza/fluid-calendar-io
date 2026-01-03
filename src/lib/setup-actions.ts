@@ -13,7 +13,8 @@ const LOG_SOURCE = "SetupActions";
  */
 export async function checkSetupStatus() {
   try {
-    const userCount = await // TODO: Manually migrate count - db.select({ count: sql`count(*)` }).from(users));
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+    const userCount = result[0]?.count || 0;
 
     logger.info("Checked if users exist", { userCount }, LOG_SOURCE);
 

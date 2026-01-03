@@ -182,7 +182,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updateData: any = {};
+    const updateData: Partial<typeof calendarEvents.$inferInsert> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (start !== undefined) updateData.start = newDate(start);

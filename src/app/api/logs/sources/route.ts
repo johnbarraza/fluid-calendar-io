@@ -10,15 +10,10 @@ const LOG_SOURCE = "LogSourcesAPI";
 export async function GET() {
   try {
     // Get all unique sources
-    const sources = await db.query.logs.findMany({
-      distinct: ["source"],
-      columns: { source: true },
-      where: {
-        source: {
-          not: null,
-        },
-      },
-    });
+    const sources = await db
+      .select({ source: logs.source })
+      .from(logs)
+      .groupBy(logs.source);
 
     logger.debug(
       "Successfully fetched log sources",
@@ -31,7 +26,7 @@ export async function GET() {
     return NextResponse.json({
       sources: sources
         .map((s) => s.source)
-        .filter(Boolean)
+        .filter((s): s is string => !!s)
         .sort(),
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { AutoScheduleSettings, Task } from "@prisma/client";
+import type { AutoScheduleSettings, Task } from "@/db/types";
 
 import { getEnergyLevelForTime } from "@/lib/autoSchedule";
 import {

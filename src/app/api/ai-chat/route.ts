@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
           result.events.forEach((event, idx) => {
             const startTime = event.start
               ? new Date(event.start).toLocaleString("es-ES", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
               : "Sin hora";
             responseContent += `${idx + 1}. ${event.summary || "Sin título"} - ${startTime}\n`;
             if (event.location) {
@@ -347,12 +347,6 @@ export async function POST(request: NextRequest) {
           responseContent = `Tu frecuencia cardíaca de hoy (${today}):\n\n`;
           if (result.restingHeartRate) {
             responseContent += `💓 FC en reposo: ${result.restingHeartRate} bpm\n`;
-          }
-          if (result.averageHeartRate) {
-            responseContent += `📊 FC promedio: ${result.averageHeartRate} bpm\n`;
-          }
-          if (result.maxHeartRate && result.minHeartRate) {
-            responseContent += `📈 Rango: ${result.minHeartRate} - ${result.maxHeartRate} bpm`;
           }
         }
       }

@@ -2,7 +2,7 @@ import { db, routines, routineTasks } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger";
-import { Routine, RoutineTask } from "@prisma/client";
+import type { Routine, RoutineTask, RoutineWithTasks } from "@/db/types";
 
 const LOG_SOURCE = "RoutineService";
 
@@ -26,9 +26,8 @@ export interface RoutineInput {
   tasks: RoutineTaskInput[];
 }
 
-export interface RoutineWithTasks extends Routine {
-  tasks: RoutineTask[];
-}
+// Use the type from @/db/types instead
+export type { RoutineWithTasks } from "@/db/types";
 
 export class RoutineService {
   /**
@@ -37,14 +36,14 @@ export class RoutineService {
   async getUserRoutines(userId: string): Promise<RoutineWithTasks[]> {
     try {
       const routines = await db.query.routines.findMany({
-        where: { userId },
+        where: (routines, { eq }) => eq(routines.userId, userId),
         with: {
           tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-        orderBy: [{ order: "asc" }, { startTime: "asc" }],
-      });
+        orderBy: (routines, { asc }) => [asc(routines.order), asc(routines.startTime)],
+      }) as unknown as RoutineWithTasks[];
 
       logger.info(
         `Fetched ${routines.length} routines for user`,
@@ -72,15 +71,15 @@ export class RoutineService {
   ): Promise<RoutineWithTasks | null> {
     try {
       const routine = await db.query.routines.findFirst({
-        where: { id: routineId, userId },
+        where: (routines, { eq, and }) => and(eq(routines.id, routineId), eq(routines.userId, userId)),
         with: {
           tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-      });
+      }) as unknown as RoutineWithTasks;
 
-      return routine;
+      return routine || null;
     } catch (error) {
       logger.error(
         "Failed to fetch routine",
@@ -104,14 +103,14 @@ export class RoutineService {
   ): Promise<RoutineWithTasks[]> {
     try {
       const routines = await db.query.routines.findMany({
-        where: { userId, category },
+        where: (routines, { eq, and }) => and(eq(routines.userId, userId), eq(routines.category, category)),
         with: {
           tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-        orderBy: [{ order: "asc" }, { startTime: "asc" }],
-      });
+        orderBy: (routines, { asc }) => [asc(routines.order), asc(routines.startTime)],
+      }) as unknown as RoutineWithTasks[];
 
       return routines;
     } catch (error) {
@@ -175,7 +174,7 @@ export class RoutineService {
             orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-      });
+      }) as unknown as RoutineWithTasks;
 
       if (!routineWithTasks) {
         throw new Error("Failed to create routine");
@@ -209,17 +208,16 @@ export class RoutineService {
     try {
       // Verify ownership
       const existing = await db.query.routines.findFirst({
-        where: { id: routineId, userId },
+        where: (routines, { eq, and }) => and(eq(routines.id, routineId), eq(routines.userId, userId)),
       });
 
       if (!existing) {
         throw new Error("Routine not found or access denied");
       }
 
-      // Update routine and tasks
-      const routine = await prisma.routine.update({
-        where: { id: routineId },
-        data: {
+      // Update routine
+      await db.update(routines)
+        .set({
           name: data.name,
           description: data.description,
           icon: data.icon,
@@ -227,26 +225,39 @@ export class RoutineService {
           startTime: data.startTime,
           isActive: data.isActive,
           order: data.order,
-          ...(data.tasks && {
-            tasks: {
-              deleteMany: {}, // Delete existing tasks
-              create: data.tasks.map((task) => ({
-                name: task.name,
-                icon: task.icon,
-                duration: task.duration,
-                order: task.order,
-                autoContinue: task.autoContinue ?? true,
-                notes: task.notes,
-              })),
-            },
-          }),
-        },
+        })
+        .where(eq(routines.id, routineId));
+
+      // Update tasks if provided
+      if (data.tasks) {
+        // Delete existing tasks
+        await db.delete(routineTasks)
+          .where(eq(routineTasks.routineId, routineId));
+
+        // Create new tasks
+        await db.insert(routineTasks).values(
+          data.tasks.map((task) => ({
+            id: crypto.randomUUID(),
+            routineId: routineId,
+            name: task.name,
+            icon: task.icon,
+            duration: task.duration,
+            order: task.order,
+            autoContinue: task.autoContinue ?? true,
+            notes: task.notes,
+          }))
+        );
+      }
+
+      // Fetch updated routine with tasks
+      const routine = await db.query.routines.findFirst({
+        where: (table, { eq }) => eq(table.id, routineId),
         with: {
           tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-      });
+      }) as unknown as RoutineWithTasks;
 
       logger.info("Updated routine", { routineId }, LOG_SOURCE);
 
@@ -272,16 +283,15 @@ export class RoutineService {
     try {
       // Verify ownership
       const existing = await db.query.routines.findFirst({
-        where: { id: routineId, userId },
+        where: (routines, { eq, and }) => and(eq(routines.id, routineId), eq(routines.userId, userId)),
       });
 
       if (!existing) {
         throw new Error("Routine not found or access denied");
       }
 
-      await prisma.routine.delete({
-        where: { id: routineId },
-      });
+      await db.delete(routines)
+        .where(eq(routines.id, routineId));
 
       logger.info("Deleted routine", { routineId }, LOG_SOURCE);
     } catch (error) {
@@ -307,22 +317,25 @@ export class RoutineService {
   ): Promise<RoutineWithTasks> {
     try {
       const existing = await db.query.routines.findFirst({
-        where: { id: routineId, userId },
+        where: (routines, { eq, and }) => and(eq(routines.id, routineId), eq(routines.userId, userId)),
       });
 
       if (!existing) {
         throw new Error("Routine not found or access denied");
       }
 
-      const routine = await prisma.routine.update({
-        where: { id: routineId },
-        data: { isActive: !existing.isActive },
+      await db.update(routines)
+        .set({ isActive: !existing.isActive })
+        .where(eq(routines.id, routineId));
+
+      const routine = await db.query.routines.findFirst({
+        where: (table, { eq }) => eq(table.id, routineId),
         with: {
           tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
-      });
+      }) as unknown as RoutineWithTasks;
 
       logger.info(
         "Toggled routine active status",

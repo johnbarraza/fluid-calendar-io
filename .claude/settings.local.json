@@ -18,7 +18,13 @@
       "Bash(timeout 15 tail:*)",
       "Bash(ls:*)",
       "Bash(git add:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run lint:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

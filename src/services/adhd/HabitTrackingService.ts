@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger"
-import { Habit, HabitLog } from "@prisma/client"
+import type { Habit, HabitLog, HabitWithLogs } from "@/db/types";
 import { db, habits, habitLogs } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
@@ -39,48 +39,43 @@ export class HabitTrackingService {
     today.setHours(0, 0, 0, 0)
 
     try {
-      // Use a transaction to ensure atomicity
-      const result = await db.transaction(async (tx) => {
-        // Create the habit log entry
-        const habitLog = await tx.habitLog.create({
-          data: {
-            habitId,
-            date: today,
-            note,
-            mood,
+      // Create the habit log entry
+      const [habitLog] = await db.insert(habitLogs).values({
+        id: crypto.randomUUID(),
+        habitId,
+        date: today,
+        note,
+        mood,
+      }).returning();
+
+      // Recalculate and update the streak
+      const habit = await db.query.habits.findFirst({
+        where: (table, { eq }) => eq(table.id, habitId),
+        with: {
+          logs: {
+            orderBy: (logs, { desc }) => [desc(logs.date)],
+            limit: 365, // Look back 1 year max
           },
+        },
+      });
+
+      if (!habit) {
+        throw new Error(`Habit ${habitId} not found`)
+      }
+
+      const currentStreak = this.calculateCurrentStreak(habit)
+      const longestStreak = Math.max(currentStreak, habit.longestStreak)
+
+      // Update habit with new streak and total completions
+      await db.update(habits)
+        .set({
+          currentStreak,
+          longestStreak,
+          totalCompletions: habit.totalCompletions + 1,
         })
+        .where(eq(habits.id, habitId));
 
-        // Recalculate and update the streak
-        const habit = await tx.habit.findUnique({
-          where: { id: habitId },
-          with: {
-            logs: {
-              orderBy: { date: "desc" },
-              take: 365, // Look back 1 year max
-            },
-          },
-        })
-
-        if (!habit) {
-          throw new Error(`Habit ${habitId} not found`)
-        }
-
-        const currentStreak = this.calculateCurrentStreak(habit)
-        const longestStreak = Math.max(currentStreak, habit.longestStreak)
-
-        // Update habit with new streak and total completions
-        await tx.habit.update({
-          where: { id: habitId },
-          data: {
-            currentStreak,
-            longestStreak,
-            totalCompletions: habit.totalCompletions + 1,
-          },
-        })
-
-        return habitLog
-      })
+      const result = habitLog;
 
       logger.info("Habit completion logged successfully", { habitId }, LOG_SOURCE)
       return result
@@ -97,7 +92,7 @@ export class HabitTrackingService {
   /**
    * Calculate current streak for a habit
    */
-  calculateCurrentStreak(habit: Habit & { logs: HabitLog[] }): number {
+  calculateCurrentStreak(habit: HabitWithLogs): number {
     if (habit.logs.length === 0) {
       return 0
     }
@@ -177,11 +172,11 @@ export class HabitTrackingService {
   ): Promise<HabitStats> {
     logger.info("Fetching habit stats", { habitId, timeframe }, LOG_SOURCE)
 
-    const habit = await prisma.habit.findUnique({
-      where: { id: habitId },
+    const habit = await db.query.habits.findFirst({
+      where: (table, { eq }) => eq(table.id, habitId),
       with: {
         logs: {
-          orderBy: { date: "desc" },
+          orderBy: (logs, { desc }) => [desc(logs.date)],
         },
       },
     })
@@ -250,9 +245,9 @@ export class HabitTrackingService {
     const variance =
       weeklyCompletions.length > 0
         ? weeklyCompletions.reduce(
-            (sum, count) => sum + Math.pow(count - mean, 2),
-            0
-          ) / weeklyCompletions.length
+          (sum, count) => sum + Math.pow(count - mean, 2),
+          0
+        ) / weeklyCompletions.length
         : 0
 
     // Consistency score: higher is better (lower variance)
@@ -278,12 +273,13 @@ export class HabitTrackingService {
   async getHabitById(habitId: string, userId: string): Promise<Habit | null> {
     logger.info("Fetching habit", { habitId, userId }, LOG_SOURCE)
 
-    return db.query.habits.findFirst({
-      where: {
-        id: habitId,
-        userId,
-      },
+    const habit = await db.query.habits.findFirst({
+      where: (habits, { eq, and }) => and(
+        eq(habits.id, habitId),
+        eq(habits.userId, userId)
+      ),
     })
+    return habit || null
   }
 
   /**
@@ -293,13 +289,11 @@ export class HabitTrackingService {
     logger.info("Fetching active habits", { userId }, LOG_SOURCE)
 
     return db.query.habits.findMany({
-      where: {
-        userId,
-        isActive: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      where: (habits, { eq, and }) => and(
+        eq(habits.userId, userId),
+        eq(habits.isActive, true)
+      ),
+      orderBy: (table, { desc }) => [desc(table.createdAt)],
     })
   }
 
@@ -310,16 +304,16 @@ export class HabitTrackingService {
   async checkStreakExpiration(userId: string): Promise<void> {
     logger.info("Checking for expired streaks", { userId }, LOG_SOURCE)
 
-    const habits = await db.query.habits.findMany({
-      where: {
-        userId,
-        isActive: true,
-        currentStreak: { gt: 0 }, // Only check habits with active streaks
-      },
+    const activeHabits = await db.query.habits.findMany({
+      where: (habits, { eq, and, gt }) => and(
+        eq(habits.userId, userId),
+        eq(habits.isActive, true),
+        gt(habits.currentStreak, 0) // Only check habits with active streaks
+      ),
       with: {
         logs: {
-          orderBy: { date: "desc" },
-          take: 10, // Get recent logs
+          orderBy: (logs, { desc }) => [desc(logs.date)],
+          limit: 10, // Get recent logs
         },
       },
     })
@@ -327,17 +321,14 @@ export class HabitTrackingService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    for (const habit of habits) {
-      const recalculatedStreak = this.calculateCurrentStreak(habit)
+    for (const habit of activeHabits) {
+      const recalculatedStreak = this.calculateCurrentStreak(habit as unknown as HabitWithLogs)
 
       // If recalculated streak is different, update it
       if (recalculatedStreak !== habit.currentStreak) {
-        await prisma.habit.update({
-          where: { id: habit.id },
-          data: {
-            currentStreak: recalculatedStreak,
-          },
-        })
+        await db.update(habits)
+          .set({ currentStreak: recalculatedStreak })
+          .where(eq(habits.id, habit.id));
 
         logger.info(
           "Streak updated",
@@ -420,13 +411,19 @@ export class HabitTrackingService {
       updateData.customSchedule = JSON.stringify(data.customSchedule)
     }
 
-    return prisma.habit.update({
-      where: {
-        id: habitId,
-        userId, // Ensure user owns this habit
-      },
-      data: updateData,
-    })
+    await db.update(habits)
+      .set(updateData)
+      .where(and(eq(habits.id, habitId), eq(habits.userId, userId)));
+
+    const updatedHabit = await db.query.habits.findFirst({
+      where: (table, { eq }) => eq(table.id, habitId),
+    });
+
+    if (!updatedHabit) {
+      throw new Error(`Habit ${habitId} not found after update`);
+    }
+
+    return updatedHabit;
   }
 
   /**
@@ -435,12 +432,8 @@ export class HabitTrackingService {
   async deleteHabit(habitId: string, userId: string): Promise<void> {
     logger.info("Deleting habit", { habitId, userId }, LOG_SOURCE)
 
-    await prisma.habit.delete({
-      where: {
-        id: habitId,
-        userId, // Ensure user owns this habit
-      },
-    })
+    await db.delete(habits)
+      .where(and(eq(habits.id, habitId), eq(habits.userId, userId)));
   }
 
   /**
@@ -458,16 +451,12 @@ export class HabitTrackingService {
     )
 
     return db.query.habitLogs.findMany({
-      where: {
-        habitId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        date: "desc",
-      },
+      where: (habitLogs, { eq, and, gte, lte }) => and(
+        eq(habitLogs.habitId, habitId),
+        gte(habitLogs.date, startDate),
+        lte(habitLogs.date, endDate)
+      ),
+      orderBy: (table, { desc }) => [desc(table.date)],
     })
   }
 }

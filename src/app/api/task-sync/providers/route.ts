@@ -35,9 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Get all providers for the user
     const providers = await db.query.taskProviders.findMany({
-      where: {
-        userId,
-      },
+      where: (table, { eq }) => eq(table.userId, userId),
     });
 
     return NextResponse.json(providers);

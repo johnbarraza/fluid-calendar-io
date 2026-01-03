@@ -1,7 +1,7 @@
 import { db, calendarEvents } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { Client } from "@microsoft/microsoft-graph-client";
-import type { Prisma } from "@prisma/client";
+// Removed Prisma types - using Drizzle types instead
 
 import { convertToUTC, newDate, newDateFromYMD } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
@@ -138,8 +138,10 @@ export function createBaseEventData(
 }
 
 // Helper to save an event to the database
+import type { CalendarEventInsert } from "@/db/types";
+
 export async function saveEventToDatabase(
-  eventData: Prisma.CalendarEventCreateInput | Prisma.CalendarEventUpdateInput,
+  eventData: Partial<CalendarEventInsert>,
   feedId: string,
   externalEventId: string,
   isMaster: boolean = false
@@ -160,7 +162,7 @@ export async function saveEventToDatabase(
   if (existingEvent) {
     const [updated] = await db
       .update(calendarEvents)
-      .set(eventData as any)
+      .set(eventData as Partial<CalendarEventInsert>)
       .where(eq(calendarEvents.id, existingEvent.id))
       .returning();
     return updated;
@@ -168,7 +170,7 @@ export async function saveEventToDatabase(
 
   const [inserted] = await db
     .insert(calendarEvents)
-    .values(eventData as any)
+    .values(eventData as CalendarEventInsert)
     .returning();
   return inserted;
 }
@@ -396,11 +398,8 @@ export async function syncOutlookCalendar(
   );
   if (forceFullSync) {
     // delete all events from the database
-    await prisma.calendarEvent.deleteMany({
-      where: {
-        feedId: feed.id,
-      },
-    });
+    await db.delete(calendarEvents)
+      .where(eq(calendarEvents.feedId, feed.id));
   }
 
   // Handle deleted events first if this is a delta sync
@@ -409,15 +408,14 @@ export async function syncOutlookCalendar(
       try {
         // Find and delete the event from our database
         const existingEvent = await db.query.calendarEvents.findFirst({
-          where: {
-            feedId: feed.id,
-            externalEventId: eventId,
-          },
+          where: (events, { eq, and }) => and(
+            eq(events.feedId, feed.id),
+            eq(events.externalEventId, eventId)
+          ),
         });
         if (existingEvent) {
-          await prisma.calendarEvent.delete({
-            where: { id: existingEvent.id },
-          });
+          await db.delete(calendarEvents)
+            .where(eq(calendarEvents.id, existingEvent.id));
         }
       } catch (error) {
         logger.error(

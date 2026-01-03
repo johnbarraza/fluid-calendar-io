@@ -35,10 +35,8 @@ export async function GET(
     const userId = auth.userId;
 
     // Get the mapping
-    const mapping = await prisma.taskListMapping.findUnique({
-      where: {
-        id: id,
-      },
+    const mapping = await db.query.taskListMappings.findFirst({
+      where: (mappings, { eq }) => eq(mappings.id, id),
       with: {
         provider: {
           columns: {
@@ -130,18 +128,13 @@ export async function PATCH(
 
     // Get the mapping to check ownership
     const mapping = await db.query.taskListMappings.findFirst({
-      where: {
-        id: mappingId,
-        provider: {
-          userId,
-        },
-      },
+      where: (mappings, { eq }) => eq(mappings.id, mappingId),
       with: {
         provider: true,
       },
     });
 
-    if (!mapping) {
+    if (!mapping || mapping.provider.userId !== userId) {
       return NextResponse.json(
         { error: "Task list mapping not found" },
         { status: 404 }
@@ -171,12 +164,10 @@ export async function PATCH(
     }
 
     // Update the mapping with only the provided fields
-    const updatedMapping = await prisma.taskListMapping.update({
-      where: {
-        id: mappingId,
-      },
-      data: updateData,
-    });
+    const [updatedMapping] = await db.update(taskListMappings)
+      .set(updateData)
+      .where(eq(taskListMappings.id, mappingId))
+      .returning();
 
     logger.info(
       `Updated task list mapping ${mappingId}`,
@@ -195,8 +186,8 @@ export async function PATCH(
         ...updatedMapping,
         projectName: updatedMapping.projectId
           ? (
-              await prisma.project.findUnique({
-                where: { id: updatedMapping.projectId },
+              await db.query.projects.findFirst({
+                where: (projects, { eq }) => eq(projects.id, updatedMapping.projectId!),
               })
             )?.name
           : null,
@@ -245,10 +236,8 @@ export async function DELETE(
     const userId = auth.userId;
 
     // Get the existing mapping
-    const existingMapping = await prisma.taskListMapping.findUnique({
-      where: {
-        id: id,
-      },
+    const existingMapping = await db.query.taskListMappings.findFirst({
+      where: (mappings, { eq }) => eq(mappings.id, id),
       with: {
         provider: {
           columns: {
@@ -271,11 +260,8 @@ export async function DELETE(
     }
 
     // Delete the mapping
-    await prisma.taskListMapping.delete({
-      where: {
-        id: id,
-      },
-    });
+    await db.delete(taskListMappings)
+      .where(eq(taskListMappings.id, id));
 
     return NextResponse.json({
       success: true,

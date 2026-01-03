@@ -31,11 +31,11 @@ export async function GET(
     id = paramData.id;
 
     // Get the provider
-    const provider = await prisma.taskProvider.findUnique({
-      where: {
-        id,
-        userId,
-      },
+    const provider = await db.query.taskProviders.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.id, id),
+        eq(table.userId, userId)
+      ),
       with: {
         account: true,
       },
@@ -57,9 +57,7 @@ export async function GET(
 
     // Get task mappings for this provider
     const mappings = await db.query.taskListMappings.findMany({
-      where: {
-        providerId: provider.id,
-      },
+      where: (table, { eq }) => eq(table.providerId, provider.id),
       with: {
         project: {
           columns: {

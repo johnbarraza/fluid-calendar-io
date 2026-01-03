@@ -2,7 +2,7 @@ import { db, tasks, autoScheduleSettings } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger"
-import { Task, AutoScheduleSettings } from "@prisma/client"
+import type { Task, AutoScheduleSettings } from "@/db/types"
 
 const LOG_SOURCE = "BreakProtectionService"
 
@@ -58,9 +58,8 @@ export class BreakProtectionService {
           taskIds: [currentTask.id, nextTask.id],
           startTime: currentTask.scheduledEnd!,
           endTime: nextTask.scheduledStart!,
-          description: `Only ${Math.round(gapMinutes)} minutes between tasks (minimum: ${
-            settings.minBreakDuration
-          } minutes)`,
+          description: `Only ${Math.round(gapMinutes)} minutes between tasks (minimum: ${settings.minBreakDuration
+            } minutes)`,
           severity: gapMinutes < 5 ? "high" : "medium",
           suggestedFix: `Add ${settings.minBreakDuration - Math.round(gapMinutes)} more minutes between tasks`,
         })
@@ -197,7 +196,8 @@ export class BreakProtectionService {
     const suggestions: BreakSuggestion[] = []
 
     // Get settings
-    const settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
+    const settings = await db.query.autoScheduleSettings.findFirst({
+      where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     })
 
     if (!settings || !settings.enforceBreaks) {
@@ -211,16 +211,12 @@ export class BreakProtectionService {
     dayEnd.setHours(23, 59, 59, 999)
 
     const tasks = await db.query.tasks.findMany({
-      where: {
-        userId,
-        scheduledStart: {
-          gte: dayStart,
-          lte: dayEnd,
-        },
-      },
-      orderBy: {
-        scheduledStart: "asc",
-      },
+      where: (tasks, { eq, and, gte, lte }) => and(
+        eq(tasks.userId, userId),
+        gte(tasks.scheduledStart, dayStart),
+        lte(tasks.scheduledStart, dayEnd)
+      ),
+      orderBy: (tasks, { asc }) => [asc(tasks.scheduledStart)],
     })
 
     const violations = await this.validateScheduleBreaks(tasks, settings)
@@ -417,7 +413,8 @@ export class BreakProtectionService {
       LOG_SOURCE
     )
 
-    const settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
+    const settings = await db.query.autoScheduleSettings.findFirst({
+      where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     })
 
     if (!settings || !settings.enforceBreaks) {
@@ -428,12 +425,10 @@ export class BreakProtectionService {
     startDate.setDate(startDate.getDate() - days)
 
     const tasks = await db.query.tasks.findMany({
-      where: {
-        userId,
-        scheduledStart: {
-          gte: startDate,
-        },
-      },
+      where: (tasks, { eq, and, gte }) => and(
+        eq(tasks.userId, userId),
+        gte(tasks.scheduledStart, startDate)
+      ),
     })
 
     if (tasks.length === 0) {

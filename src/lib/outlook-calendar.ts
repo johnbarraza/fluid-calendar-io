@@ -1,5 +1,5 @@
 import { Client } from "@microsoft/microsoft-graph-client";
-import { ConnectedAccount } from "@prisma/client";
+import type { ConnectedAccount } from "@/db/types";
 import { Frequency, RRule } from "rrule";
 
 import { logger } from "@/lib/logger";

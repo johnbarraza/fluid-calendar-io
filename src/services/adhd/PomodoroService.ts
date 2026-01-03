@@ -1,8 +1,8 @@
-import { db, pomodoroSessions } from "@/db";
+import { db, pomodoroSessions, tasks } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger"
-import { PomodoroSession } from "@prisma/client"
+import type { PomodoroSession } from "@/db/types"
 
 const LOG_SOURCE = "PomodoroService"
 
@@ -96,10 +96,10 @@ export class PomodoroService {
     logger.info("Completing Pomodoro session", { sessionId }, LOG_SOURCE)
 
     try {
-      const session = await prisma.pomodoroSession.findUnique({
-        where: { id: sessionId },
+      const session = await db.query.pomodoroSessions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
         with: { task: true },
-      })
+      });
 
       if (!session) {
         throw new Error(`Pomodoro session ${sessionId} not found`)
@@ -113,31 +113,31 @@ export class PomodoroService {
         throw new Error("Session was interrupted and cannot be completed")
       }
 
-      const updatedSession = await db.transaction(async (tx) => {
-        // Update session
-        const updated = await tx.pomodoroSession.update({
-          where: { id: sessionId },
-          data: {
-            completed: true,
-            endedAt: new Date(),
-          },
-          with: { task: true },
+      // Update session
+      await db.update(pomodoroSessions)
+        .set({
+          completed: true,
+          endedAt: new Date(),
         })
+        .where(eq(pomodoroSessions.id, sessionId));
 
-        // If this was a work session linked to a task, increment actualPomodoros
-        if (updated.type === "work" && updated.taskId) {
-          await tx.task.update({
-            where: { id: updated.taskId },
-            data: {
-              actualPomodoros: {
-                increment: 1,
-              },
-            },
-          })
+      // If this was a work session linked to a task, increment actualPomodoros
+      if (session.type === "work" && session.taskId) {
+        const task = await db.query.tasks.findFirst({
+          where: (table, { eq }) => eq(table.id, session.taskId!),
+        });
+
+        if (task) {
+          await db.update(tasks)
+            .set({ actualPomodoros: (task.actualPomodoros || 0) + 1 })
+            .where(eq(tasks.id, session.taskId));
         }
+      }
 
-        return updated
-      })
+      const updatedSession = await db.query.pomodoroSessions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
+        with: { task: true },
+      });
 
       logger.info(
         "Pomodoro session completed successfully",
@@ -145,6 +145,7 @@ export class PomodoroService {
         LOG_SOURCE
       )
 
+      if (!updatedSession) throw new Error("Failed to retrieve updated session");
       return updatedSession
     } catch (error) {
       logger.error(
@@ -166,9 +167,9 @@ export class PomodoroService {
     logger.info("Interrupting Pomodoro session", { sessionId, reason }, LOG_SOURCE)
 
     try {
-      const session = await prisma.pomodoroSession.findUnique({
-        where: { id: sessionId },
-      })
+      const session = await db.query.pomodoroSessions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
+      });
 
       if (!session) {
         throw new Error(`Pomodoro session ${sessionId} not found`)
@@ -182,14 +183,17 @@ export class PomodoroService {
         throw new Error("Session is already interrupted")
       }
 
-      const updatedSession = await prisma.pomodoroSession.update({
-        where: { id: sessionId },
-        data: {
+      await db.update(pomodoroSessions)
+        .set({
           interrupted: true,
           interruptReason: reason,
           endedAt: new Date(),
-        },
-      })
+        })
+        .where(eq(pomodoroSessions.id, sessionId));
+
+      const updatedSession = await db.query.pomodoroSessions.findFirst({
+        where: (table, { eq }) => eq(table.id, sessionId),
+      });
 
       logger.info(
         "Pomodoro session interrupted",
@@ -197,6 +201,7 @@ export class PomodoroService {
         LOG_SOURCE
       )
 
+      if (!updatedSession) throw new Error("Failed to retrieve updated session");
       return updatedSession
     } catch (error) {
       logger.error(
@@ -214,19 +219,18 @@ export class PomodoroService {
   async getActiveSession(userId: string): Promise<PomodoroSession | null> {
     logger.info("Fetching active Pomodoro session", { userId }, LOG_SOURCE)
 
-    return db.query.pomodoroSessions.findFirst({
-      where: {
-        userId,
-        completed: false,
-        interrupted: false,
-      },
-      orderBy: {
-        startedAt: "desc",
-      },
+    const session = await db.query.pomodoroSessions.findFirst({
+      where: (pomodoroSessions, { eq, and }) => and(
+        eq(pomodoroSessions.userId, userId),
+        eq(pomodoroSessions.completed, false),
+        eq(pomodoroSessions.interrupted, false)
+      ),
+      orderBy: (pomodoroSessions, { desc }) => [desc(pomodoroSessions.startedAt)],
       with: {
         task: true,
       },
     })
+    return session || null
   }
 
   /**
@@ -246,15 +250,11 @@ export class PomodoroService {
     startDate.setDate(startDate.getDate() - days)
 
     return db.query.pomodoroSessions.findMany({
-      where: {
-        userId,
-        startedAt: {
-          gte: startDate,
-        },
-      },
-      orderBy: {
-        startedAt: "desc",
-      },
+      where: (pomodoroSessions, { eq, and, gte }) => and(
+        eq(pomodoroSessions.userId, userId),
+        gte(pomodoroSessions.startedAt, startDate)
+      ),
+      orderBy: (pomodoroSessions, { desc }) => [desc(pomodoroSessions.startedAt)],
       with: {
         task: true,
       },
@@ -278,12 +278,10 @@ export class PomodoroService {
     startDate.setDate(startDate.getDate() - days)
 
     const sessions = await db.query.pomodoroSessions.findMany({
-      where: {
-        userId,
-        startedAt: {
-          gte: startDate,
-        },
-      },
+      where: (pomodoroSessions, { eq, and, gte }) => and(
+        eq(pomodoroSessions.userId, userId),
+        gte(pomodoroSessions.startedAt, startDate)
+      ),
     })
 
     if (sessions.length === 0) {
@@ -360,12 +358,8 @@ export class PomodoroService {
     logger.info("Fetching sessions for task", { taskId }, LOG_SOURCE)
 
     return db.query.pomodoroSessions.findMany({
-      where: {
-        taskId,
-      },
-      orderBy: {
-        startedAt: "desc",
-      },
+      where: (pomodoroSessions, { eq }) => eq(pomodoroSessions.taskId, taskId),
+      orderBy: (pomodoroSessions, { desc }) => [desc(pomodoroSessions.startedAt)],
     })
   }
 
@@ -375,12 +369,8 @@ export class PomodoroService {
   async deleteSession(sessionId: string, userId: string): Promise<void> {
     logger.info("Deleting Pomodoro session", { sessionId, userId }, LOG_SOURCE)
 
-    await prisma.pomodoroSession.delete({
-      where: {
-        id: sessionId,
-        userId, // Ensure user owns this session
-      },
-    })
+    await db.delete(pomodoroSessions)
+      .where(and(eq(pomodoroSessions.id, sessionId), eq(pomodoroSessions.userId, userId)));
   }
 
   /**
@@ -395,25 +385,22 @@ export class PomodoroService {
     cutoffTime.setMinutes(cutoffTime.getMinutes() - maxSessionDuration)
 
     const staleSessions = await db.query.pomodoroSessions.findMany({
-      where: {
-        completed: false,
-        interrupted: false,
-        startedAt: {
-          lt: cutoffTime,
-        },
-      },
+      where: (pomodoroSessions, { eq, and, lt }) => and(
+        eq(pomodoroSessions.completed, false),
+        eq(pomodoroSessions.interrupted, false),
+        lt(pomodoroSessions.startedAt, cutoffTime)
+      ),
     })
 
     let count = 0
     for (const session of staleSessions) {
-      await prisma.pomodoroSession.update({
-        where: { id: session.id },
-        data: {
+      await db.update(pomodoroSessions)
+        .set({
           interrupted: true,
           interruptReason: "Auto-interrupted due to inactivity",
           endedAt: new Date(),
-        },
-      })
+        })
+        .where(eq(pomodoroSessions.id, session.id));
       count++
     }
 

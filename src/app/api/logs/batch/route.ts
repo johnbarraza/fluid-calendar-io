@@ -15,9 +15,9 @@ export async function POST(request: Request) {
     }
 
     const logger = new ServerLogger();
-    const result = await logger.writeBatch(entries);
+    await Promise.all(entries.map(entry => logger.writeLog(entry)));
 
-    return NextResponse.json(result);
+    return NextResponse.json({ success: true, count: entries.length });
   } catch (error) {
     console.error("Failed to process batch logs:", error);
     return NextResponse.json(

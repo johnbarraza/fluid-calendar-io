@@ -16,6 +16,7 @@ export class ServerLogger {
         metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
         source: entry.source || null,
         timestamp: entry.timestamp,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days retention
       }).returning();
     } catch (error) {
       console.error("Failed to write log to database:", error);

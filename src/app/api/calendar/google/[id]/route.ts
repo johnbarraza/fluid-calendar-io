@@ -28,11 +28,11 @@ export async function PATCH(
     const userId = auth.userId;
 
     const { id } = await params;
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id,
-        userId,
-      },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) => and(
+        eq(feeds.id, id),
+        eq(feeds.userId, userId)
+      ),
       with: { account: true },
     });
 
@@ -46,13 +46,16 @@ export async function PATCH(
     const updates = (await request.json()) as UpdateRequest;
 
     // Update only local properties
-    const updatedFeed = await prisma.calendarFeed.update({
-      where: { id, userId },
-      data: {
+    const [updatedFeed] = await db.update(calendarFeeds)
+      .set({
         enabled: updates.enabled,
         color: updates.color,
-      },
-    });
+      })
+      .where(and(
+        eq(calendarFeeds.id, id),
+        eq(calendarFeeds.userId, userId)
+      ))
+      .returning();
 
     return NextResponse.json(updatedFeed);
   } catch (error) {
@@ -84,11 +87,11 @@ export async function DELETE(
     const userId = auth.userId;
 
     const { id } = await params;
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id,
-        userId,
-      },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) => and(
+        eq(feeds.id, id),
+        eq(feeds.userId, userId)
+      ),
     });
 
     if (!feed) {
@@ -96,9 +99,11 @@ export async function DELETE(
     }
 
     // Delete the feed
-    await prisma.calendarFeed.delete({
-      where: { id, userId },
-    });
+    await db.delete(calendarFeeds)
+      .where(and(
+        eq(calendarFeeds.id, id),
+        eq(calendarFeeds.userId, userId)
+      ));
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -29,14 +29,13 @@ export class FitbitSyncService {
 
       const newTokens = await refreshFitbitTokens(account.refreshToken);
 
-      await prisma.fitbitAccount.update({
-        where: { userId },
-        data: {
+      await db.update(fitbitAccounts)
+        .set({
           accessToken: newTokens.access_token,
           refreshToken: newTokens.refresh_token,
           expiresAt: new Date(Date.now() + newTokens.expires_in * 1000),
-        },
-      });
+        })
+        .where(eq(fitbitAccounts.userId, userId));
 
       return new FitbitClient(newTokens.access_token);
     }
@@ -61,7 +60,7 @@ export class FitbitSyncService {
       const data = await client.getDailyActivity(dateStr);
 
       // Try to find existing activity record
-      let activity = await db.query.fitbitActivities.findFirst({
+      const activity = await db.query.fitbitActivities.findFirst({
         where: (activities, { eq, and }) =>
           and(
             eq(activities.userId, userId),
@@ -141,7 +140,7 @@ export class FitbitSyncService {
         const sleepDate = new Date(sleepSession.dateOfSleep);
 
         // Try to find existing sleep record
-        let existingSleep = await db.query.fitbitSleep.findFirst({
+        const existingSleep = await db.query.fitbitSleep.findFirst({
           where: (sleep, { eq, and }) =>
             and(
               eq(sleep.userId, userId),
@@ -253,7 +252,7 @@ export class FitbitSyncService {
       }
 
       // Try to find existing heart rate record
-      let existingHeartRate = await db.query.fitbitHeartRate.findFirst({
+      const existingHeartRate = await db.query.fitbitHeartRate.findFirst({
         where: (hr, { eq, and }) =>
           and(
             eq(hr.userId, userId),

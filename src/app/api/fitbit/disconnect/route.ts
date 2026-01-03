@@ -35,17 +35,16 @@ export async function DELETE(request: NextRequest) {
     );
 
     // Delete Fitbit account (tokens)
-    await prisma.fitbitAccount.delete({
-      where: { userId },
-    });
+    await db.delete(fitbitAccounts)
+      .where(eq(fitbitAccounts.userId, userId));
 
     // Optionally delete all synced data
     if (deleteData) {
-      await db.transaction([
-        prisma.fitbitActivity.deleteMany({ where: { userId } }),
-        prisma.fitbitSleep.deleteMany({ where: { userId } }),
-        prisma.fitbitHeartRate.deleteMany({ where: { userId } }),
-      ]);
+      await db.transaction(async (tx) => {
+        await tx.delete(fitbitActivities).where(eq(fitbitActivities.userId, userId));
+        await tx.delete(fitbitSleep).where(eq(fitbitSleep.userId, userId));
+        await tx.delete(fitbitHeartRate).where(eq(fitbitHeartRate.userId, userId));
+      });
 
       logger.info(
         "Fitbit account and all data deleted",

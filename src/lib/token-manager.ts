@@ -31,8 +31,11 @@ export class TokenManager {
     accountId: string,
     userId: string
   ): Promise<TokenInfo | null> {
-    const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId, userId },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {
@@ -50,8 +53,11 @@ export class TokenManager {
     accountId: string,
     userId: string
   ): Promise<TokenInfo | null> {
-    const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId, userId },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account || !account.refreshToken) {
@@ -73,15 +79,15 @@ export class TokenManager {
       );
 
       // Update tokens in database
-      const updatedAccount = await prisma.connectedAccount.update({
-        where: { id: accountId, userId },
-        data: {
+      const [updatedAccount] = await db.update(connectedAccounts)
+        .set({
           accessToken: response.credentials.access_token!,
           refreshToken:
             response.credentials.refresh_token || account.refreshToken,
           expiresAt,
-        },
-      });
+        })
+        .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)))
+        .returning();
 
       return {
         accessToken: updatedAccount.accessToken,
@@ -105,7 +111,7 @@ export class TokenManager {
     userId: string
   ): Promise<string> {
     // Try to find existing account
-    let account = await db.query.connectedAccounts.findFirst({
+    const account = await db.query.connectedAccounts.findFirst({
       where: (accounts, { eq, and }) =>
         and(
           eq(accounts.userId, userId),
@@ -148,8 +154,11 @@ export class TokenManager {
     accountId: string,
     userId: string
   ): Promise<TokenInfo | null> {
-    const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId, userId },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account || !account.refreshToken) {
@@ -183,14 +192,14 @@ export class TokenManager {
       const expiresAt = newDate(Date.now() + data.expires_in * 1000);
 
       // Update tokens in database
-      const updatedAccount = await prisma.connectedAccount.update({
-        where: { id: accountId, userId },
-        data: {
+      const [updatedAccount] = await db.update(connectedAccounts)
+        .set({
           accessToken: data.access_token,
           refreshToken: data.refresh_token || account.refreshToken,
           expiresAt,
-        },
-      });
+        })
+        .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)))
+        .returning();
 
       return {
         accessToken: updatedAccount.accessToken,
@@ -209,8 +218,11 @@ export class TokenManager {
     accountId: string,
     userId: string
   ): Promise<TokenInfo | null> {
-    const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountId, userId },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {
@@ -257,14 +269,14 @@ export class TokenManager {
     try {
       const newTokens = await refreshFitbitTokens(account.refreshToken);
 
-      const updatedAccount = await prisma.fitbitAccount.update({
-        where: { userId },
-        data: {
+      const [updatedAccount] = await db.update(fitbitAccounts)
+        .set({
           accessToken: newTokens.access_token,
           refreshToken: newTokens.refresh_token || account.refreshToken,
           expiresAt: new Date(Date.now() + newTokens.expires_in * 1000),
-        },
-      });
+        })
+        .where(eq(fitbitAccounts.userId, userId))
+        .returning();
 
       return updatedAccount.accessToken;
     } catch (error) {

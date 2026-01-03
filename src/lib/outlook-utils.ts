@@ -23,8 +23,8 @@ export async function getMsGraphClient(accountIdOrUserId: string) {
 
   try {
     // First try to find the account
-    const account = await prisma.connectedAccount.findUnique({
-      where: { id: accountIdOrUserId },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq }) => eq(accounts.id, accountIdOrUserId),
     });
 
     if (account) {
@@ -43,10 +43,10 @@ export async function getMsGraphClient(accountIdOrUserId: string) {
 
       // Find the first Outlook account for this user
       const account = await db.query.connectedAccounts.findFirst({
-        where: {
-          userId: accountIdOrUserId,
-          provider: "OUTLOOK" as Provider,
-        },
+        where: (accounts, { eq, and }) => and(
+          eq(accounts.userId, accountIdOrUserId),
+          eq(accounts.provider, "OUTLOOK" as Provider)
+        ),
       });
 
       if (!account) {

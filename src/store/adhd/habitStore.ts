@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Habit, HabitLog } from "@prisma/client";
+import type { Habit, HabitLog } from "@/db/types";
 
 /**
  * Extended Habit type with computed properties

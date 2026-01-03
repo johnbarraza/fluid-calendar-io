@@ -1,4 +1,4 @@
-import { db, calendarFeeds } from "@/db";
+import { db, calendarFeeds, calendarEvents } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -33,11 +33,11 @@ export async function POST(
     const { id: feedId } = await params;
 
     // Verify the feed belongs to the current user
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id: feedId,
-        userId,
-      },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) => and(
+        eq(feeds.id, feedId),
+        eq(feeds.userId, userId)
+      ),
     });
 
     if (!feed) {
@@ -47,34 +47,32 @@ export async function POST(
     // Start a transaction to ensure data consistency
     await db.transaction(async (tx) => {
       // Delete existing events for this feed
-      await tx.calendarEvent.deleteMany({
-        where: { feedId },
-      });
+      await tx.delete(calendarEvents)
+        .where(eq(calendarEvents.feedId, feedId));
 
       // Insert new events
       if (events && events.length > 0) {
-        await tx.calendarEvent.createMany({
-          data: events.map((event: CalendarEventInput) => ({
+        await tx.insert(calendarEvents).values(
+          events.map((event: CalendarEventInput) => ({
+            id: crypto.randomUUID(),
             ...event,
             feedId,
-            // Convert Date objects to strings for database storage
-            start: newDate(event.start).toISOString(),
-            end: newDate(event.end).toISOString(),
-            created: event.created
-              ? newDate(event.created).toISOString()
-              : undefined,
-            lastModified: event.lastModified
-              ? newDate(event.lastModified).toISOString()
-              : undefined,
-          })),
-        });
+            // Convert Date objects to Date for database storage
+            start: newDate(event.start),
+            end: newDate(event.end),
+            created: event.created ? newDate(event.created) : undefined,
+            lastModified: event.lastModified ? newDate(event.lastModified) : undefined,
+          }))
+        );
       }
 
       // Update feed's lastSync timestamp
-      await tx.calendarFeed.update({
-        where: { id: feedId, userId },
-        data: { lastSync: newDate() },
-      });
+      await tx.update(calendarFeeds)
+        .set({ lastSync: newDate() })
+        .where(and(
+          eq(calendarFeeds.id, feedId),
+          eq(calendarFeeds.userId, userId)
+        ));
     });
 
     return NextResponse.json({ success: true });

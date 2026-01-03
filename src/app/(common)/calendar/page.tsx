@@ -34,9 +34,7 @@ export default async function HomePage() {
   if (userId) {
     // Fetch calendar feeds
     const dbFeeds = await db.query.calendarFeeds.findMany({
-      where: {
-        userId: userId,
-      },
+      where: (feeds, { eq }) => eq(feeds.userId, userId),
       with: {
         account: {
           columns: {
@@ -46,9 +44,7 @@ export default async function HomePage() {
           },
         },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: (feeds, { asc }) => [asc(feeds.createdAt)],
     });
 
     // Transform to match expected types
@@ -74,22 +70,21 @@ export default async function HomePage() {
       account: feed.account,
     }));
 
-    // Fetch calendar events
-    const dbEvents = await db.query.calendarEvents.findMany({
-      where: {
-        feed: {
-          userId: userId,
-        },
-      },
-      with: {
-        feed: {
-          columns: {
-            name: true,
-            color: true,
+    // Fetch calendar events - get feed IDs first, then filter events
+    const feedIds = dbFeeds.map(f => f.id);
+    const dbEvents = feedIds.length > 0
+      ? await db.query.calendarEvents.findMany({
+          where: (events, { inArray }) => inArray(events.feedId, feedIds),
+          with: {
+            feed: {
+              columns: {
+                name: true,
+                color: true,
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : [];
 
     // Transform to match expected types
     events = dbEvents.map((event) => ({

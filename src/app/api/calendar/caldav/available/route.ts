@@ -45,11 +45,11 @@ export async function GET(request: NextRequest) {
     );
 
     // Get the account from the database and ensure it belongs to the current user
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
     });
 
     if (!account) {
@@ -146,11 +146,11 @@ export async function GET(request: NextRequest) {
 
       // Get existing calendars for this account
       const existingCalendars = await db.query.calendarFeeds.findMany({
-        where: {
-          accountId: account.id,
-          type: "CALDAV",
-          userId,
-        },
+        where: (feeds, { eq, and }) => and(
+          eq(feeds.accountId, account.id),
+          eq(feeds.type, "CALDAV"),
+          eq(feeds.userId, userId)
+        ),
         columns: {
           url: true,
         },

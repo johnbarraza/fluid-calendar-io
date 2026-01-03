@@ -1,4 +1,4 @@
-import { Task } from "@prisma/client";
+import type { Task } from "@/db/types";
 
 export type EnergyLevel = "high" | "medium" | "low";
 

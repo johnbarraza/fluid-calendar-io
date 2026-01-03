@@ -189,8 +189,10 @@ export async function POST(request: NextRequest) {
         accountId,
         userId,
         enabled: true,
-        lastSync: formatISO(new Date()),
+        lastSync: new Date(new Date().toISOString()),
         syncToken: calendar.syncToken ? String(calendar.syncToken) : null,
+        createdAt: new Date(new Date().toISOString()),
+        updatedAt: new Date(new Date().toISOString()),
       }).returning();
 
       logger.info(

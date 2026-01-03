@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Migración de tipos de Prisma a Drizzle**: Reemplazados todos los imports de tipos de `@prisma/client` con tipos inferidos de Drizzle desde `@/db/types`
+  - Creado archivo `src/db/types.ts` con todos los tipos inferidos de Drizzle (User, Task, Habit, CalendarEvent, etc.)
+  - Actualizados todos los servicios ADHD para usar tipos de Drizzle
+  - Actualizados servicios de scheduling para usar tipos de Drizzle
+  - Actualizados archivos de task-sync para usar tipos de Drizzle
+  - Actualizados stores de Zustand para usar tipos de Drizzle
+  - Actualizados archivos de lib (caldav, outlook) para usar tipos de Drizzle
+  - Corregidos tipos de relaciones (HabitWithLogs, RoutineWithTasks, etc.) para usar tipos de Drizzle
+
 ### Added
 
 - **ADHD-Friendly Features (Phase 1: Full Stack Implementation)** - Open Source

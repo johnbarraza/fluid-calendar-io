@@ -1,13 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Routine, RoutineTask } from "@prisma/client";
+import type { Routine, RoutineTask, RoutineWithTasks } from "@/db/types";
 
-/**
- * Extended Routine type with tasks
- */
-export interface RoutineWithTasks extends Routine {
-  tasks: RoutineTask[];
-}
+// Re-export for convenience
+export type { RoutineWithTasks } from "@/db/types";
 
 /**
  * New routine task data for creation

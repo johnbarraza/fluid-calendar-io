@@ -38,7 +38,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   // Reset search and showAllCommands when opening/closing
   useEffect(() => {
     if (!open) {
+      // Valid pattern: Reset state when modal/component closes
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearch("");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowAllCommands(false);
     }
   }, [open]);

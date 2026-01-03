@@ -51,40 +51,34 @@ export async function getTasks(
   params: z.infer<typeof GetTasksSchema>
 ) {
   try {
-    const whereClause: {
-      userId: string;
-      status?: string;
-      priority?: string;
-      projectId?: string;
-      dueDate?: { equals?: Date; lte?: Date };
-    } = {
-      userId,
-    };
-
-    if (params.status) {
-      whereClause.status = params.status;
-    }
-
-    if (params.priority) {
-      whereClause.priority = params.priority;
-    }
-
-    if (params.projectId) {
-      whereClause.projectId = params.projectId;
-    }
-
-    if (params.dueDate) {
-      const date = new Date(params.dueDate);
-      date.setHours(23, 59, 59, 999);
-      whereClause.dueDate = { equals: date };
-    } else if (params.dueBefore) {
-      const date = new Date(params.dueBefore);
-      date.setHours(23, 59, 59, 999);
-      whereClause.dueDate = { lte: date };
-    }
-
     const tasks = await db.query.tasks.findMany({
-      where: whereClause,
+      where: (table, { eq, and, lte }) => {
+        const conditions = [eq(table.userId, userId)];
+
+        if (params.status) {
+          conditions.push(eq(table.status, params.status));
+        }
+
+        if (params.priority) {
+          conditions.push(eq(table.priority, params.priority));
+        }
+
+        if (params.projectId) {
+          conditions.push(eq(table.projectId, params.projectId));
+        }
+
+        if (params.dueDate) {
+          const date = new Date(params.dueDate);
+          date.setHours(23, 59, 59, 999);
+          conditions.push(eq(table.dueDate, date));
+        } else if (params.dueBefore) {
+          const date = new Date(params.dueBefore);
+          date.setHours(23, 59, 59, 999);
+          conditions.push(lte(table.dueDate, date));
+        }
+
+        return and(...conditions);
+      },
       with: {
         project: {
           columns: {
@@ -94,19 +88,23 @@ export async function getTasks(
           },
         },
         tags: {
-          columns: {
-            id: true,
-            name: true,
-            color: true,
+          with: {
+            tag: {
+              columns: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
           },
         },
       },
-      orderBy: [
-        { priority: "desc" },
-        { dueDate: "asc" },
-        { createdAt: "desc" },
+      orderBy: (table, { desc, asc }) => [
+        desc(table.priority),
+        asc(table.dueDate),
+        desc(table.createdAt),
       ],
-      take: params.limit || 20,
+      limit: params.limit || 20,
     });
 
     logger.info(
@@ -132,15 +130,15 @@ export async function getTasks(
         energyLevel: task.energyLevel,
         project: task.project
           ? {
-              id: task.project.id,
-              name: task.project.name,
-              color: task.project.color,
-            }
+            id: task.project.id,
+            name: task.project.name,
+            color: task.project.color,
+          }
           : null,
-        tags: task.tags.map((tag) => ({
-          id: tag.id,
-          name: tag.name,
-          color: tag.color,
+        tags: task.tags.map((t) => ({
+          id: t.tag.id,
+          name: t.tag.name,
+          color: t.tag.color,
         })),
         isAutoScheduled: task.isAutoScheduled,
         scheduledStart: task.scheduledStart?.toISOString() || null,
@@ -221,10 +219,10 @@ export async function createTask(
         dueDate: task.dueDate ? task.dueDate.toISOString().split("T")[0] : null,
         project: task.project
           ? {
-              id: task.project.id,
-              name: task.project.name,
-              color: task.project.color,
-            }
+            id: task.project.id,
+            name: task.project.name,
+            color: task.project.color,
+          }
           : null,
       },
     };
@@ -252,10 +250,10 @@ export async function updateTask(
   try {
     // Verify task belongs to user
     const existingTask = await db.query.tasks.findFirst({
-      where: {
-        id: params.taskId,
-        userId,
-      },
+      where: (table, { eq, and }) => and(
+        eq(table.id, params.taskId),
+        eq(table.userId, userId)
+      ),
     });
 
     if (!existingTask) {
@@ -286,9 +284,12 @@ export async function updateTask(
     }
     if (params.priority) updateData.priority = params.priority;
 
-    const task = await prisma.task.update({
-      where: { id: params.taskId },
-      data: updateData,
+    await db.update(tasks)
+      .set(updateData)
+      .where(eq(tasks.id, params.taskId));
+
+    const task = await db.query.tasks.findFirst({
+      where: (table, { eq }) => eq(table.id, params.taskId),
       with: {
         project: {
           columns: {
@@ -299,6 +300,12 @@ export async function updateTask(
         },
       },
     });
+
+    if (!task) {
+      return {
+        error: "Failed to retrieve updated task",
+      };
+    }
 
     logger.info(
       "Updated task",
@@ -317,10 +324,10 @@ export async function updateTask(
         dueDate: task.dueDate ? task.dueDate.toISOString().split("T")[0] : null,
         project: task.project
           ? {
-              id: task.project.id,
-              name: task.project.name,
-              color: task.project.color,
-            }
+            id: task.project.id,
+            name: task.project.name,
+            color: task.project.color,
+          }
           : null,
       },
     };
@@ -361,10 +368,10 @@ export async function deleteTask(
   try {
     // Verify task belongs to user
     const existingTask = await db.query.tasks.findFirst({
-      where: {
-        id: params.taskId,
-        userId,
-      },
+      where: (table, { eq, and }) => and(
+        eq(table.id, params.taskId),
+        eq(table.userId, userId)
+      ),
     });
 
     if (!existingTask) {
@@ -373,9 +380,8 @@ export async function deleteTask(
       };
     }
 
-    await prisma.task.delete({
-      where: { id: params.taskId },
-    });
+    await db.delete(tasks)
+      .where(eq(tasks.id, params.taskId));
 
     logger.info(
       "Deleted task",

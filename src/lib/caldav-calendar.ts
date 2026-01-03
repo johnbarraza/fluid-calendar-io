@@ -1,6 +1,6 @@
 import { db, calendarFeeds, calendarEvents } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
-import { CalendarEvent, ConnectedAccount, Prisma } from "@prisma/client";
+import type { CalendarEvent, ConnectedAccount } from "@/db/types";
 import ICAL from "ical.js";
 import { DAVDepth, DAVResponse, createDAVClient } from "tsdav";
 
@@ -29,7 +29,6 @@ export class CalDAVCalendarService {
 
   /**
    * Creates a new CalDAV calendar service
-   * @param prisma Prisma client instance
    * @param account Connected account with CalDAV credentials
    */
   constructor(private account: ConnectedAccount) {
@@ -255,13 +254,13 @@ export class CalDAVCalendarService {
     const props: Record<string, unknown> = {
       "calendar-data": useExpand
         ? {
-            expand: {
-              _attributes: {
-                start: this.formatDateForCalDAV(start),
-                end: this.formatDateForCalDAV(end),
-              },
+          expand: {
+            _attributes: {
+              start: this.formatDateForCalDAV(start),
+              end: this.formatDateForCalDAV(end),
             },
-          }
+          },
+        }
         : {}, // No expand for master events
     };
 
@@ -455,23 +454,20 @@ export class CalDAVCalendarService {
     try {
       // Get the calendar feed from the database
       const feed = await db.query.calendarFeeds.findFirst({
-        where: {
-          url: calendarPath,
-          accountId: this.account.id,
-          type: "CALDAV",
-          userId,
-        },
+        where: (calendarFeeds, { eq, and }) => and(
+          eq(calendarFeeds.url, calendarPath),
+          eq(calendarFeeds.accountId, this.account.id),
+          eq(calendarFeeds.type, "CALDAV"),
+          eq(calendarFeeds.userId, userId)
+        ),
       });
 
       if (!feed) {
         throw new Error(`Calendar feed not found for path: ${calendarPath}`);
       }
       //delete all events from the database
-      await prisma.calendarEvent.deleteMany({
-        where: {
-          feedId: feed.id,
-        },
-      });
+      await db.delete(calendarEvents)
+        .where(eq(calendarEvents.feedId, feed.id));
 
       // Get existing events for this feed
       // const existingEvents = await this.getExistingEvents(feed.id);
@@ -491,13 +487,12 @@ export class CalDAVCalendarService {
 
       const result = await this.createAllEvents(events, feed.id);
       // Update the feed's last sync time and sync token
-      await prisma.calendarFeed.update({
-        where: { id: feed.id, userId },
-        data: {
+      await db.update(calendarFeeds)
+        .set({
           lastSync: newDate(),
           syncToken: feed.syncToken ? String(feed.syncToken) : null,
-        },
-      });
+        })
+        .where(and(eq(calendarFeeds.id, feed.id), eq(calendarFeeds.userId, userId)));
 
       return result;
     } catch (error) {
@@ -558,8 +553,7 @@ export class CalDAVCalendarService {
             Authorization:
               "Basic " +
               Buffer.from(
-                `${this.account.caldavUsername || this.account.email}:${
-                  this.account.accessToken
+                `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                 }`
               ).toString("base64"),
           },
@@ -604,8 +598,7 @@ export class CalDAVCalendarService {
               LOG_SOURCE
             );
             throw new Error(
-              `Failed to update event on server: ${
-                response.statusText || response.status
+              `Failed to update event on server: ${response.statusText || response.status
               }`
             );
           }
@@ -635,11 +628,11 @@ export class CalDAVCalendarService {
       if (mode === "single" && event.isRecurring) {
         // Get the master event
         const masterEvent = await db.query.calendarEvents.findFirst({
-          where: {
-            externalEventId: externalEventId.split("_")[0],
-            feedId: eventWithFeed.feedId,
-            isMaster: true,
-          },
+          where: (calendarEvents, { eq, and }) => and(
+            eq(calendarEvents.externalEventId, externalEventId.split("_")[0]),
+            eq(calendarEvents.feedId, eventWithFeed.feedId),
+            eq(calendarEvents.isMaster, true)
+          ),
         });
 
         if (masterEvent && masterEvent.recurrenceRule) {
@@ -655,8 +648,7 @@ export class CalDAVCalendarService {
               Authorization:
                 "Basic " +
                 Buffer.from(
-                  `${this.account.caldavUsername || this.account.email}:${
-                    this.account.accessToken
+                  `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                   }`
                 ).toString("base64"),
             },
@@ -680,8 +672,7 @@ export class CalDAVCalendarService {
                   Authorization:
                     "Basic " +
                     Buffer.from(
-                      `${this.account.caldavUsername || this.account.email}:${
-                        this.account.accessToken
+                      `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                       }`
                     ).toString("base64"),
                 },
@@ -760,8 +751,7 @@ export class CalDAVCalendarService {
             Authorization:
               "Basic " +
               Buffer.from(
-                `${this.account.caldavUsername || this.account.email}:${
-                  this.account.accessToken
+                `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                 }`
               ).toString("base64"),
           },
@@ -801,8 +791,7 @@ export class CalDAVCalendarService {
               LOG_SOURCE
             );
             throw new Error(
-              `Failed to delete event on server: ${
-                response.statusText || response.status
+              `Failed to delete event on server: ${response.statusText || response.status
               }`
             );
           }
@@ -832,10 +821,10 @@ export class CalDAVCalendarService {
       if (mode === "single" && event.isRecurring && event.masterEventId) {
         // Get the master event
         const masterEvent = await db.query.calendarEvents.findFirst({
-          where: {
-            id: event.masterEventId,
-            feedId: event.feedId,
-          },
+          where: (calendarEvents, { eq, and }) => and(
+            eq(calendarEvents.id, event.masterEventId ?? ""),
+            eq(calendarEvents.feedId, event.feedId)
+          ),
         });
 
         if (masterEvent && masterEvent.recurrenceRule) {
@@ -851,8 +840,7 @@ export class CalDAVCalendarService {
               Authorization:
                 "Basic " +
                 Buffer.from(
-                  `${this.account.caldavUsername || this.account.email}:${
-                    this.account.accessToken
+                  `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                   }`
                 ).toString("base64"),
             },
@@ -876,8 +864,7 @@ export class CalDAVCalendarService {
                   Authorization:
                     "Basic " +
                     Buffer.from(
-                      `${this.account.caldavUsername || this.account.email}:${
-                        this.account.accessToken
+                      `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                       }`
                     ).toString("base64"),
                 },
@@ -1046,8 +1033,7 @@ export class CalDAVCalendarService {
             Authorization:
               "Basic " +
               Buffer.from(
-                `${this.account.caldavUsername || this.account.email}:${
-                  this.account.accessToken
+                `${this.account.caldavUsername || this.account.email}:${this.account.accessToken
                 }`
               ).toString("base64"),
           },
@@ -1091,8 +1077,7 @@ export class CalDAVCalendarService {
               LOG_SOURCE
             );
             throw new Error(
-              `Failed to create event on server: ${
-                response.statusText || response.status
+              `Failed to create event on server: ${response.statusText || response.status
               }`
             );
           }
@@ -1119,12 +1104,12 @@ export class CalDAVCalendarService {
 
       // Get the calendar feed from the database
       const feed = await db.query.calendarFeeds.findFirst({
-        where: {
-          url: calendarPath,
-          accountId: this.account.id,
-          type: "CALDAV",
-          userId,
-        },
+        where: (feeds, { eq, and }) => and(
+          eq(feeds.url, calendarPath),
+          eq(feeds.accountId, this.account.id),
+          eq(feeds.type, "CALDAV"),
+          eq(feeds.userId, userId)
+        ),
       });
 
       if (!feed) {

@@ -1,6 +1,6 @@
 import { db, calendarEvents, tasks } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
-import { CalendarEvent } from "@prisma/client";
+import type { CalendarEvent } from "@/db/types";
 
 import { areIntervalsOverlapping } from "@/lib/date-utils";
 
@@ -105,12 +105,17 @@ export class CalendarServiceImpl implements CalendarService {
 
     // Only check task conflicts if there are no calendar conflicts
     const scheduledTasks = await db.query.tasks.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduledStart: { not: null },
-        scheduledEnd: { not: null },
-        id: excludeTaskId ? { not: excludeTaskId } : undefined,
-        userId,
+      where: (tasks, { eq, and, isNotNull, ne }) => {
+        const conditions = [
+          eq(tasks.isAutoScheduled, true),
+          isNotNull(tasks.scheduledStart),
+          isNotNull(tasks.scheduledEnd),
+          eq(tasks.userId, userId)
+        ];
+        if (excludeTaskId) {
+          conditions.push(ne(tasks.id, excludeTaskId));
+        }
+        return and(...conditions);
       },
     });
 
@@ -162,23 +167,11 @@ export class CalendarServiceImpl implements CalendarService {
     endDay.setDate(endDay.getDate() + 1); // Add one more day just to be safe
 
     const events = await db.query.calendarEvents.findMany({
-      where: {
-        feedId: {
-          in: selectedCalendarIds,
-        },
-        AND: [
-          {
-            start: {
-              lte: endDay,
-            },
-          },
-          {
-            end: {
-              gte: startDay,
-            },
-          },
-        ],
-      },
+      where: (calendarEvents, { inArray, and, lte, gte }) => and(
+        inArray(calendarEvents.feedId, selectedCalendarIds),
+        lte(calendarEvents.start, endDay),
+        gte(calendarEvents.end, startDay)
+      ),
     });
 
     // Update cache with new timestamp
@@ -230,12 +223,17 @@ export class CalendarServiceImpl implements CalendarService {
 
     // Fetch all scheduled tasks once
     const scheduledTasks = await db.query.tasks.findMany({
-      where: {
-        isAutoScheduled: true,
-        scheduledStart: { not: null },
-        scheduledEnd: { not: null },
-        id: excludeTaskId ? { not: excludeTaskId } : undefined,
-        userId,
+      where: (tasks, { eq, and, isNotNull, ne }) => {
+        const conditions = [
+          eq(tasks.isAutoScheduled, true),
+          isNotNull(tasks.scheduledStart),
+          isNotNull(tasks.scheduledEnd),
+          eq(tasks.userId, userId)
+        ];
+        if (excludeTaskId) {
+          conditions.push(ne(tasks.id, excludeTaskId));
+        }
+        return and(...conditions);
       },
     });
 

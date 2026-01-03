@@ -26,13 +26,11 @@ export async function POST(request: NextRequest) {
 
     // Get all recurring tasks with recurrence rules for the current user
     const recurringTasks = await db.query.tasks.findMany({
-      where: {
-        isRecurring: true,
-        recurrenceRule: {
-          not: null,
-        },
-        userId,
-      },
+      where: (table, { eq, and, isNotNull }) => and(
+        eq(table.isRecurring, true),
+        isNotNull(table.recurrenceRule),
+        eq(table.userId, userId)
+      ),
     });
 
     logger.info(
@@ -64,13 +62,9 @@ export async function POST(request: NextRequest) {
           RRule.fromString(standardizedRule);
 
           // Update the task with the standardized rule
-          await prisma.task.update({
-            where: {
-              id: task.id,
-              userId,
-            },
-            data: { recurrenceRule: standardizedRule },
-          });
+          await db.update(tasks)
+            .set({ recurrenceRule: standardizedRule })
+            .where(and(eq(tasks.id, task.id), eq(tasks.userId, userId)));
 
           updatedTasks.push({
             id: task.id,

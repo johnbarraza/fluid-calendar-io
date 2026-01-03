@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
           userId,
           googleCalendarEnabled: false,
           outlookCalendarEnabled: false,
-          caldavEnabled: false,
         })
         .returning();
     }
@@ -82,7 +81,6 @@ export async function PATCH(request: NextRequest) {
           userId,
           googleCalendarEnabled: false,
           outlookCalendarEnabled: false,
-          caldavEnabled: false,
           ...updates,
         })
         .returning();

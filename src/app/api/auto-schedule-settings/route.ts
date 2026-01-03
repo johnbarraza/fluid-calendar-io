@@ -33,12 +33,9 @@ export async function GET(request: NextRequest) {
           workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
           workHourStart: 9, // 9 AM
           workHourEnd: 17, // 5 PM
-          bufferTimeBefore: 0,
-          bufferTimeAfter: 0,
-          minTaskDuration: 15,
-          maxTaskDuration: 240,
-          breakDuration: 15,
-          breakInterval: 120,
+          bufferMinutes: 15,
+          minBreakDuration: 10,
+          maxConsecutiveHours: 3,
         })
         .returning();
     }
@@ -91,12 +88,9 @@ export async function PATCH(request: NextRequest) {
           workDays: JSON.stringify([1, 2, 3, 4, 5]), // Monday to Friday
           workHourStart: 9, // 9 AM
           workHourEnd: 17, // 5 PM
-          bufferTimeBefore: 0,
-          bufferTimeAfter: 0,
-          minTaskDuration: 15,
-          maxTaskDuration: 240,
-          breakDuration: 15,
-          breakInterval: 120,
+          bufferMinutes: 15,
+          minBreakDuration: 10,
+          maxConsecutiveHours: 3,
           ...updates,
         })
         .returning();

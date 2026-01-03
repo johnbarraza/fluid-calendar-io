@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     // If filtering by tagIds, we need to filter manually since Drizzle doesn't support nested some
     if (tagIds.length > 0) {
       tasksResult = tasksResult.filter((task) =>
-        task.tags.some((tag) => tagIds.includes(tag.id))
+        task.tags.some((tag) => tagIds.includes(tag.tagId))
       );
     }
 
@@ -181,6 +181,10 @@ export async function POST(request: NextRequest) {
         project: true,
       },
     });
+
+    if (!task) {
+      throw new Error("Failed to retrieve created task");
+    }
 
     // Track the creation for sync purposes if the task is in a mapped project
     if (mappingId) {

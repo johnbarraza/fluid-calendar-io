@@ -19,145 +19,108 @@ export async function migrateExistingData(adminUserId: string) {
 
   try {
     // Migrate CalendarFeeds - this table has a userId field
-    const calendarFeeds = await db.query.calendarFeeds.findMany({
-      where: {
-        userId: null,
-      },
+    const feedsToMigrate = await db.query.calendarFeeds.findMany({
+      where: (feeds, { isNull }) => isNull(feeds.userId),
     });
 
     logger.info(
       "Found calendar feeds to migrate",
-      { count: calendarFeeds.length },
+      { count: feedsToMigrate.length },
       LOG_SOURCE
     );
 
-    if (calendarFeeds.length > 0) {
-      const calendarFeedCount = await prisma.calendarFeed.updateMany({
-        where: {
-          userId: null,
-        },
-        data: {
-          userId: adminUserId,
-        },
-      });
+    if (feedsToMigrate.length > 0) {
+      await db.update(calendarFeeds)
+        .set({ userId: adminUserId })
+        .where(isNull(calendarFeeds.userId));
 
       logger.info(
         "Migrated calendar feeds",
-        { count: calendarFeedCount.count },
+        { count: feedsToMigrate.length },
         LOG_SOURCE
       );
     }
 
     // Migrate ConnectedAccounts - now has a userId field
-    const connectedAccounts = await db.query.connectedAccounts.findMany({
-      where: {
-        userId: null,
-      },
+    const accountsToMigrate = await db.query.connectedAccounts.findMany({
+      where: (accounts, { isNull }) => isNull(accounts.userId),
     });
 
     logger.info(
       "Found connected accounts to migrate",
-      { count: connectedAccounts.length },
+      { count: accountsToMigrate.length },
       LOG_SOURCE
     );
 
-    if (connectedAccounts.length > 0) {
-      const connectedAccountCount = await prisma.connectedAccount.updateMany({
-        where: {
-          userId: null,
-        },
-        data: {
-          userId: adminUserId,
-        },
-      });
+    if (accountsToMigrate.length > 0) {
+      await db.update(connectedAccounts)
+        .set({ userId: adminUserId })
+        .where(isNull(connectedAccounts.userId));
 
       logger.info(
         "Migrated connected accounts",
-        { count: connectedAccountCount.count },
+        { count: accountsToMigrate.length },
         LOG_SOURCE
       );
     }
 
     // Migrate Tags - now has a userId field
-    const tags = await db.query.tags.findMany({
-      where: {
-        userId: null,
-      },
+    const tagsToMigrate = await db.query.tags.findMany({
+      where: (tags, { isNull }) => isNull(tags.userId),
     });
 
-    logger.info("Found tags to migrate", { count: tags.length }, LOG_SOURCE);
+    logger.info("Found tags to migrate", { count: tagsToMigrate.length }, LOG_SOURCE);
 
-    if (tags.length > 0) {
-      const tagCount = await prisma.tag.updateMany({
-        where: {
-          userId: null,
-        },
-        data: {
-          userId: adminUserId,
-        },
-      });
+    if (tagsToMigrate.length > 0) {
+      await db.update(tags)
+        .set({ userId: adminUserId })
+        .where(isNull(tags.userId));
 
-      logger.info("Migrated tags", { count: tagCount.count }, LOG_SOURCE);
+      logger.info("Migrated tags", { count: tagsToMigrate.length }, LOG_SOURCE);
     }
 
     // Migrate Tasks - now has a userId field
-    const tasks = await db.query.tasks.findMany({
-      where: {
-        userId: null,
-      },
+    const tasksToMigrate = await db.query.tasks.findMany({
+      where: (tasks, { isNull }) => isNull(tasks.userId),
     });
 
-    logger.info("Found tasks to migrate", { count: tasks.length }, LOG_SOURCE);
+    logger.info("Found tasks to migrate", { count: tasksToMigrate.length }, LOG_SOURCE);
 
-    if (tasks.length > 0) {
-      const taskCount = await prisma.task.updateMany({
-        where: {
-          userId: null,
-        },
-        data: {
-          userId: adminUserId,
-        },
-      });
+    if (tasksToMigrate.length > 0) {
+      await db.update(tasks)
+        .set({ userId: adminUserId })
+        .where(isNull(tasks.userId));
 
-      logger.info("Migrated tasks", { count: taskCount.count }, LOG_SOURCE);
+      logger.info("Migrated tasks", { count: tasksToMigrate.length }, LOG_SOURCE);
     }
 
     // Migrate Projects - now has a userId field
-    const projects = await db.query.projects.findMany({
-      where: {
-        userId: null,
-      },
+    const projectsToMigrate = await db.query.projects.findMany({
+      where: (projects, { isNull }) => isNull(projects.userId),
     });
 
     logger.info(
       "Found projects to migrate",
-      { count: projects.length },
+      { count: projectsToMigrate.length },
       LOG_SOURCE
     );
 
-    if (projects.length > 0) {
-      const projectCount = await prisma.project.updateMany({
-        where: {
-          userId: null,
-        },
-        data: {
-          userId: adminUserId,
-        },
-      });
+    if (projectsToMigrate.length > 0) {
+      await db.update(projects)
+        .set({ userId: adminUserId })
+        .where(isNull(projects.userId));
 
       logger.info(
         "Migrated projects",
-        { count: projectCount.count },
+        { count: projectsToMigrate.length },
         LOG_SOURCE
       );
     }
 
     // Create AutoScheduleSettings for the admin user if they don't exist
     const existingAutoScheduleSettings =
-      await prisma.autoScheduleSettings.findUnique({
-        where: {
-          userId: adminUserId,
-        },
+      await db.query.autoScheduleSettings.findFirst({
+        where: (table, { eq }) => eq(table.userId, adminUserId),
       });
 
     if (!existingAutoScheduleSettings) {

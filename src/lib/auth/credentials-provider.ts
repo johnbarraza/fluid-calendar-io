@@ -18,13 +18,11 @@ const LOG_SOURCE = "CredentialsProvider";
 export async function authenticateUser(email: string, password: string) {
   try {
     // Find the user by email
-    const user = await db.query.users.findFirst({ where: (users, { eq }) => eq(users.email, email),
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, email),
       with: {
-        accounts: {
-          where: {
-            provider: "credentials",
-          },
-        },
+        accounts: true, // Note: Drizzle relational queries don't support nested where filtering
+        // We'll filter the accounts in memory below
       },
     });
 

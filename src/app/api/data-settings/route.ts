@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
         .values({
           id: crypto.randomUUID(),
           userId,
-          retentionDays: 90,
-          autoCleanup: true,
+          retainDataFor: 90,
+          autoBackup: true,
         })
         .returning();
     }
@@ -79,8 +79,8 @@ export async function PATCH(request: NextRequest) {
         .values({
           id: crypto.randomUUID(),
           userId,
-          retentionDays: 90,
-          autoCleanup: true,
+          retainDataFor: 90,
+          autoBackup: true,
           ...updates,
         })
         .returning();

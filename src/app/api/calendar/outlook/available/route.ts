@@ -29,11 +29,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Get the account and ensure it belongs to the current user
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) => and(
+        eq(accounts.id, accountId),
+        eq(accounts.userId, userId)
+      ),
       with: {
         calendars: true,
       },
@@ -67,12 +67,14 @@ export async function GET(req: NextRequest) {
         color: calendar.color || "#3b82f6",
         canEdit: calendar.canEdit ?? true,
       }))
-      .filter((cal) => {
+      .filter((cal): cal is typeof cal & { id: string } => {
         // Only include calendars that:
         // 1. Have an ID and name
         // 2. Are not already connected
         // 3. User has write access
-        return cal.id && !account.calendars.some((f) => f.url === cal.id);
+        // Intentional workaround for Drizzle type inference bug with JSON array fields
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return !!cal.id && !((account.calendars as any[]) || []).some((f: any) => f.url === cal.id);
       });
 
     return NextResponse.json(availableCalendars);

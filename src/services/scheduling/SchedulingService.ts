@@ -1,6 +1,6 @@
 import { db, tasks } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
-import { AutoScheduleSettings, Task } from "@prisma/client";
+import type { AutoScheduleSettings, Task } from "@/db/types";
 
 import { addDays, newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
@@ -223,12 +223,10 @@ export class SchedulingService {
     // Get all tasks (including locked ones) to return
     const finalFetchStart = this.startMetric("fetchFinalTasks");
     const allTasks = await db.query.tasks.findMany({
-      where: {
-        id: {
-          in: tasks.map((t) => t.id),
-        },
-        userId,
-      },
+      where: (dbTasks, { eq, and, inArray }) => and(
+        inArray(dbTasks.id, tasks.map((t) => t.id)),
+        eq(dbTasks.userId, userId)
+      ),
     });
     this.endMetric("fetchFinalTasks", finalFetchStart);
 
@@ -279,26 +277,31 @@ export class SchedulingService {
         });
 
         // Update the task with the selected slot
-        const updatedTask = await prisma.task.update({
-          where: { id: task.id },
-          data: {
+        await db.update(tasks)
+          .set({
             scheduledStart: bestSlot.start,
             scheduledEnd: bestSlot.end,
             isAutoScheduled: true,
             duration: task.duration || DEFAULT_TASK_DURATION,
             scheduleScore: bestSlot.score,
             userId,
-          },
+          })
+          .where(eq(tasks.id, task.id));
+
+        const updatedTask = await db.query.tasks.findFirst({
+          where: (table, { eq }) => eq(table.id, task.id),
         });
 
         // Add this newly scheduled task to the list of conflicts
         // so it won't be available for other tasks
-        await timeSlotManager.addScheduledTaskConflict(updatedTask);
+        if (updatedTask) {
+          await timeSlotManager.addScheduledTaskConflict(updatedTask);
+        }
 
         this.endMetric("updateTask", updateStart);
         this.endMetric("tryWindow", windowStart);
         this.endMetric("scheduleTask", taskStart);
-        return updatedTask;
+        return updatedTask || null;
       } else {
         logger.debug(
           `No available slots found in ${window.label} window`,

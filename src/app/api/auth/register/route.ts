@@ -96,10 +96,9 @@ export async function POST(req: NextRequest) {
         userId: newUser.id,
         theme: "system",
         timeZone: "UTC",
-        dateFormat: "MM/DD/YYYY",
         timeFormat: "12h",
-        weekStart: "sunday",
-        language: "en",
+        weekStartDay: "sunday",
+        defaultView: "week",
       });
 
       return newUser;

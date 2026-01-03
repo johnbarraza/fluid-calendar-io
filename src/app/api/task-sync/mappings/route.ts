@@ -41,12 +41,26 @@ export async function GET(request: NextRequest) {
     const providerId = searchParams.get("providerId");
 
     // Get mappings with optional provider filter
+    // Get user's providers to filter mappings
+    const userProviders = await db.query.taskProviders.findMany({
+      where: (providers, { eq }) => eq(providers.userId, userId),
+      columns: { id: true },
+    });
+
+    const userProviderIds = userProviders.map((p) => p.id);
+
+    if (userProviderIds.length === 0) {
+      return NextResponse.json({ mappings: [] });
+    }
+
+    // Get mappings ensuring they belong to user's providers
     const mappings = await db.query.taskListMappings.findMany({
-      where: {
-        provider: {
-          userId,
-          ...(providerId ? { id: providerId } : {}),
-        },
+      where: (mappings, { inArray, and, eq }) => {
+        const conditions = [inArray(mappings.providerId, userProviderIds)];
+        if (providerId) {
+          conditions.push(eq(mappings.providerId, providerId));
+        }
+        return and(...conditions);
       },
       with: {
         provider: {
@@ -64,9 +78,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: (mappings, { desc }) => [desc(mappings.createdAt)],
     });
 
     return NextResponse.json({
@@ -106,10 +118,10 @@ export async function GET(request: NextRequest) {
  * POST /api/task-sync/mappings
  * Create a new task list mapping
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
-    if ("response" in auth) {
+    if ("response" in auth && auth.response) {
       return auth.response;
     }
 
@@ -120,11 +132,11 @@ export async function POST(request: NextRequest) {
     const validatedData = createMappingSchema.parse(body);
 
     // Verify the provider exists and belongs to the user
-    const provider = await prisma.taskProvider.findUnique({
-      where: {
-        id: validatedData.providerId,
-        userId,
-      },
+    const provider = await db.query.taskProviders.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.id, validatedData.providerId),
+        eq(table.userId, userId)
+      ),
     });
 
     if (!provider) {
@@ -135,11 +147,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the project exists and belongs to the user
-    const project = await prisma.project.findUnique({
-      where: {
-        id: validatedData.projectId,
-        userId,
-      },
+    const project = await db.query.projects.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.id, validatedData.projectId),
+        eq(table.userId, userId)
+      ),
     });
 
     if (!project) {
@@ -151,10 +163,10 @@ export async function POST(request: NextRequest) {
 
     // Check if a mapping already exists for this external list
     const existingMapping = await db.query.taskListMappings.findFirst({
-      where: {
-        providerId: validatedData.providerId,
-        externalListId: validatedData.externalListId,
-      },
+      where: (table, { eq, and }) => and(
+        eq(table.providerId, validatedData.providerId),
+        eq(table.externalListId, validatedData.externalListId)
+      ),
     });
 
     if (existingMapping) {
@@ -176,7 +188,7 @@ export async function POST(request: NextRequest) {
     }).returning();
 
     // Fetch the mapping with relations
-    const mapping = await db.query.taskListMappings.findFirst({
+    const dbMapping = await db.query.taskListMappings.findFirst({
       where: (mappings, { eq }) => eq(mappings.id, insertedMapping.id),
       with: {
         provider: {
@@ -194,22 +206,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    if (!dbMapping) {
+      throw new Error("Failed to retrieve created mapping");
+    }
+
+    // Ensure relations are present (strictly checked for TS narrowing)
+    if (!dbMapping.provider || !dbMapping.project) {
+      throw new Error("Mapping relations not found");
+    }
+
     return NextResponse.json({
       mapping: {
-        id: mapping.id,
-        providerId: mapping.providerId,
-        providerName: mapping.provider.name,
-        providerType: mapping.provider.type,
-        externalListId: mapping.externalListId,
-        externalListName: mapping.externalListName,
-        projectId: mapping.projectId,
-        projectName: mapping.project.name,
-        projectColor: mapping.project.color,
-        syncEnabled: mapping.syncEnabled,
-        lastSyncedAt: mapping.lastSyncedAt,
-        direction: mapping.direction,
-        createdAt: mapping.createdAt,
-        updatedAt: mapping.updatedAt,
+        id: dbMapping.id,
+        providerId: dbMapping.providerId,
+        providerName: dbMapping.provider.name,
+        providerType: dbMapping.provider.type,
+        externalListId: dbMapping.externalListId,
+        externalListName: dbMapping.externalListName,
+        projectId: dbMapping.projectId,
+        projectName: dbMapping.project.name,
+        projectColor: dbMapping.project.color,
+        syncEnabled: dbMapping.syncEnabled,
+        lastSyncedAt: dbMapping.lastSyncedAt,
+        direction: dbMapping.direction,
+        createdAt: dbMapping.createdAt,
+        updatedAt: dbMapping.updatedAt,
       },
     });
   } catch (error) {

@@ -1,0 +1,1762 @@
+
+> fluid-calendar@0.1.0 lint
+> eslint .
+
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\eslint.config.mjs
+  7:7  warning  '__dirname' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\scripts\account-manager.js
+  53:10  warning  'info' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\auth\server.ts
+  173:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  195:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\auth\tokenManager.ts
+   50:34  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:22  warning  'unlinkErr' is defined but never used     @typescript-eslint/no-unused-vars
+  417:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  489:71  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  527:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  544:35  error    A `require()` style import is forbidden   @typescript-eslint/no-require-imports
+  685:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\auth\utils.ts
+    2:13  warning  'os' is defined but never used                          @typescript-eslint/no-unused-vars
+   23:10  warning  'isRunningInTestEnvironment' is defined but never used  @typescript-eslint/no-unused-vars
+  102:12  warning  'error' is defined but never used                       @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\BaseToolHandler.ts
+   11:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:72  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  430:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  462:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  513:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\BatchRequestHandler.ts
+    7:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   13:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\CreateEventHandler.ts
+    1:26  warning  'McpError' is defined but never used      @typescript-eslint/no-unused-vars
+    1:36  warning  'ErrorCode' is defined but never used     @typescript-eslint/no-unused-vars
+   21:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\DeleteEventHandler.ts
+  1:26  warning  'McpError' is defined but never used      @typescript-eslint/no-unused-vars
+  1:36  warning  'ErrorCode' is defined but never used     @typescript-eslint/no-unused-vars
+  9:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\FreeBusyEventHandler.ts
+   18:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  173:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\GetCurrentTimeHandler.ts
+  10:25  error    Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  21:15  warning  'requestedTimeZone' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\GetEventHandler.ts
+   1:26  warning  'McpError' is defined but never used      @typescript-eslint/no-unused-vars
+   1:36  warning  'ErrorCode' is defined but never used     @typescript-eslint/no-unused-vars
+  64:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\ListCalendarsHandler.ts
+   9:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\ListColorsHandler.ts
+  9:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\ListEventsHandler.ts
+  203:118  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:115  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  274:20   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:89   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\RecurringEventHelpers.ts
+  116:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\RespondToEventHandler.ts
+    4:10  warning  'calendar_v3' is defined but never used   @typescript-eslint/no-unused-vars
+  140:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\SearchEventsHandler.ts
+    8:36   warning  'convertEventsToStructured' is defined but never used  @typescript-eslint/no-unused-vars
+   30:25   error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   66:21   warning  'client' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  175:112  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  176:109  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\core\UpdateEventHandler.ts
+   1:26  warning  'McpError' is defined but never used      @typescript-eslint/no-unused-vars
+   1:36  warning  'ErrorCode' is defined but never used     @typescript-eslint/no-unused-vars
+  27:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\utils.ts
+  77:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\handlers\utils\datetime.ts
+  42:19  warning  'utcDate' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  49:18  warning  'error' is defined but never used                    @typescript-eslint/no-unused-vars
+  62:9   error    'testDate' is never reassigned. Use 'const' instead  prefer-const
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\server.ts
+  189:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  189:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\services\CalendarRegistry.ts
+   76:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\services\conflict-detection\ConflictDetectionService.ts
+  128:16  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  170:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  287:27  warning  '_event' is defined but never used        @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\claude-mcp-integration.test.ts
+   24:62  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   26:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:13  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:54  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:44  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\direct-integration.test.ts
+    52:44  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+   146:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   169:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   191:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   218:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   255:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   277:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   315:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   403:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   417:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   431:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   525:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   592:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   626:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   650:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   667:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   698:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   762:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   800:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   825:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   862:78  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   923:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1005:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1031:76  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1054:74  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1068:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1091:94  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1110:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1115:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1159:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1224:64  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1255:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1297:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1356:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1452:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1454:61  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1604:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1626:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1651:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1716:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1744:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1800:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1859:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1911:22  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  1946:69  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1964:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1996:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2024:80  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2068:22  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  2120:62  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2150:72  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2202:22  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  2245:80  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2271:82  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2313:22  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  2345:74  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2392:22  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  2433:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2458:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2463:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2489:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2490:59  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2525:54  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2573:54  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2607:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2628:72  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2663:87  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2668:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2704:66  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2723:76  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2728:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2747:87  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2752:61  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2885:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2887:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2915:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2955:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2959:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2990:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  2994:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  3057:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\docker-integration.test.ts
+    4:10  warning  'spawn' is defined but never used          @typescript-eslint/no-unused-vars
+   30:7   warning  'dockerProcess' is defined but never used  @typescript-eslint/no-unused-vars
+   83:16  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  171:18  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  243:20  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  311:45  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  376:50  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  472:18  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  514:16  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  522:14  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\multi-account-integration.test.ts
+   35:7   error  'createdEventIds' is never reassigned. Use 'const' instead  prefer-const
+  158:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  168:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  181:68  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  191:72  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  219:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  251:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  283:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  307:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  332:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  354:60  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  380:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  396:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  410:60  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  434:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  460:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  465:57  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  486:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  518:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  559:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  590:47  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  627:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  642:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  668:56  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  687:54  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  705:62  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  711:13  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  730:53  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  751:62  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  753:13  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  773:68  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  801:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  827:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  830:58  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  853:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  879:66  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  881:58  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\multi-account.test.ts
+   30:44  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  119:62  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\openai-mcp-integration.test.ts
+   36:29  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:20  warning  '_testName' is defined but never used     @typescript-eslint/no-unused-vars
+   91:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:66  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:59  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  327:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  327:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  328:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  331:29  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  338:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  380:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:44  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  595:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\integration\test-data-factory.ts
+  178:14  warning  '_operation' is defined but never used    @typescript-eslint/no-unused-vars
+  230:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  286:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\auth\AuthServer.test.ts
+    4:10  warning  'EventEmitter' is defined but never used  @typescript-eslint/no-unused-vars
+   59:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:49  warning  '_port' is defined but never used         @typescript-eslint/no-unused-vars
+  119:64  warning  '_callback' is defined but never used     @typescript-eslint/no-unused-vars
+  122:75  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\auth\multi-account.test.ts
+    3:24  warning  'Credentials' is defined but never used   @typescript-eslint/no-unused-vars
+  146:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\auth\tokenManager-operations.test.ts
+   34:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\console-statements.test.ts
+  151:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\BaseToolHandler-accounts.test.ts
+  1:44  warning  'vi' is defined but never used         @typescript-eslint/no-unused-vars
+  4:10  warning  'McpError' is defined but never used   @typescript-eslint/no-unused-vars
+  4:20  warning  'ErrorCode' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\BatchListEvents.test.ts
+   15:7   warning  'MockBatchRequestHandler' is defined but never used  @typescript-eslint/no-unused-vars
+   16:15  warning  '_auth' is defined but never used                    @typescript-eslint/no-unused-vars
+   18:22  warning  '_requests' is defined but never used                @typescript-eslint/no-unused-vars
+   18:33  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   18:49  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   36:24  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   66:35  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  196:57  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  218:57  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  316:56  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  322:58  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  387:56  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  393:58  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  445:58  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  516:33  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  562:37  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  591:56  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  612:56  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  676:57  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\BatchRequestHandler.test.ts
+    6:45  warning  'BatchResponse' is defined but never used  @typescript-eslint/no-unused-vars
+   16:10  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   29:39  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   30:41  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   57:39  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   58:41  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   84:39  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  105:39  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  120:39  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  154:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  186:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  213:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  250:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  277:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  299:42  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  356:26  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\CalendarNameResolution.test.ts
+   32:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\CreateEventHandler.test.ts
+   42:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  241:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  637:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  648:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\DeleteEventHandler.test.ts
+   22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\FreeBusyEventHandler.test.ts
+   20:38  warning  'timezone' is defined but never used      @typescript-eslint/no-unused-vars
+   30:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  339:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  376:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  430:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\GetCurrentTimeHandler.test.ts
+   16:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\GetEventHandler.test.ts
+   30:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\ListCalendarsHandler.test.ts
+   22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  287:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  404:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  408:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  417:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  421:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  433:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\ListColorsHandler.test.ts
+   23:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  190:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  300:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\ListEventsHandler.test.ts
+   28:21  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   91:55  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  106:55  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  121:9   error  'processedArgs' is never reassigned. Use 'const' instead  prefer-const
+  129:55  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  140:21  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  339:25  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  340:25  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  344:26  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  353:43  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  353:66  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  369:25  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  433:25  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\ManageAccountsHandler.test.ts
+    7:10  warning  'google' is defined but never used        @typescript-eslint/no-unused-vars
+  392:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  396:54  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\RecurringEventHelpers.test.ts
+    7:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\RespondToEventHandler.test.ts
+   29:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  353:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  458:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  483:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  549:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  582:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\SearchEventsHandler.test.ts
+   20:38  warning  'timezone' is defined but never used      @typescript-eslint/no-unused-vars
+   38:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   56:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  324:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  413:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  430:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  457:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  498:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  527:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  552:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  557:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\UpdateEventHandler.recurring.test.ts
+   13:23  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   13:28  warning  'accounts' is defined but never used             @typescript-eslint/no-unused-vars
+   13:74  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   24:36  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   54:36  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   70:34  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   81:37  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  150:40  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  185:7   warning  'RecurringEventError' is defined but never used  @typescript-eslint/no-unused-vars
+  195:7   warning  'ERRORS' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  205:21  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  745:13  warning  'result' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  915:13  warning  'result' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\UpdateEventHandler.test.ts
+    33:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    90:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   113:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   116:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   119:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   157:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   193:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   229:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   269:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   317:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   442:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   489:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   548:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   592:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   686:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   702:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   734:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   745:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   871:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   915:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   958:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1001:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\create-event-account-selection.test.ts
+  45:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\create-event-blocking.test.ts
+  24:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\handlers\list-events-registry.test.ts
+  15:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\index.test.ts
+   85:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  262:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  298:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  315:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\schemas\no-refs.test.ts
+  44:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  45:7   error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\schemas\schema-compatibility.test.ts
+   18:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\schemas\tool-registration.test.ts
+   15:80  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   22:64  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   22:69  warning  '_handler' is defined but never used      @typescript-eslint/no-unused-vars
+   22:79  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:63  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\schemas\validators.test.ts
+   78:21  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  416:7   warning  'SearchEventsSchema' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tests\unit\services\CalendarRegistry.test.ts
+   93:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  213:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  256:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  357:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  397:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  452:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  458:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  605:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  611:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  722:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  746:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\tools\registry.ts
+  620:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  622:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  622:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  623:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  628:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  628:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  629:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  798:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  798:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  826:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  827:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  838:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\transports\http.ts
+   59:64  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  169:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  210:77  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  345:77  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  379:77  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\types\structured-responses.ts
+  441:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  456:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  457:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\google-calendar-mcp\src\utils\response-builder.ts
+  122:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\eslint.config.js
+  5:1  warning  Assign array to a variable before exporting as module default  import/no-anonymous-default-export
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\heart-rate.test.ts
+    5:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    5:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\index.test.ts
+   67:165  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:25   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:42   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\nutrition.test.ts
+  17:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\sleep.test.ts
+  162:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\utils.test.ts
+   11:8  warning  'ToolResponseStructure' is defined but never used  @typescript-eslint/no-unused-vars
+  200:9  warning  'mockMakeFitbitRequest' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\mcp-fitbit\src\weight.test.ts
+  147:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\migrate-to-drizzle.js
+  7:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  8:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\migrate.js
+  1:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\configure-integrations.ts
+  65:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\create-user.ts
+  38:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\fix-drizzle-todos.js
+   7:12  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+   8:14  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+  35:10  warning  'fixUpsertQueries' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\fix-upserts.js
+  6:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  7:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\migrate-all-to-drizzle.js
+    7:12  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+    8:14  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   76:38  warning  'filePath' is defined but never used     @typescript-eslint/no-unused-vars
+  234:18  warning  'err' is defined but never used          @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\test-adhd-api.ts
+   62:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\scripts\test-connection-details.ts
+  62:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\(common)\calendar\page.tsx
+  1:14  warning  'calendarFeeds' is defined but never used   @typescript-eslint/no-unused-vars
+  1:29  warning  'calendarEvents' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\(common)\settings\page.tsx
+  144:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\(common)\settings\page.tsx:144:5
+  142 |   // Set hydrated state after mount
+  143 |   useEffect(() => {
+> 144 |     setIsHydrated(true);
+      |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  145 |   }, []);
+  146 |
+  147 |   // Update hash when tab changes  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\accounts\route.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\adhd\breaks\validate\route.ts
+  2:14  warning  'tasks' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:21  warning  'autoScheduleSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  3:10  warning  'eq' is defined but never used                    @typescript-eslint/no-unused-vars
+  3:14  warning  'and' is defined but never used                   @typescript-eslint/no-unused-vars
+  3:19  warning  'or' is defined but never used                    @typescript-eslint/no-unused-vars
+  3:23  warning  'inArray' is defined but never used               @typescript-eslint/no-unused-vars
+  3:32  warning  'like' is defined but never used                  @typescript-eslint/no-unused-vars
+  3:38  warning  'gte' is defined but never used                   @typescript-eslint/no-unused-vars
+  3:43  warning  'lte' is defined but never used                   @typescript-eslint/no-unused-vars
+  3:48  warning  'isNull' is defined but never used                @typescript-eslint/no-unused-vars
+  3:56  warning  'desc' is defined but never used                  @typescript-eslint/no-unused-vars
+  3:62  warning  'asc' is defined but never used                   @typescript-eslint/no-unused-vars
+  3:67  warning  'sql' is defined but never used                   @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\auth\register\route.ts
+  2:10  warning  'eq' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\auth\reset-password\request\route.ts
+  1:14  warning  'users' is defined but never used     @typescript-eslint/no-unused-vars
+  1:37  warning  'accounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used        @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used       @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\auth\reset-password\reset\route.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\caldav\auth\route.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\caldav\available\route.ts
+  1:14  warning  'calendarFeeds' is defined but never used      @typescript-eslint/no-unused-vars
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used                @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\caldav\events\route.ts
+  1:14  warning  'calendarFeeds' is defined but never used      @typescript-eslint/no-unused-vars
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used                @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\caldav\route.ts
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+  5:10  warning  'formatISO' is defined but never used          @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\caldav\sync\route.ts
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\google\[id]\route.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\google\available\route.ts
+   1:14  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+   2:10  warning  'eq' is defined but never used                 @typescript-eslint/no-unused-vars
+   2:14  warning  'and' is defined but never used                @typescript-eslint/no-unused-vars
+   2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+   2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+   2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+   2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+   2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+   2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+   2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+   2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+   2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+  75:35  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  75:58  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\google\events\route.ts
+  1:14  warning  'calendarFeeds' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used             @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used            @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used             @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used        @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used           @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used         @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used           @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used            @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\google\route.ts
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+  7:16  warning  'uuidv4' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\outlook\available\route.ts
+   1:14  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+   2:10  warning  'eq' is defined but never used                 @typescript-eslint/no-unused-vars
+   2:14  warning  'and' is defined but never used                @typescript-eslint/no-unused-vars
+   2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+   2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+   2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+   2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+   2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+   2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+   2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+   2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+   2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+  75:52  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  75:75  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\outlook\events\route.ts
+  1:14  warning  'calendarFeeds' is defined but never used  @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used            @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used        @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used           @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used         @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used           @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used            @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\calendar\outlook\sync\route.ts
+  1:29  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\events\route.ts
+  185:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\export\tasks\route.ts
+  1:14  warning  'tasks' is defined but never used     @typescript-eslint/no-unused-vars
+  1:21  warning  'projects' is defined but never used  @typescript-eslint/no-unused-vars
+  1:31  warning  'tags' is defined but never used      @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used        @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used       @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used        @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used   @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used      @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used    @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used       @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used       @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\feeds\[id]\sync\route.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\feeds\route.ts
+  5:29  warning  'accounts' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\fitbit\callback\route.ts
+   2:14  warning  'and' is defined but never used                           @typescript-eslint/no-unused-vars
+   2:19  warning  'or' is defined but never used                            @typescript-eslint/no-unused-vars
+   2:23  warning  'inArray' is defined but never used                       @typescript-eslint/no-unused-vars
+   2:32  warning  'like' is defined but never used                          @typescript-eslint/no-unused-vars
+   2:38  warning  'gte' is defined but never used                           @typescript-eslint/no-unused-vars
+   2:43  warning  'lte' is defined but never used                           @typescript-eslint/no-unused-vars
+   2:48  warning  'isNull' is defined but never used                        @typescript-eslint/no-unused-vars
+   2:56  warning  'desc' is defined but never used                          @typescript-eslint/no-unused-vars
+   2:62  warning  'asc' is defined but never used                           @typescript-eslint/no-unused-vars
+   2:67  warning  'sql' is defined but never used                           @typescript-eslint/no-unused-vars
+  63:9   error    'fitbitAccount' is never reassigned. Use 'const' instead  prefer-const
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\fitbit\disconnect\route.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\fitbit\status\route.ts
+  1:14  warning  'fitbitAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\import\tasks\route.ts
+  2:10  warning  'eq' is defined but never used   @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\integration-status\route.ts
+  1:14  warning  'systemSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\logs\cleanup\route.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\logs\route.ts
+  2:43  warning  'sql' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\logs\settings\route.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\logs\sources\route.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\notification-settings\route.ts
+  79:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\settings\homepage-disabled\route.ts
+  1:14  warning  'systemSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\setup\route.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\mappings\[id]\route.ts
+  1:14  warning  'projects' is defined but never used  @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used       @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used        @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used   @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used      @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used    @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used       @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used       @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\mappings\route.ts
+   1:14  warning  'projects' is defined but never used       @typescript-eslint/no-unused-vars
+   1:24  warning  'taskProviders' is defined but never used  @typescript-eslint/no-unused-vars
+   2:10  warning  'eq' is defined but never used             @typescript-eslint/no-unused-vars
+   2:14  warning  'and' is defined but never used            @typescript-eslint/no-unused-vars
+   2:19  warning  'or' is defined but never used             @typescript-eslint/no-unused-vars
+   2:23  warning  'inArray' is defined but never used        @typescript-eslint/no-unused-vars
+   2:32  warning  'like' is defined but never used           @typescript-eslint/no-unused-vars
+   2:38  warning  'gte' is defined but never used            @typescript-eslint/no-unused-vars
+   2:43  warning  'lte' is defined but never used            @typescript-eslint/no-unused-vars
+   2:48  warning  'isNull' is defined but never used         @typescript-eslint/no-unused-vars
+   2:56  warning  'desc' is defined but never used           @typescript-eslint/no-unused-vars
+   2:62  warning  'asc' is defined but never used            @typescript-eslint/no-unused-vars
+   2:67  warning  'sql' is defined but never used            @typescript-eslint/no-unused-vars
+  85:40  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\providers\[id]\lists\route.ts
+  1:14  warning  'taskProviders' is defined but never used     @typescript-eslint/no-unused-vars
+  1:29  warning  'taskListMappings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used               @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used           @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used              @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used               @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used               @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used            @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used              @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used               @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\providers\[id]\route.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\providers\route.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\task-sync\sync\route.ts
+  1:14  warning  'taskProviders' is defined but never used     @typescript-eslint/no-unused-vars
+  1:29  warning  'taskListMappings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used               @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used           @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used              @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used               @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used               @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used            @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used              @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used               @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\tasks\[id]\route.ts
+  266:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\tasks\normalize-recurrence\route.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\tasks\route.ts
+  9:21  warning  'tags' is defined but never used      @typescript-eslint/no-unused-vars
+  9:27  warning  'projects' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\api\user-settings\route.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\error.tsx
+  22:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\error.tsx:22:5
+  20 |
+  21 |   useEffect(() => {
+> 22 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |     // Set document title on the client side
+  24 |     document.title = "Error - FluidCalendar";
+  25 |     // Log the error to an error reporting service  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\loading.tsx
+  18:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\loading.tsx:18:5
+  16 |
+  17 |   useEffect(() => {
+> 18 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |     // Set document title on the client side
+  20 |     const title = getTitleFromPathname(pathname);
+  21 |     document.title = `Loading ${title}`;  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\not-found.tsx
+  16:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\app\not-found.tsx:16:5
+  14 |
+  15 |   useEffect(() => {
+> 16 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  17 |     // Set document title on the client side
+  18 |     document.title = "404 - Page Not Found";
+  19 |   }, []);  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\adhd\routines\RoutineExecutor.tsx
+   34:45  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\adhd\routines\RoutineExecutor.tsx:34:45
+  32 |   ); // seconds
+  33 |   const [completedTasks, setCompletedTasks] = React.useState(0);
+> 34 |   const [sessionStartTime] = React.useState(Date.now());
+     |                                             ^^^^^^^^^^ Cannot call impure function
+  35 |
+  36 |   const currentTask = routine.tasks[currentTaskIndex];
+  37 |   const totalTasks = routine.tasks.length;  react-hooks/purity
+  103:33  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\adhd\routines\RoutineExecutor.tsx:103:33
+  101 |
+  102 |   const getElapsedTime = (): string => {
+> 103 |     const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+      |                                 ^^^^^^^^^^ Cannot call impure function
+  104 |     return formatTime(elapsed);
+  105 |   };
+  106 |                                                                                            react-hooks/purity
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\focus\FocusMode.tsx
+  30:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\focus\FocusMode.tsx:30:5
+  28 |   // This effect will only run on the client
+  29 |   useEffect(() => {
+> 30 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  31 |   }, []);
+  32 |
+  33 |   // If not mounted yet, render a simple loading state  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\ui\command-palette.tsx
+  41:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\components\ui\command-palette.tsx:41:7
+  39 |   useEffect(() => {
+  40 |     if (!open) {
+> 41 |       setSearch("");
+     |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |       setShowAllCommands(false);
+  43 |     }
+  44 |   }, [open]);  react-hooks/set-state-in-effect
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\db\helpers.ts
+   6:19  warning  'or' is defined but never used            @typescript-eslint/no-unused-vars
+   6:23  warning  'inArray' is defined but never used       @typescript-eslint/no-unused-vars
+   6:32  warning  'like' is defined but never used          @typescript-eslint/no-unused-vars
+   6:38  warning  'gte' is defined but never used           @typescript-eslint/no-unused-vars
+   6:43  warning  'lte' is defined but never used           @typescript-eslint/no-unused-vars
+  18:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:29  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\db\schema.ts
+  14:3  warning  'varchar' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3  warning  'uuid' is defined but never used     @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\auth.ts
+  1:14  warning  'systemSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\auth\credentials-provider.ts
+  1:14  warning  'users' is defined but never used    @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\auth\public-signup.ts
+  1:14  warning  'systemSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\caldav-calendar.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\email\resend.ts
+  1:14  warning  'systemSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\logger\client-safe.ts
+  7:10  warning  'LogLevel' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\logger\index.ts
+  7:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\logger\server.ts
+  7:7  warning  'LOG_SOURCE' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\mcp\tools\fitbit-tools.ts
+    1:14  warning  'fitbitActivities' is defined but never used  @typescript-eslint/no-unused-vars
+    1:32  warning  'fitbitSleep' is defined but never used       @typescript-eslint/no-unused-vars
+    1:45  warning  'fitbitHeartRate' is defined but never used   @typescript-eslint/no-unused-vars
+    2:10  warning  'eq' is defined but never used                @typescript-eslint/no-unused-vars
+    2:14  warning  'and' is defined but never used               @typescript-eslint/no-unused-vars
+    2:19  warning  'or' is defined but never used                @typescript-eslint/no-unused-vars
+    2:23  warning  'inArray' is defined but never used           @typescript-eslint/no-unused-vars
+    2:32  warning  'like' is defined but never used              @typescript-eslint/no-unused-vars
+    2:38  warning  'gte' is defined but never used               @typescript-eslint/no-unused-vars
+    2:43  warning  'lte' is defined but never used               @typescript-eslint/no-unused-vars
+    2:48  warning  'isNull' is defined but never used            @typescript-eslint/no-unused-vars
+    2:56  warning  'desc' is defined but never used              @typescript-eslint/no-unused-vars
+    2:62  warning  'asc' is defined but never used               @typescript-eslint/no-unused-vars
+    2:67  warning  'sql' is defined but never used               @typescript-eslint/no-unused-vars
+  152:42  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  153:43  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  154:41  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\mcp\tools\task-tools.ts
+    2:14  warning  'and' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:19  warning  'or' is defined but never used                     @typescript-eslint/no-unused-vars
+    2:23  warning  'inArray' is defined but never used                @typescript-eslint/no-unused-vars
+    2:32  warning  'like' is defined but never used                   @typescript-eslint/no-unused-vars
+    2:38  warning  'gte' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:43  warning  'lte' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:48  warning  'isNull' is defined but never used                 @typescript-eslint/no-unused-vars
+    2:56  warning  'desc' is defined but never used                   @typescript-eslint/no-unused-vars
+    2:62  warning  'asc' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:67  warning  'sql' is defined but never used                    @typescript-eslint/no-unused-vars
+  122:31  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  131:27  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  138:33  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  174:12  warning  'insertedTask' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\outlook-sync.ts
+    2:14  warning  'and' is defined but never used           @typescript-eslint/no-unused-vars
+    2:19  warning  'or' is defined but never used            @typescript-eslint/no-unused-vars
+    2:23  warning  'inArray' is defined but never used       @typescript-eslint/no-unused-vars
+    2:32  warning  'like' is defined but never used          @typescript-eslint/no-unused-vars
+    2:38  warning  'gte' is defined but never used           @typescript-eslint/no-unused-vars
+    2:43  warning  'lte' is defined but never used           @typescript-eslint/no-unused-vars
+    2:48  warning  'isNull' is defined but never used        @typescript-eslint/no-unused-vars
+    2:56  warning  'desc' is defined but never used          @typescript-eslint/no-unused-vars
+    2:62  warning  'asc' is defined but never used           @typescript-eslint/no-unused-vars
+    2:67  warning  'sql' is defined but never used           @typescript-eslint/no-unused-vars
+  165:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\outlook-utils.ts
+  1:14  warning  'connectedAccounts' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used                @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                 @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used            @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used               @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used             @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used               @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\setup-actions.ts
+  4:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  4:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  4:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  4:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  4:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  4:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  4:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  4:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  4:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  4:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\setup-migration.ts
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\task-sync\task-change-tracker.ts
+  2:10  warning  'eq' is defined but never used      @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used     @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used      @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used    @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used     @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used     @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used  @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used    @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used     @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\task-sync\task-sync-manager.ts
+  1:21  warning  'taskProviders' is defined but never used  @typescript-eslint/no-unused-vars
+  1:54  warning  'taskChanges' is defined but never used    @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used            @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used             @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used        @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used           @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used            @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used         @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used           @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used            @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\token-manager.ts
+    2:19  warning  'or' is defined but never used                      @typescript-eslint/no-unused-vars
+    2:23  warning  'inArray' is defined but never used                 @typescript-eslint/no-unused-vars
+    2:32  warning  'like' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:38  warning  'gte' is defined but never used                     @typescript-eslint/no-unused-vars
+    2:43  warning  'lte' is defined but never used                     @typescript-eslint/no-unused-vars
+    2:48  warning  'isNull' is defined but never used                  @typescript-eslint/no-unused-vars
+    2:56  warning  'desc' is defined but never used                    @typescript-eslint/no-unused-vars
+    2:62  warning  'asc' is defined but never used                     @typescript-eslint/no-unused-vars
+    2:67  warning  'sql' is defined but never used                     @typescript-eslint/no-unused-vars
+  114:9   error    'account' is never reassigned. Use 'const' instead  prefer-const
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\lib\waitlist\position.ts
+   1:10  warning  'eq' is defined but never used      @typescript-eslint/no-unused-vars
+   1:14  warning  'and' is defined but never used     @typescript-eslint/no-unused-vars
+   1:19  warning  'or' is defined but never used      @typescript-eslint/no-unused-vars
+   1:23  warning  'gt' is defined but never used      @typescript-eslint/no-unused-vars
+   1:27  warning  'lt' is defined but never used      @typescript-eslint/no-unused-vars
+   1:31  warning  'sql' is defined but never used     @typescript-eslint/no-unused-vars
+   2:10  warning  'db' is defined but never used      @typescript-eslint/no-unused-vars
+  12:43  warning  'userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\proxy.ts
+  45:16  warning  'getHomepageSetting' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\BreakProtectionService.ts
+  1:14  warning  'tasks' is defined but never used                 @typescript-eslint/no-unused-vars
+  1:21  warning  'autoScheduleSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used                    @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                    @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used               @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used                  @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used                @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used                  @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                   @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\HabitTrackingService.ts
+  4:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  4:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  4:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  4:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  4:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  4:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  4:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  4:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  4:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\MoodEnergyService.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\PomodoroService.ts
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\RescheduleSuggestionService.ts
+  1:14  warning  'calendarEvents' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\RoutineService.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+  5:15  warning  'Routine' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\adhd\RoutineTrackingService.ts
+  1:14  warning  'routines' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used        @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used   @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used      @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used       @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used    @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used       @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\fitbit\FitbitSyncService.ts
+    2:19  warning  'or' is defined but never used                                @typescript-eslint/no-unused-vars
+    2:23  warning  'inArray' is defined but never used                           @typescript-eslint/no-unused-vars
+    2:32  warning  'like' is defined but never used                              @typescript-eslint/no-unused-vars
+    2:38  warning  'gte' is defined but never used                               @typescript-eslint/no-unused-vars
+    2:43  warning  'lte' is defined but never used                               @typescript-eslint/no-unused-vars
+    2:48  warning  'isNull' is defined but never used                            @typescript-eslint/no-unused-vars
+    2:56  warning  'desc' is defined but never used                              @typescript-eslint/no-unused-vars
+    2:62  warning  'asc' is defined but never used                               @typescript-eslint/no-unused-vars
+    2:67  warning  'sql' is defined but never used                               @typescript-eslint/no-unused-vars
+   63:11  error    'activity' is never reassigned. Use 'const' instead           prefer-const
+  143:13  error    'existingSleep' is never reassigned. Use 'const' instead      prefer-const
+  255:11  error    'existingHeartRate' is never reassigned. Use 'const' instead  prefer-const
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\scheduling\CalendarServiceImpl.ts
+  1:14  warning  'calendarEvents' is defined but never used  @typescript-eslint/no-unused-vars
+  1:30  warning  'tasks' is defined but never used           @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used              @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used             @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used              @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used         @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used            @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used             @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used          @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used            @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used             @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\scheduling\SchedulingService.ts
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\scheduling\TaskSchedulingService.ts
+  1:21  warning  'autoScheduleSettings' is defined but never used  @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used                    @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used                  @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used                @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used                  @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used                   @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used                   @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\services\scheduling\TimeSlotManager.ts
+  1:14  warning  'tasks' is defined but never used    @typescript-eslint/no-unused-vars
+  2:10  warning  'eq' is defined but never used       @typescript-eslint/no-unused-vars
+  2:14  warning  'and' is defined but never used      @typescript-eslint/no-unused-vars
+  2:19  warning  'or' is defined but never used       @typescript-eslint/no-unused-vars
+  2:23  warning  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+  2:32  warning  'like' is defined but never used     @typescript-eslint/no-unused-vars
+  2:38  warning  'gte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:43  warning  'lte' is defined but never used      @typescript-eslint/no-unused-vars
+  2:48  warning  'isNull' is defined but never used   @typescript-eslint/no-unused-vars
+  2:56  warning  'desc' is defined but never used     @typescript-eslint/no-unused-vars
+  2:62  warning  'asc' is defined but never used      @typescript-eslint/no-unused-vars
+  2:67  warning  'sql' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\src\store\adhd\routineStore.ts
+  3:15  warning  'Routine' is defined but never used      @typescript-eslint/no-unused-vars
+  3:24  warning  'RoutineTask' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\johnb\Documents\GitHub\fluid-calendar-io\tests\google-calendar.spec.ts
+  5:10  warning  'eq' is defined but never used   @typescript-eslint/no-unused-vars
+  5:14  warning  'and' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1306 problems (530 errors, 776 warnings)
+  8 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -2,7 +2,7 @@ import { db, moodEntries } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { logger } from "@/lib/logger"
-import { MoodEntry } from "@prisma/client"
+import type { MoodEntry } from "@/db/types"
 
 const LOG_SOURCE = "MoodEnergyService"
 
@@ -120,15 +120,11 @@ export class MoodEnergyService {
     startDate.setDate(startDate.getDate() - days)
 
     const entries = await db.query.moodEntries.findMany({
-      where: {
-        userId,
-        timestamp: {
-          gte: startDate,
-        },
-      },
-      orderBy: {
-        timestamp: "asc",
-      },
+      where: (moodEntries, { eq, and, gte }) => and(
+        eq(moodEntries.userId, userId),
+        gte(moodEntries.timestamp, startDate)
+      ),
+      orderBy: (table, { asc }) => [asc(table.timestamp)],
     })
 
     if (entries.length === 0) {
@@ -222,12 +218,10 @@ export class MoodEnergyService {
     startDate.setDate(startDate.getDate() - 30) // Last 30 days
 
     const entries = await db.query.moodEntries.findMany({
-      where: {
-        userId,
-        timestamp: {
-          gte: startDate,
-        },
-      },
+      where: (moodEntries, { eq, and, gte }) => and(
+        eq(moodEntries.userId, userId),
+        gte(moodEntries.timestamp, startDate)
+      ),
     })
 
     const hourlyData: TimeEnergyMap = {}
@@ -329,8 +323,8 @@ export class MoodEnergyService {
       slot.averageEnergy >= 2.7
         ? "High Energy"
         : slot.averageEnergy >= 2.3
-        ? "Good Energy"
-        : "Moderate Energy"
+          ? "Good Energy"
+          : "Moderate Energy"
     return `${startLabel}-${endLabel} (${energyLevel})`
   }
 
@@ -354,15 +348,11 @@ export class MoodEnergyService {
     startDate.setDate(startDate.getDate() - 30)
 
     const entries = await db.query.moodEntries.findMany({
-      where: {
-        userId,
-        timestamp: {
-          gte: startDate,
-        },
-      },
-      orderBy: {
-        timestamp: "asc",
-      },
+      where: (moodEntries, { eq, and, gte }) => and(
+        eq(moodEntries.userId, userId),
+        gte(moodEntries.timestamp, startDate)
+      ),
+      orderBy: (table, { asc }) => [asc(table.timestamp)],
     })
 
     const anomalies: MoodAnomaly[] = []
@@ -417,9 +407,8 @@ export class MoodEnergyService {
         anomalies.push({
           type: "sudden_drop",
           startDate: entries[i].timestamp,
-          description: `Sudden mood drop from ${entries[i - 1].mood} to ${
-            entries[i].mood
-          }`,
+          description: `Sudden mood drop from ${entries[i - 1].mood} to ${entries[i].mood
+            }`,
           severity: drop >= 3 ? "high" : "medium",
         })
       }
@@ -455,16 +444,12 @@ export class MoodEnergyService {
     )
 
     return db.query.moodEntries.findMany({
-      where: {
-        userId,
-        timestamp: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        timestamp: "desc",
-      },
+      where: (moodEntries, { eq, and, gte, lte }) => and(
+        eq(moodEntries.userId, userId),
+        gte(moodEntries.timestamp, startDate),
+        lte(moodEntries.timestamp, endDate)
+      ),
+      orderBy: (table, { desc }) => [desc(table.timestamp)],
     })
   }
 
@@ -474,11 +459,7 @@ export class MoodEnergyService {
   async deleteMoodEntry(entryId: string, userId: string): Promise<void> {
     logger.info("Deleting mood entry", { entryId, userId }, LOG_SOURCE)
 
-    await prisma.moodEntry.delete({
-      where: {
-        id: entryId,
-        userId, // Ensure user owns this entry
-      },
-    })
+    await db.delete(moodEntries)
+      .where(and(eq(moodEntries.id, entryId), eq(moodEntries.userId, userId)));
   }
 }

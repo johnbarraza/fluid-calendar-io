@@ -132,7 +132,7 @@ export async function PUT(
             // Calculate the number of days between the original start and due dates
             const startToDueDelta = Math.round(
               (task.dueDate.getTime() - task.startDate.getTime()) /
-                (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24)
             );
 
             // Apply the same delta to the new due date to get the new start date
@@ -156,6 +156,7 @@ export async function PUT(
 
           // Create a completed instance as a separate task
           const [completedInstance] = await db.insert(tasks).values({
+            id: crypto.randomUUID(),
             title: task.title,
             description: task.description,
             status: TaskStatus.COMPLETED,
@@ -175,8 +176,9 @@ export async function PUT(
           if (task.tags.length > 0) {
             await db.insert(taskTags).values(
               task.tags.map((tag) => ({
+                id: crypto.randomUUID(),
                 taskId: completedInstance.id,
-                tagId: tag.id,
+                tagId: tag.tagId,
               }))
             );
           }
@@ -239,6 +241,7 @@ export async function PUT(
       if (tagIds.length > 0) {
         await db.insert(taskTags).values(
           tagIds.map((tagId: string) => ({
+            id: crypto.randomUUID(),
             taskId: id,
             tagId,
           }))
@@ -260,7 +263,7 @@ export async function PUT(
       const changeTracker = new TaskChangeTracker();
       const changes = changeTracker.compareTaskObjects(
         oldTask,
-        updatedTask as any
+        updatedTask
       );
 
       await changeTracker.trackChange(

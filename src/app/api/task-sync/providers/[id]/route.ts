@@ -36,11 +36,11 @@ export async function GET(
     const userId = auth.userId;
 
     // Get the provider with the account and mappings
-    const provider = await prisma.taskProvider.findUnique({
-      where: {
-        id: id,
-        userId,
-      },
+    const provider = await db.query.taskProviders.findFirst({
+      where: (providers, { eq, and }) => and(
+        eq(providers.id, id),
+        eq(providers.userId, userId)
+      ),
       with: {
         account: {
           columns: {
@@ -118,11 +118,11 @@ export async function PATCH(
     }
 
     // Check if the provider exists and belongs to the user
-    const provider = await prisma.taskProvider.findUnique({
-      where: {
-        id: providerId,
-        userId,
-      },
+    const provider = await db.query.taskProviders.findFirst({
+      where: (providers, { eq, and }) => and(
+        eq(providers.id, providerId),
+        eq(providers.userId, userId)
+      ),
     });
 
     if (!provider) {
@@ -137,16 +137,14 @@ export async function PATCH(
     const validatedData = updateProviderSchema.parse(body);
 
     // Update the provider
-    const updatedProvider = await prisma.taskProvider.update({
-      where: {
-        id: providerId,
-      },
-      data: {
+    const [updatedProvider] = await db.update(taskProviders)
+      .set({
         name: validatedData.name,
         syncEnabled: validatedData.syncEnabled,
         defaultProjectId: validatedData.defaultProjectId,
-      },
-    });
+      })
+      .where(eq(taskProviders.id, providerId))
+      .returning();
 
     return NextResponse.json({
       provider: updatedProvider,
@@ -192,11 +190,11 @@ export async function DELETE(
     const userId = auth.userId;
 
     // Verify the provider exists and belongs to the user
-    const existingProvider = await prisma.taskProvider.findUnique({
-      where: {
-        id: id,
-        userId,
-      },
+    const existingProvider = await db.query.taskProviders.findFirst({
+      where: (providers, { eq, and }) => and(
+        eq(providers.id, id),
+        eq(providers.userId, userId)
+      ),
     });
 
     if (!existingProvider) {
@@ -207,11 +205,8 @@ export async function DELETE(
     }
 
     // Delete the provider
-    await prisma.taskProvider.delete({
-      where: {
-        id: id,
-      },
-    });
+    await db.delete(taskProviders)
+      .where(eq(taskProviders.id, id));
 
     return NextResponse.json({
       success: true,
