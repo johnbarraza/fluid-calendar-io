@@ -1,10 +1,12 @@
+import { db, taskProviders } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "task-sync-provider-api";
 
@@ -39,9 +41,9 @@ export async function GET(
         id: id,
         userId,
       },
-      include: {
+      with: {
         account: {
-          select: {
+          columns: {
             provider: true,
           },
         },

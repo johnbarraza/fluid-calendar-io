@@ -1,7 +1,9 @@
+import { db, calendarEvents, tasks } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { CalendarEvent } from "@prisma/client";
 
 import { areIntervalsOverlapping } from "@/lib/date-utils";
-import { prisma } from "@/lib/prisma";
+
 
 import { Conflict, TimeSlot } from "@/types/scheduling";
 
@@ -102,7 +104,7 @@ export class CalendarServiceImpl implements CalendarService {
     }
 
     // Only check task conflicts if there are no calendar conflicts
-    const scheduledTasks = await prisma.task.findMany({
+    const scheduledTasks = await db.query.tasks.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },
@@ -159,7 +161,7 @@ export class CalendarServiceImpl implements CalendarService {
     const endDay = new Date(this.getWeekTimestamp(end, false));
     endDay.setDate(endDay.getDate() + 1); // Add one more day just to be safe
 
-    const events = await prisma.calendarEvent.findMany({
+    const events = await db.query.calendarEvents.findMany({
       where: {
         feedId: {
           in: selectedCalendarIds,
@@ -227,7 +229,7 @@ export class CalendarServiceImpl implements CalendarService {
     );
 
     // Fetch all scheduled tasks once
-    const scheduledTasks = await prisma.task.findMany({
+    const scheduledTasks = await db.query.tasks.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },

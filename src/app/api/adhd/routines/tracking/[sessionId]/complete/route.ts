@@ -8,7 +8,7 @@ const LOG_SOURCE = "SessionCompleteAPI";
 // POST /api/adhd/routines/tracking/[sessionId]/complete - Complete a routine session
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -16,19 +16,21 @@ export async function POST(
       return auth.response;
     }
 
+    const resolvedParams = await params;
+
     const body = await request.json().catch(() => ({}));
     const { notes } = body;
 
     const trackingService = new RoutineTrackingService();
     const session = await trackingService.completeRoutine(
       auth.userId,
-      params.sessionId,
+      resolvedParams.sessionId,
       { notes }
     );
 
     logger.info(
       "Session completed",
-      { sessionId: params.sessionId },
+      { sessionId: resolvedParams.sessionId },
       LOG_SOURCE
     );
 

@@ -1,10 +1,12 @@
+import { db, projects, taskListMappings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "task-sync-mapping-api";
 
@@ -37,9 +39,9 @@ export async function GET(
       where: {
         id: id,
       },
-      include: {
+      with: {
         provider: {
-          select: {
+          columns: {
             id: true,
             name: true,
             type: true,
@@ -47,7 +49,7 @@ export async function GET(
           },
         },
         project: {
-          select: {
+          columns: {
             id: true,
             name: true,
             color: true,
@@ -127,14 +129,14 @@ export async function PATCH(
     const mappingId = paramData.id;
 
     // Get the mapping to check ownership
-    const mapping = await prisma.taskListMapping.findFirst({
+    const mapping = await db.query.taskListMappings.findFirst({
       where: {
         id: mappingId,
         provider: {
           userId,
         },
       },
-      include: {
+      with: {
         provider: true,
       },
     });
@@ -247,9 +249,9 @@ export async function DELETE(
       where: {
         id: id,
       },
-      include: {
+      with: {
         provider: {
-          select: {
+          columns: {
             userId: true,
           },
         },

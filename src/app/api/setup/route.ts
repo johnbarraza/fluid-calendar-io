@@ -1,4 +1,4 @@
-import { db, users, userSettings, calendarSettings, notificationSettings, integrationSettings, dataSettings } from "@/db";
+import { db, users, accounts, userSettings, calendarSettings, notificationSettings, integrationSettings, dataSettings } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -49,24 +49,24 @@ export async function POST(request: Request) {
     const hashedPassword = await hash(password, 10);
 
     // Create the admin user
-    const adminUser = await db.insert(users).values({
-        id: crypto.randomUUID(),
-        name,
-        email,
-        role: "admin",
-        // Store the hashed password in a way that's compatible with NextAuth
-        // This assumes you'll be using the credentials provider in the future
-        accounts: {
-          create: {
-            type: "credentials",
-            provider: "credentials",
-            providerAccountId: email,
-            // Store the hashed password in a field that won't conflict with OAuth providers
-            id_token: hashedPassword,
-          },
-        },
-      },
+    const userId = crypto.randomUUID();
+    const [adminUser] = await db.insert(users).values({
+      id: userId,
+      name,
+      email,
+      role: "ADMIN",
     }).returning();
+
+    // Create credentials account for the user
+    await db.insert(accounts).values({
+      id: crypto.randomUUID(),
+      userId: userId,
+      type: "credentials",
+      provider: "credentials",
+      providerAccountId: email,
+      // Store the hashed password in a field that won't conflict with OAuth providers
+      id_token: hashedPassword,
+    });
 
     logger.info("Created admin user", { userId: adminUser.id }, LOG_SOURCE);
 
@@ -78,90 +78,83 @@ export async function POST(request: Request) {
       // Create user settings
       db.insert(userSettings).values({
         id: crypto.randomUUID(),
-          userId: adminUser.id,
-          theme: "system",
-          defaultView: "week",
-          timeZone: "America/New_York", // Default timezone
-          weekStartDay: "sunday",
-          timeFormat: "12h",
-        },
+        userId: adminUser.id,
+        theme: "system",
+        defaultView: "week",
+        timeZone: "America/New_York", // Default timezone
+        weekStartDay: "sunday",
+        timeFormat: "12h",
       }),
 
       // Create calendar settings
       db.insert(calendarSettings).values({
         id: crypto.randomUUID(),
-          userId: adminUser.id,
-          workingHoursEnabled: true,
-          workingHoursStart: "09:00",
-          workingHoursEnd: "17:00",
-          workingHoursDays: "[1,2,3,4,5]",
-          defaultDuration: 60,
-          defaultColor: "#3b82f6",
-          defaultReminder: 30,
-          refreshInterval: 5,
-        },
+        userId: adminUser.id,
+        workingHoursEnabled: true,
+        workingHoursStart: "09:00",
+        workingHoursEnd: "17:00",
+        workingHoursDays: "[1,2,3,4,5]",
+        defaultDuration: 60,
+        defaultColor: "#3b82f6",
+        defaultReminder: 30,
+        refreshInterval: 5,
       }),
 
       // Create notification settings
       db.insert(notificationSettings).values({
         id: crypto.randomUUID(),
-          userId: adminUser.id,
-          emailNotifications: true,
-          eventInvites: true,
-          eventUpdates: true,
-          eventCancellations: true,
-          eventReminders: true,
-          defaultReminderTiming: "[30]",
-        },
+        userId: adminUser.id,
+        emailNotifications: true,
+        eventInvites: true,
+        eventUpdates: true,
+        eventCancellations: true,
+        eventReminders: true,
+        defaultReminderTiming: "[30]",
       }),
 
       // Create integration settings
       db.insert(integrationSettings).values({
         id: crypto.randomUUID(),
-          userId: adminUser.id,
-          googleCalendarEnabled: true,
-          googleCalendarAutoSync: true,
-          googleCalendarInterval: 5,
-          outlookCalendarEnabled: true,
-          outlookCalendarAutoSync: true,
-          outlookCalendarInterval: 5,
-        },
+        userId: adminUser.id,
+        googleCalendarEnabled: true,
+        googleCalendarAutoSync: true,
+        googleCalendarInterval: 5,
+        outlookCalendarEnabled: true,
+        outlookCalendarAutoSync: true,
+        outlookCalendarInterval: 5,
       }),
 
       // Create data settings
       db.insert(dataSettings).values({
         id: crypto.randomUUID(),
-          userId: adminUser.id,
-          autoBackup: true,
-          backupInterval: 7,
-          retainDataFor: 365,
-        },
+        userId: adminUser.id,
+        autoBackup: true,
+        backupInterval: 7,
+        retainDataFor: 365,
       }),
 
       // Check if SystemSettings record exists and fail if it does
       db.transaction(async (tx) => {
         // Check if any SystemSettings record exists
-        const existingSettings = await tx.systemSettings.findFirst().returning();
+        const existingSettings = await tx.query.systemSettings.findFirst();
 
         if (existingSettings) {
           throw new Error("SystemSettings record already exists");
         }
 
         // Create a new record with default ID
-        return tx.systemSettings.create({
-          data: {
-            id: "default",
-            logLevel: "error",
-            logDestination: "db",
-            logRetention: {
-              error: 30,
-              warn: 14,
-              info: 7,
-              debug: 3,
-            },
-            publicSignup: false,
-            resendApiKey: process.env.RESEND_API_KEY || null,
+        return tx.insert(systemSettings).values({
+          id: "default",
+          logLevel: "error",
+          logDestination: "db",
+          logRetention: {
+            error: 30,
+            warn: 14,
+            info: 7,
+            debug: 3,
           },
+          publicSignup: false,
+          resendApiKey: process.env.RESEND_API_KEY || null,
         });
       }),
     ]);

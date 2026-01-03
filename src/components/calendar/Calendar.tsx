@@ -65,7 +65,8 @@ export function Calendar({
 
     // Always fetch tasks since they're not pre-loaded
     useTaskStore.getState().fetchTasks();
-  }, [initialFeeds, initialEvents, setFeeds, setEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Remove dependencies to prevent infinite loop
 
   const handlePrevWeek = () => {
     if (view === "month" || view === "multiMonth") {

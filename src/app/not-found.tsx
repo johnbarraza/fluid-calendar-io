@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { inter } from "@/lib/fonts";
+
 
 import "../app/globals.css";
 

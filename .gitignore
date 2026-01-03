@@ -37,9 +37,16 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .env.test
-*.env
-!.env.example
-!.env.local.example
+
+# keys directory - protect sensitive credentials
+keys/.env.local
+keys/database.env
+keys/google-oauth.env
+keys/fitbit-oauth.env
+keys/*.env
+!keys/*.env.template
+!keys/.env
+!keys/README.md
 
 # vercel
 .vercel
@@ -67,3 +74,7 @@ scripts/test-outlook-task-api.sh
 .env.local.example
 client_secret_REDACTED_CLIENT_ID.json
 gcp-oauth.keys.json
+
+# Exclude MCP submodules from Next.js build
+/google-calendar-mcp/
+/mcp-fitbit/

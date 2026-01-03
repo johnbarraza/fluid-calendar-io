@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { LuCheck as Check, LuX as X, LuClock as Clock, LuTriangleAlert as AlertTriangle, LuCalendar as Calendar } from "react-icons/lu";
-import { ScheduleSuggestion } from "@prisma/client";
 import { SuggestionWithTask } from "@/store/adhd/suggestionStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,30 +90,32 @@ export function SuggestionCard({ suggestion, onAccept, onReject }: SuggestionCar
 
       <CardContent className="space-y-4">
         {/* Suggested Time Slot */}
-        <div className="rounded-lg bg-muted p-3">
-          <div className="flex items-center justify-between text-sm">
-            <div>
-              <p className="font-medium">Tiempo sugerido</p>
-              <p className="text-muted-foreground">
-                {format(new Date(suggestion.suggestedStart), "PPP", { locale: es })}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium">
-                {format(new Date(suggestion.suggestedStart), "HH:mm")} -{" "}
-                {format(new Date(suggestion.suggestedEnd), "HH:mm")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {Math.round(
-                  (new Date(suggestion.suggestedEnd).getTime() -
-                    new Date(suggestion.suggestedStart).getTime()) /
-                    (1000 * 60)
-                )}{" "}
-                min
-              </p>
+        {suggestion.suggestedStart && suggestion.suggestedEnd && (
+          <div className="rounded-lg bg-muted p-3">
+            <div className="flex items-center justify-between text-sm">
+              <div>
+                <p className="font-medium">Tiempo sugerido</p>
+                <p className="text-muted-foreground">
+                  {format(new Date(suggestion.suggestedStart), "PPP", { locale: es })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium">
+                  {format(new Date(suggestion.suggestedStart), "HH:mm")} -{" "}
+                  {format(new Date(suggestion.suggestedEnd), "HH:mm")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {Math.round(
+                    (new Date(suggestion.suggestedEnd).getTime() -
+                      new Date(suggestion.suggestedStart).getTime()) /
+                      (1000 * 60)
+                  )}{" "}
+                  min
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         {suggestion.status === "pending" && (

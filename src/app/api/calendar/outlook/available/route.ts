@@ -1,9 +1,11 @@
+import { db, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
 import { OutlookCalendarService } from "@/lib/outlook-calendar";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "OutlookAvailableCalendarsAPI";
 
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
         id: accountId,
         userId,
       },
-      include: {
+      with: {
         calendars: true,
       },
     });

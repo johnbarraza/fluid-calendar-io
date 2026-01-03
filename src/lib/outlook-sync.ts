@@ -1,10 +1,12 @@
+import { db, calendarEvents } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { Client } from "@microsoft/microsoft-graph-client";
 import type { Prisma } from "@prisma/client";
 
 import { convertToUTC, newDate, newDateFromYMD } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 import { convertOutlookRecurrenceToRRule } from "@/lib/outlook-calendar";
-import { prisma } from "@/lib/prisma";
+
 
 interface OutlookAttendee {
   emailAddress: {
@@ -142,24 +144,33 @@ export async function saveEventToDatabase(
   externalEventId: string,
   isMaster: boolean = false
 ) {
-  const existingEvent = await prisma.calendarEvent.findFirst({
-    where: {
-      feedId,
-      externalEventId,
-      ...(isMaster ? { isMaster: true } : {}),
+  const existingEvent = await db.query.calendarEvents.findFirst({
+    where: (events, { eq, and }) => {
+      const conditions = [
+        eq(events.feedId, feedId),
+        eq(events.externalEventId, externalEventId),
+      ];
+      if (isMaster) {
+        conditions.push(eq(events.isMaster, true));
+      }
+      return and(...conditions);
     },
   });
 
   if (existingEvent) {
-    return await prisma.calendarEvent.update({
-      where: { id: existingEvent.id },
-      data: eventData as Prisma.CalendarEventUpdateInput,
-    });
+    const [updated] = await db
+      .update(calendarEvents)
+      .set(eventData as any)
+      .where(eq(calendarEvents.id, existingEvent.id))
+      .returning();
+    return updated;
   }
 
-  return await prisma.calendarEvent.create({
-    data: eventData as Prisma.CalendarEventCreateInput,
-  });
+  const [inserted] = await db
+    .insert(calendarEvents)
+    .values(eventData as any)
+    .returning();
+  return inserted;
 }
 
 // Helper to fetch all events from Outlook with pagination
@@ -397,7 +408,7 @@ export async function syncOutlookCalendar(
     for (const eventId of deletedEventIds) {
       try {
         // Find and delete the event from our database
-        const existingEvent = await prisma.calendarEvent.findFirst({
+        const existingEvent = await db.query.calendarEvents.findFirst({
           where: {
             feedId: feed.id,
             externalEventId: eventId,

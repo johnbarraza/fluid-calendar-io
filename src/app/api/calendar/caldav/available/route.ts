@@ -1,8 +1,10 @@
+import { db, calendarFeeds, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import {
   createCalDAVClient,
@@ -143,13 +145,13 @@ export async function GET(request: NextRequest) {
       }));
 
       // Get existing calendars for this account
-      const existingCalendars = await prisma.calendarFeed.findMany({
+      const existingCalendars = await db.query.calendarFeeds.findMany({
         where: {
           accountId: account.id,
           type: "CALDAV",
           userId,
         },
-        select: {
+        columns: {
           url: true,
         },
       });

@@ -1,7 +1,9 @@
+import { db, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { Client } from "@microsoft/microsoft-graph-client";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 import { Provider, TokenManager } from "@/lib/token-manager";
 
 const LOG_SOURCE = "OutlookUtils";
@@ -40,7 +42,7 @@ export async function getMsGraphClient(accountIdOrUserId: string) {
       userId = accountIdOrUserId;
 
       // Find the first Outlook account for this user
-      const account = await prisma.connectedAccount.findFirst({
+      const account = await db.query.connectedAccounts.findFirst({
         where: {
           userId: accountIdOrUserId,
           provider: "OUTLOOK" as Provider,

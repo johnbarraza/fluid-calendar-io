@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { getEvent } from "@/lib/calendar-db";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, calendarEvents } from "@/db";
 
 const LOG_SOURCE = "event-route";
 
@@ -72,9 +73,9 @@ export async function PATCH(
     const { id } = await params;
 
     // Check if the event belongs to a feed owned by the current user
-    const existingEvent = await prisma.calendarEvent.findUnique({
-      where: { id },
-      include: {
+    const existingEvent = await db.query.calendarEvents.findFirst({
+      where: (events, { eq }) => eq(events.id, id),
+      with: {
         feed: true,
       },
     });
@@ -92,10 +93,11 @@ export async function PATCH(
     }
 
     const updates = await request.json();
-    const updated = await prisma.calendarEvent.update({
-      where: { id },
-      data: updates,
-    });
+    const [updated] = await db
+      .update(calendarEvents)
+      .set(updates)
+      .where(eq(calendarEvents.id, id))
+      .returning();
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -129,9 +131,9 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if the event belongs to a feed owned by the current user
-    const existingEvent = await prisma.calendarEvent.findUnique({
-      where: { id },
-      include: {
+    const existingEvent = await db.query.calendarEvents.findFirst({
+      where: (events, { eq }) => eq(events.id, id),
+      with: {
         feed: true,
       },
     });
@@ -148,9 +150,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.calendarEvent.delete({
-      where: { id },
-    });
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

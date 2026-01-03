@@ -29,7 +29,7 @@ export default function PomodoroPage() {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       const todaySessions = recentSessions.filter(
-        (s) => new Date(s.startTime) >= today && s.completed
+        (s) => new Date(s.startedAt) >= today && s.completed
       );
 
       const totalCompleted = recentSessions.filter((s) => s.completed).length;
@@ -38,8 +38,8 @@ export default function PomodoroPage() {
       const focusTime = recentSessions
         .filter((s) => s.type === "work" && s.completed)
         .reduce((acc, s) => {
-          const start = new Date(s.startTime);
-          const end = s.endTime ? new Date(s.endTime) : new Date();
+          const start = new Date(s.startedAt);
+          const end = s.endedAt ? new Date(s.endedAt) : new Date();
           return acc + (end.getTime() - start.getTime()) / 1000 / 60;
         }, 0);
 
@@ -168,14 +168,14 @@ export default function PomodoroPage() {
                 ) : (
                   <div className="space-y-3">
                     {recentSessions.slice(0, 10).map((session) => {
-                      if (!session.startTime) return null;
+                      if (!session.startedAt) return null;
 
-                      const startDate = new Date(session.startTime);
+                      const startDate = new Date(session.startedAt);
                       if (isNaN(startDate.getTime())) return null;
 
-                      const duration = session.endTime
+                      const duration = session.endedAt
                         ? Math.round(
-                            (new Date(session.endTime).getTime() -
+                            (new Date(session.endedAt).getTime() -
                               startDate.getTime()) /
                               1000 /
                               60

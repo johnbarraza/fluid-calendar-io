@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 import { ActionType } from "@/components/ui/action-overlay";
 
 import { addDays, addHours, newDate } from "@/lib/date-utils";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useTaskStore } from "@/store/task";
 

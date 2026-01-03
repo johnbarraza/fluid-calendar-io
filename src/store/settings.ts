@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { Settings } from "@/types/settings";
 

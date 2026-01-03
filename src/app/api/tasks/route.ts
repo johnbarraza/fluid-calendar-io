@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { RRule } from "rrule";
+import { eq, and, or, inArray, like, gte, lte, isNull, SQL } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, tasks, tags, projects, taskTags, taskListMappings } from "@/db";
 import {
   ChangeType,
   TaskChangeTracker,
@@ -39,48 +40,65 @@ export async function GET(request: NextRequest) {
     const hideUpcomingTasks = searchParams.get("hideUpcomingTasks") === "true";
 
     const now = newDate();
-    const tasks = await prisma.task.findMany({
-      where: {
-        // Filter by the current user's ID
-        userId,
-        ...(status.length > 0 && { status: { in: status } }),
-        ...(energyLevel.length > 0 && { energyLevel: { in: energyLevel } }),
-        ...(timePreference.length > 0 && {
-          preferredTime: { in: timePreference },
-        }),
-        ...(tagIds.length > 0 && { tags: { some: { id: { in: tagIds } } } }),
-        ...(search && {
-          OR: [
-            { title: { contains: search } },
-            { description: { contains: search } },
-          ],
-        }),
-        ...(startDate &&
-          endDate && {
-            dueDate: {
-              gte: newDate(startDate),
-              lte: newDate(endDate),
-            },
-          }),
-        ...(taskStartDate && {
-          startDate: {
-            gte: newDate(taskStartDate),
-          },
-        }),
-        ...(hideUpcomingTasks && {
-          OR: [{ startDate: null }, { startDate: { lte: now } }],
-        }),
-      },
-      include: {
+
+    // Build where conditions
+    const conditions: SQL[] = [eq(tasks.userId, userId)];
+
+    if (status.length > 0) {
+      conditions.push(inArray(tasks.status, status));
+    }
+    if (energyLevel.length > 0) {
+      conditions.push(inArray(tasks.energyLevel, energyLevel));
+    }
+    if (timePreference.length > 0) {
+      conditions.push(inArray(tasks.preferredTime, timePreference));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          like(tasks.title, `%${search}%`),
+          like(tasks.description, `%${search}%`)
+        )!
+      );
+    }
+    if (startDate && endDate) {
+      conditions.push(
+        and(
+          gte(tasks.dueDate, newDate(startDate)),
+          lte(tasks.dueDate, newDate(endDate))
+        )!
+      );
+    }
+    if (taskStartDate) {
+      conditions.push(gte(tasks.startDate, newDate(taskStartDate)));
+    }
+    if (hideUpcomingTasks) {
+      conditions.push(
+        or(
+          isNull(tasks.startDate),
+          lte(tasks.startDate, now)
+        )!
+      );
+    }
+
+    // Query tasks with relations
+    let tasksResult = await db.query.tasks.findMany({
+      where: and(...conditions),
+      with: {
         tags: true,
         project: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
     });
 
-    return NextResponse.json(tasks);
+    // If filtering by tagIds, we need to filter manually since Drizzle doesn't support nested some
+    if (tagIds.length > 0) {
+      tasksResult = tasksResult.filter((task) =>
+        task.tags.some((tag) => tagIds.includes(tag.id))
+      );
+    }
+
+    return NextResponse.json(tasksResult);
   } catch (error) {
     logger.error(
       "Error fetching tasks:",
@@ -129,30 +147,36 @@ export async function POST(request: NextRequest) {
     // Find the project's task mapping if it exists
     let mappingId = null;
     if (taskData.projectId) {
-      const mapping = await prisma.taskListMapping.findFirst({
-        where: {
-          projectId: taskData.projectId,
-        },
+      const mapping = await db.query.taskListMappings.findFirst({
+        where: eq(taskListMappings.projectId, taskData.projectId),
       });
       if (mapping) {
         mappingId = mapping.id;
       }
     }
 
-    const task = await prisma.task.create({
-      data: {
-        ...taskData,
-        // Associate the task with the current user
-        userId,
-        isRecurring: !!recurrenceRule,
-        recurrenceRule: standardizedRecurrenceRule,
-        ...(tagIds && {
-          tags: {
-            connect: tagIds.map((id: string) => ({ id })),
-          },
-        }),
-      },
-      include: {
+    // Create the task
+    const [newTask] = await db.insert(tasks).values({
+      ...taskData,
+      userId,
+      isRecurring: !!recurrenceRule,
+      recurrenceRule: standardizedRecurrenceRule,
+    }).returning();
+
+    // Connect tags if provided (many-to-many relationship)
+    if (tagIds && tagIds.length > 0) {
+      await db.insert(taskTags).values(
+        tagIds.map((tagId: string) => ({
+          taskId: newTask.id,
+          tagId: tagId,
+        }))
+      );
+    }
+
+    // Fetch the complete task with relations
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, newTask.id),
+      with: {
         tags: true,
         project: true,
       },

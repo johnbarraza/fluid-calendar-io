@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { clearResendInstance } from "@/lib/email/resend";
-import { logger } from "@/lib/logger";
+import { clearResendInstance } from "@/lib/email/resend-client";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useSettingsStore } from "@/store/settings";
 

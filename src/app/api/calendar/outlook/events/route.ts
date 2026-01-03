@@ -1,3 +1,5 @@
+import { db, calendarFeeds, calendarEvents } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
@@ -15,7 +17,7 @@ import {
 } from "@/lib/outlook-calendar";
 import { getOutlookClient } from "@/lib/outlook-calendar";
 import { syncOutlookCalendar } from "@/lib/outlook-sync";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "OutlookCalendarEventsAPI";
 
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
         id: feedId,
         userId,
       },
-      include: {
+      with: {
         account: true,
       },
     });
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Get the created event from database
-    const createdEvent = await prisma.calendarEvent.findFirst({
+    const createdEvent = await db.query.calendarEvents.findFirst({
       where: {
         feedId: feed.id,
         externalEventId: outlookEvent.id,
@@ -176,7 +178,7 @@ export async function PUT(request: NextRequest) {
       validatedEvent.feed.syncToken
     );
 
-    const record = await prisma.calendarEvent.findFirst({
+    const record = await db.query.calendarEvents.findFirst({
       where: {
         externalEventId: outlookEvent.id,
       },

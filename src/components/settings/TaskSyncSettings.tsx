@@ -34,7 +34,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { format } from "@/lib/date-utils";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useProjectStore } from "@/store/project";
 import { useSettingsStore } from "@/store/settings";

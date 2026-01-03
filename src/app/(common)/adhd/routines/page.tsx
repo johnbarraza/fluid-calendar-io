@@ -42,7 +42,6 @@ export default function RoutinesPage() {
     useRoutineStore();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
-  const [showTemplateGallery, setShowTemplateGallery] = React.useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     React.useState<RoutineTemplate | null>(null);
   const [editingRoutine, setEditingRoutine] =
@@ -91,7 +90,6 @@ export default function RoutinesPage() {
 
   const handleSelectTemplate = (template: RoutineTemplate) => {
     setSelectedTemplate(template);
-    setShowTemplateGallery(false);
     setIsCreateDialogOpen(true);
   };
 
@@ -127,7 +125,7 @@ export default function RoutinesPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => setShowTemplateGallery(true)}
+              onClick={() => setSelectedTemplate(null)}
             >
               <Sparkles className="mr-2 h-4 w-4" />
               Plantillas
@@ -252,7 +250,7 @@ export default function RoutinesPage() {
             <AlertDialogTitle>¿Eliminar rutina?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminará permanentemente la
-              rutina "{deletingRoutine?.name}" y todas sus tareas.
+              rutina &quot;{deletingRoutine?.name}&quot; y todas sus tareas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

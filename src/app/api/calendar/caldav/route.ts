@@ -1,3 +1,5 @@
+import { db, calendarFeeds, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { formatISO } from "date-fns";
@@ -6,7 +8,7 @@ import { authenticateRequest } from "@/lib/auth/api-auth";
 import { CalDAVCalendarService } from "@/lib/caldav-calendar";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import {
   createCalDAVClient,
@@ -47,11 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the account from the database and ensure it belongs to the current user
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) =>
+        and(eq(accounts.id, accountId), eq(accounts.userId, userId)),
     });
 
     if (!account) {
@@ -150,11 +150,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const existingCalendar = await prisma.calendarFeed.findFirst({
-        where: {
-          url: calendarId,
-          userId,
-        },
+      const existingCalendar = await db.query.calendarFeeds.findFirst({
+        where: (feeds, { eq, and }) =>
+          and(eq(feeds.url, calendarId), eq(feeds.userId, userId)),
       });
 
       if (existingCalendar) {
@@ -182,19 +180,18 @@ export async function POST(request: NextRequest) {
       if (typeof calendarName !== "string") {
         calendarName = "Unnamed Calendar";
       }
-      const newCalendar = await prisma.calendarFeed.create({
-        data: {
-          name: calendarName,
-          color: calendarColor,
-          type: "CALDAV",
-          url: calendarId,
-          accountId,
-          userId,
-          enabled: true,
-          lastSync: formatISO(new Date()),
-          syncToken: calendar.syncToken ? String(calendar.syncToken) : null,
-        },
-      });
+      const [newCalendar] = await db.insert(calendarFeeds).values({
+        id: crypto.randomUUID(),
+        name: calendarName,
+        color: calendarColor,
+        type: "CALDAV",
+        url: calendarId,
+        accountId,
+        userId,
+        enabled: true,
+        lastSync: formatISO(new Date()),
+        syncToken: calendar.syncToken ? String(calendar.syncToken) : null,
+      }).returning();
 
       logger.info(
         `Successfully added CalDAV calendar: ${newCalendar.id}`,
@@ -214,12 +211,17 @@ export async function POST(request: NextRequest) {
         await caldavService.syncCalendar(newCalendar.id, calendarId, userId);
 
         // Update the last sync time
-        await prisma.calendarFeed.update({
-          where: { id: newCalendar.id, userId },
-          data: {
+        await db
+          .update(calendarFeeds)
+          .set({
             lastSync: newDate(),
-          },
-        });
+          })
+          .where(
+            and(
+              eq(calendarFeeds.id, newCalendar.id),
+              eq(calendarFeeds.userId, userId)
+            )
+          );
 
         logger.info(
           `Initial sync completed for CalDAV calendar: ${newCalendar.id}`,

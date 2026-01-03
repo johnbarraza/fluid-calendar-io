@@ -1,10 +1,12 @@
+import { db, tasks } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { RRule } from "rrule";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules";
 
 const LOG_SOURCE = "normalize-recurrence-route";
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
     const userId = auth.userId;
 
     // Get all recurring tasks with recurrence rules for the current user
-    const recurringTasks = await prisma.task.findMany({
+    const recurringTasks = await db.query.tasks.findMany({
       where: {
         isRecurring: true,
         recurrenceRule: {

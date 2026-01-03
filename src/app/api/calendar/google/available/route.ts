@@ -1,3 +1,5 @@
+import { db, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { GaxiosError } from "gaxios";
@@ -5,7 +7,7 @@ import { GaxiosError } from "gaxios";
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { getGoogleCalendarClient } from "@/lib/google-calendar";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "GoogleAvailableCalendarsAPI";
 
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
         id: accountId,
         userId,
       },
-      include: {
+      with: {
         calendars: true,
       },
     });

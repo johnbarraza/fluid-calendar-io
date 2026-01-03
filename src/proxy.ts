@@ -73,8 +73,9 @@ async function getHomepageSetting(request: NextRequest): Promise<boolean> {
 /**
  * Middleware for handling authentication and authorization
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log("[Middleware] START - Processing:", pathname);
 
   // Allow static files to bypass authentication
   const hasStaticExtension = staticFileExtensions.some((ext) =>
@@ -108,33 +109,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Special handling for the root path based on the disableHomepage setting
+  // Special handling for the root path - redirect to calendar
   if (pathname === "/") {
+    console.log("[Middleware] Processing root path /");
     // For API routes and API calls to the root path, just continue
     if (request.headers.get("accept")?.includes("application/json")) {
+      console.log("[Middleware] API request, continuing");
       return NextResponse.next();
     }
 
-    // Get the homepage setting directly from the API
-    const disableHomepage = await getHomepageSetting(request);
-
-    // If the homepage is disabled, check authentication and redirect accordingly
-    if (disableHomepage) {
-      const token = await getToken({
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET,
-      });
-
-      // Redirect authenticated users to /calendar, unauthenticated to /auth/signin
-      if (token) {
-        return NextResponse.redirect(new URL("/calendar", request.url));
-      } else {
-        return NextResponse.redirect(new URL("/auth/signin", request.url));
-      }
-    }
-
-    // If homepage is not disabled, continue normally
-    return NextResponse.next();
+    console.log("[Middleware] Redirecting / to /calendar");
+    // Always redirect root to /calendar (which has proper auth handling)
+    return NextResponse.redirect(new URL("/calendar", request.url));
   }
 
   // Check if the route is public
@@ -148,13 +134,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Get the token from the request
+  console.log("[Middleware] Calling getToken()...");
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
+  console.log("[Middleware] Got token:", !!token);
 
   // If there's no token, redirect to the sign-in page
   if (!token) {
+    console.log("[Middleware] No token, redirecting to signin");
     const url = new URL("/auth/signin", request.url);
     url.searchParams.set("callbackUrl", encodeURI(request.url));
     return NextResponse.redirect(url);

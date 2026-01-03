@@ -1,8 +1,10 @@
+import { db, calendarFeeds, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "accounts-route";
 
@@ -16,13 +18,13 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get accounts filtered by the current user's ID
-    const accounts = await prisma.connectedAccount.findMany({
+    const accounts = await db.query.connectedAccounts.findMany({
       where: {
         userId,
       },
-      include: {
+      with: {
         calendars: {
-          select: {
+          columns: {
             id: true,
             name: true,
           },

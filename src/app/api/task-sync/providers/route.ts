@@ -1,10 +1,12 @@
+import { db, taskProviders } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "task-sync-providers-api";
 
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get all providers for the user
-    const providers = await prisma.taskProvider.findMany({
+    const providers = await db.query.taskProviders.findMany({
       where: {
         userId,
       },
@@ -73,19 +75,18 @@ export async function POST(request: NextRequest) {
     const validatedData = createProviderSchema.parse(body);
 
     // Create the provider
-    const provider = await prisma.taskProvider.create({
-      data: {
-        name: validatedData.name,
-        type: validatedData.type,
-        userId,
-        syncEnabled: validatedData.syncEnabled,
-        defaultProjectId: validatedData.defaultProjectId,
-        accountId: validatedData.accountId,
-        settings: validatedData.settings
-          ? JSON.parse(JSON.stringify(validatedData.settings))
-          : undefined,
-      },
-    });
+    const [provider] = await db.insert(taskProviders).values({
+      id: crypto.randomUUID(),
+      name: validatedData.name,
+      type: validatedData.type,
+      userId,
+      syncEnabled: validatedData.syncEnabled,
+      defaultProjectId: validatedData.defaultProjectId,
+      accountId: validatedData.accountId,
+      settings: validatedData.settings
+        ? JSON.parse(JSON.stringify(validatedData.settings))
+        : undefined,
+    }).returning();
 
     return NextResponse.json(
       {

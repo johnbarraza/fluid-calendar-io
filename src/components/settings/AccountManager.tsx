@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useSettingsStore } from "@/store/settings";
 

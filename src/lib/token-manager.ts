@@ -1,11 +1,14 @@
+import { db, connectedAccounts, fitbitAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { getOutlookCredentials } from "@/lib/auth";
 import { createGoogleOAuthClient } from "@/lib/google";
-import { prisma } from "@/lib/prisma";
+
+import { refreshFitbitTokens } from "@/lib/fitbit-auth";
 
 import { newDate } from "./date-utils";
 import { MICROSOFT_GRAPH_AUTH_ENDPOINTS } from "./outlook";
 
-export type Provider = "GOOGLE" | "OUTLOOK" | "CALDAV";
+export type Provider = "GOOGLE" | "OUTLOOK" | "CALDAV" | "FITBIT";
 
 interface TokenInfo {
   accessToken: string;
@@ -101,30 +104,44 @@ export class TokenManager {
     },
     userId: string
   ): Promise<string> {
-    const account = await prisma.connectedAccount.upsert({
-      where: {
-        userId_provider_email: {
-          userId,
-          provider,
-          email,
-        },
-      },
-      update: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresAt: tokens.expiresAt,
-      },
-      create: {
-        provider,
-        email,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresAt: tokens.expiresAt,
-        userId,
-      },
+    // Try to find existing account
+    let account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) =>
+        and(
+          eq(accounts.userId, userId),
+          eq(accounts.provider, provider),
+          eq(accounts.email, email)
+        ),
     });
 
-    return account.id;
+    if (account) {
+      // Update existing account
+      const [updatedAccount] = await db
+        .update(connectedAccounts)
+        .set({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+        })
+        .where(eq(connectedAccounts.id, account.id))
+        .returning();
+      return updatedAccount.id;
+    } else {
+      // Create new account
+      const [newAccount] = await db
+        .insert(connectedAccounts)
+        .values({
+          id: crypto.randomUUID(),
+          provider,
+          email,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          userId,
+        })
+        .returning();
+      return newAccount.id;
+    }
   }
 
   async refreshOutlookTokens(
@@ -205,5 +222,54 @@ export class TokenManager {
       accessToken: account.accessToken,
       expiresAt: account.expiresAt,
     };
+  }
+
+  /**
+   * Get Fitbit tokens for a user
+   */
+  async getFitbitTokens(userId: string): Promise<string | null> {
+    const account = await db.query.fitbitAccounts.findFirst({ where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
+    });
+
+    if (!account) {
+      return null;
+    }
+
+    // Check if token is expired
+    if (new Date(account.expiresAt) < new Date()) {
+      return await this.refreshFitbitTokens(userId);
+    }
+
+    return account.accessToken;
+  }
+
+  /**
+   * Refresh Fitbit tokens for a user
+   */
+  async refreshFitbitTokens(userId: string): Promise<string | null> {
+    const account = await db.query.fitbitAccounts.findFirst({ where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
+    });
+
+    if (!account?.refreshToken) {
+      return null;
+    }
+
+    try {
+      const newTokens = await refreshFitbitTokens(account.refreshToken);
+
+      const updatedAccount = await prisma.fitbitAccount.update({
+        where: { userId },
+        data: {
+          accessToken: newTokens.access_token,
+          refreshToken: newTokens.refresh_token || account.refreshToken,
+          expiresAt: new Date(Date.now() + newTokens.expires_in * 1000),
+        },
+      });
+
+      return updatedAccount.accessToken;
+    } catch (error) {
+      console.error("Failed to refresh Fitbit tokens:", error);
+      return null;
+    }
   }
 }

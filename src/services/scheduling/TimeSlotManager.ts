@@ -1,3 +1,5 @@
+import { db, tasks } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { AutoScheduleSettings } from "@prisma/client";
 import { Task } from "@prisma/client";
 
@@ -14,7 +16,7 @@ import {
   setMinutes,
   toZonedTime,
 } from "@/lib/date-utils";
-import { prisma } from "@/lib/prisma";
+
 
 import { useSettingsStore } from "@/store/settings";
 
@@ -61,7 +63,7 @@ export class TimeSlotManagerImpl implements TimeSlotManager {
 
   async updateScheduledTasks(userId: string): Promise<void> {
     // Fetch all scheduled tasks
-    const scheduledTasks = await prisma.task.findMany({
+    const scheduledTasks = await db.query.tasks.findMany({
       where: {
         isAutoScheduled: true,
         scheduledStart: { not: null },

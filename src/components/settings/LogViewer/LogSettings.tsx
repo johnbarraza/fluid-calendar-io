@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 import { LogSettings as LogSettingsType } from "@/lib/logger/types";
 
 const LOG_SOURCE = "LogSettings";

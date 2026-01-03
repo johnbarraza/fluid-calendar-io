@@ -1,5 +1,7 @@
+import { db, systemSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "PublicSignup";
 
@@ -10,7 +12,7 @@ const LOG_SOURCE = "PublicSignup";
 export async function isPublicSignupEnabled(): Promise<boolean> {
   try {
     // Get the first system settings record (there should only be one)
-    const systemSettings = await prisma.systemSettings.findFirst();
+    const systemSettings = await db.query.systemSettings.findFirst();
 
     // If no system settings exist, default to false
     if (!systemSettings) {

@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { isPublicSignupEnabledClient } from "@/lib/auth/client-public-signup";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 const LOG_SOURCE = "SignInForm";
 

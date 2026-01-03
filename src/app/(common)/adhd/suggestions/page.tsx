@@ -198,7 +198,7 @@ export default function SuggestionsPage() {
           )}
 
           {/* Suggestions Panel */}
-          <SuggestionPanel onGenerate={handleGenerate} />
+          <SuggestionPanel autoGenerate={false} />
 
           {/* Tips Card */}
           {suggestions.length > 0 && (

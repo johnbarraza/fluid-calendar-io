@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   LuClock as Clock,
   LuPlay as Play,
-  LuCheckCircle2 as CheckCircle,
+  LuCheck as CheckCircle,
 } from "react-icons/lu";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -194,7 +194,7 @@ export function RoutineTimeline({
 
           {/* Routine blocks */}
           <div className="relative h-24 mb-4">
-            {timelineBlocks.map((block, index) => {
+            {timelineBlocks.map((block) => {
               const left =
                 ((block.startMinutes - startHour * 60) /
                   ((endHour - startHour) * 60)) *

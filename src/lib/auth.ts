@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { db, systemSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 
 export async function getGoogleCredentials() {
   try {
-    const settings = await prisma.systemSettings.findFirst();
+    const settings = await db.query.systemSettings.findFirst();
     if (settings) {
       return {
         clientId: settings.googleClientId || process.env.GOOGLE_CLIENT_ID!,
@@ -23,7 +25,7 @@ export async function getGoogleCredentials() {
 
 export async function getOutlookCredentials() {
   try {
-    const settings = await prisma.systemSettings.findFirst();
+    const settings = await db.query.systemSettings.findFirst();
     if (settings) {
       return {
         clientId: settings.outlookClientId || process.env.AZURE_AD_CLIENT_ID!,

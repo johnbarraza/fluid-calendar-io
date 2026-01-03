@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db, tasks, autoScheduleSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
 import { BreakProtectionService } from "@/services/adhd/BreakProtectionService";
-import { prisma } from "@/lib/prisma";
 
 const LOG_SOURCE = "BreakValidationAPI";
 
@@ -16,10 +17,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { taskIds, date } = body;
+    const { taskIds } = body;
 
     // Get tasks and settings
-    const tasks = await prisma.task.findMany({
+    const tasks = await db.query.tasks.findMany({
       where: {
         id: { in: taskIds },
         userId: auth.userId,

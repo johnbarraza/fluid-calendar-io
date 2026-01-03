@@ -1,3 +1,5 @@
+import { db, tasks, taskProviders, taskListMappings, taskChanges } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 /**
  * TaskSyncManager
  *
@@ -18,7 +20,7 @@ import { logger } from "@/lib/logger";
 // import { CalDAVTaskProvider } from "./providers/caldav-provider";
 // Import utility to get Microsoft Graph client
 import { getMsGraphClient } from "@/lib/outlook-utils";
-import { prisma } from "@/lib/prisma";
+
 
 import { TaskStatus } from "@/types/task";
 
@@ -73,7 +75,7 @@ export class TaskSyncManager {
     // Fetch provider details from database
     const dbProvider = await prisma.taskProvider.findUnique({
       where: { id: providerId },
-      include: {
+      with: {
         // We need to check the account schema
         account: true,
       },
@@ -127,7 +129,7 @@ export class TaskSyncManager {
     if (typeof mappingId === "string") {
       const foundMapping = await prisma.taskListMapping.findUnique({
         where: { id: mappingId },
-        include: { provider: true },
+        with: { provider: true },
       });
 
       if (!foundMapping) {
@@ -233,7 +235,7 @@ export class TaskSyncManager {
 
     try {
       // Get all active mappings for the user
-      const mappings = await prisma.taskListMapping.findMany({
+      const mappings = await db.query.taskListMappings.findMany({
         where: {
           provider: {
             userId,
@@ -241,7 +243,7 @@ export class TaskSyncManager {
             syncEnabled: true,
           },
         },
-        include: { provider: true },
+        with: { provider: true },
       });
 
       // Sync each mapping
@@ -312,11 +314,11 @@ export class TaskSyncManager {
     try {
       // Step 1: Fetch tasks from both sources
       const localTasks = (
-        await prisma.task.findMany({
+        await db.query.tasks.findMany({
           where: {
             projectId: mapping.projectId,
           },
-          include: {
+          with: {
             tags: true,
             project: true,
           },
@@ -393,13 +395,13 @@ export class TaskSyncManager {
         // Refresh local tasks data if we processed any changes
         if (processedTaskIds.size > 0) {
           // Get the updated task data for tasks we just processed
-          const refreshedTasks = await prisma.task.findMany({
+          const refreshedTasks = await db.query.tasks.findMany({
             where: {
               id: {
                 in: Array.from(processedTaskIds),
               },
             },
-            include: {
+            with: {
               tags: true,
               project: true,
             },
@@ -476,41 +478,40 @@ export class TaskSyncManager {
                 mapping.projectId
               );
 
-              await prisma.task.create({
-                data: {
-                  title: internalTask.title || "Untitled Task",
+              await db.insert(tasks).values({
+                id: crypto.randomUUID(),
+                title: internalTask.title || "Untitled Task",
+                description: internalTask.description,
+                status: internalTask.status || TaskStatus.TODO,
+                dueDate: internalTask.dueDate,
+                startDate: internalTask.startDate,
+                duration: internalTask.duration,
+                priority: internalTask.priority,
+                energyLevel: internalTask.energyLevel,
+                preferredTime: internalTask.preferredTime,
+                isRecurring: internalTask.isRecurring || false,
+                recurrenceRule: internalTask.recurrenceRule,
+                isAutoScheduled: mapping.isAutoScheduled,
+                scheduleLocked: false,
+                source: mapping.provider.type,
+                externalListId: mapping.externalListId,
+                externalTaskId: externalTask.id,
+                lastSyncedAt: newDate(),
+                syncStatus: "SYNCED",
+                userId: mapping.provider.userId,
+                projectId: mapping.projectId,
+                externalUpdatedAt: externalTask.lastModified
+                  ? newDate(externalTask.lastModified)
+                  : externalTask.lastModifiedDateTime
+                    ? newDate(externalTask.lastModifiedDateTime)
+                    : new Date(),
+                syncHash: tracker.generateTaskHash({
+                  title: internalTask.title,
                   description: internalTask.description,
-                  status: internalTask.status || TaskStatus.TODO,
+                  status: internalTask.status,
                   dueDate: internalTask.dueDate,
-                  startDate: internalTask.startDate,
-                  duration: internalTask.duration,
-                  priority: internalTask.priority,
-                  energyLevel: internalTask.energyLevel,
-                  preferredTime: internalTask.preferredTime,
-                  isRecurring: internalTask.isRecurring || false,
-                  recurrenceRule: internalTask.recurrenceRule,
-                  isAutoScheduled: mapping.isAutoScheduled,
-                  scheduleLocked: false,
-                  source: mapping.provider.type,
-                  externalListId: mapping.externalListId,
-                  externalTaskId: externalTask.id,
-                  lastSyncedAt: newDate(),
-                  syncStatus: "SYNCED",
-                  userId: mapping.provider.userId,
-                  projectId: mapping.projectId,
-                  externalUpdatedAt: externalTask.lastModified
-                    ? newDate(externalTask.lastModified)
-                    : externalTask.lastModifiedDateTime
-                      ? newDate(externalTask.lastModifiedDateTime)
-                      : new Date(),
-                  syncHash: tracker.generateTaskHash({
-                    title: internalTask.title,
-                    description: internalTask.description,
-                    status: internalTask.status,
-                    dueDate: internalTask.dueDate,
-                  }),
-                },
-              });
+                }),
+              }).returning();
 
               result.imported++;
             }
@@ -583,7 +584,7 @@ export class TaskSyncManager {
 
         try {
           // Check if this task was recently modified locally
-          const recentChanges = await prisma.taskChange.findMany({
+          const recentChanges = await db.query.taskChanges.findMany({
             where: {
               taskId: localTask.id,
               timestamp: {
@@ -642,7 +643,7 @@ export class TaskSyncManager {
     // Get the task details
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      include: {
+      with: {
         tags: true,
         project: true,
       },
@@ -711,7 +712,7 @@ export class TaskSyncManager {
     // Get the task details
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      include: {
+      with: {
         tags: true,
         project: true,
       },

@@ -1,7 +1,9 @@
+import { db, systemSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "HomepageSettingAPI";
 
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the system settings
-    const settings = await prisma.systemSettings.findFirst();
+    const settings = await db.query.systemSettings.findFirst();
 
     // Return the homepage disabled setting
     return NextResponse.json(

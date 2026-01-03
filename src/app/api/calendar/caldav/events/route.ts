@@ -1,3 +1,5 @@
+import { db, calendarFeeds, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
@@ -5,7 +7,7 @@ import { CalDAVCalendarService } from "@/lib/caldav-calendar";
 import { getEvent, validateEvent } from "@/lib/calendar-db";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "CalDAVEventsAPI";
 
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
         id: feedId,
         userId,
       },
-      include: {
+      with: {
         account: true,
       },
     });

@@ -1,5 +1,6 @@
 import { Providers } from "@/components/providers";
 import { metadata as baseMetadata } from "./metadata";
+import "./globals.css";
 
 export const metadata = baseMetadata;
 

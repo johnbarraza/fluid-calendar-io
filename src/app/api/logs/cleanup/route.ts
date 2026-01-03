@@ -1,7 +1,9 @@
+import { db, logs } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { newDate } from "@/lib/date-utils";
-import { prisma } from "@/lib/prisma";
+
 
 export async function POST() {
   try {

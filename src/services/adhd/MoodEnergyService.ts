@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import { db, moodEntries } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger"
 import { MoodEntry } from "@prisma/client"
 
@@ -82,17 +84,16 @@ export class MoodEnergyService {
     logger.info("Logging mood entry", { userId }, LOG_SOURCE)
 
     try {
-      const moodEntry = await prisma.moodEntry.create({
-        data: {
-          userId,
-          mood: data.mood,
-          energyLevel: data.energyLevel,
-          focus: data.focus,
-          anxiety: data.anxiety,
-          note: data.note,
-          tags: data.tags ? JSON.stringify(data.tags) : null,
-        },
-      })
+      const [moodEntry] = await db.insert(moodEntries).values({
+        id: crypto.randomUUID(),
+        userId,
+        mood: data.mood,
+        energyLevel: data.energyLevel,
+        focus: data.focus,
+        anxiety: data.anxiety,
+        note: data.note,
+        tags: data.tags ? JSON.stringify(data.tags) : null,
+      }).returning();
 
       logger.info("Mood entry logged successfully", { userId }, LOG_SOURCE)
       return moodEntry
@@ -118,7 +119,7 @@ export class MoodEnergyService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    const entries = await prisma.moodEntry.findMany({
+    const entries = await db.query.moodEntries.findMany({
       where: {
         userId,
         timestamp: {
@@ -184,7 +185,7 @@ export class MoodEnergyService {
         try {
           const tags = JSON.parse(entry.tags)
           allTags.push(...tags)
-        } catch (e) {
+        } catch {
           // Ignore parsing errors
         }
       }
@@ -220,7 +221,7 @@ export class MoodEnergyService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 30) // Last 30 days
 
-    const entries = await prisma.moodEntry.findMany({
+    const entries = await db.query.moodEntries.findMany({
       where: {
         userId,
         timestamp: {
@@ -352,7 +353,7 @@ export class MoodEnergyService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 30)
 
-    const entries = await prisma.moodEntry.findMany({
+    const entries = await db.query.moodEntries.findMany({
       where: {
         userId,
         timestamp: {
@@ -449,11 +450,11 @@ export class MoodEnergyService {
   ): Promise<MoodEntry[]> {
     logger.info(
       "Fetching mood entries",
-      { userId, startDate, endDate },
+      { userId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
       LOG_SOURCE
     )
 
-    return prisma.moodEntry.findMany({
+    return db.query.moodEntries.findMany({
       where: {
         userId,
         timestamp: {

@@ -1,8 +1,10 @@
+import { db, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import {
   createCalDAVClient,
@@ -116,17 +118,16 @@ export async function POST(request: NextRequest) {
         ? formatAbsoluteUrl(serverUrl, caldavPath)
         : serverUrl;
 
-      const account = await prisma.connectedAccount.create({
-        data: {
-          provider: "CALDAV",
-          email: username,
-          caldavUrl: fullUrl,
-          caldavUsername: username,
-          accessToken: password, // Store password as access token
-          userId, // Associate with the current user
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Set expiry to 1 year from now
-        },
-      });
+      const [account] = await db.insert(connectedAccounts).values({
+        id: crypto.randomUUID(),
+        provider: "CALDAV",
+        email: username,
+        caldavUrl: fullUrl,
+        caldavUsername: username,
+        accessToken: password, // Store password as access token
+        userId, // Associate with the current user
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Set expiry to 1 year from now
+      }).returning();
 
       logger.info(
         "Successfully added CalDAV account",

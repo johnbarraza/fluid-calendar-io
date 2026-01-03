@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { db, routines, routineTasks } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger";
 import { Routine, RoutineTask } from "@prisma/client";
 
@@ -34,9 +36,9 @@ export class RoutineService {
    */
   async getUserRoutines(userId: string): Promise<RoutineWithTasks[]> {
     try {
-      const routines = await prisma.routine.findMany({
+      const routines = await db.query.routines.findMany({
         where: { userId },
-        include: {
+        with: {
           tasks: {
             orderBy: { order: "asc" },
           },
@@ -69,9 +71,9 @@ export class RoutineService {
     userId: string
   ): Promise<RoutineWithTasks | null> {
     try {
-      const routine = await prisma.routine.findFirst({
+      const routine = await db.query.routines.findFirst({
         where: { id: routineId, userId },
-        include: {
+        with: {
           tasks: {
             orderBy: { order: "asc" },
           },
@@ -101,9 +103,9 @@ export class RoutineService {
     category: string
   ): Promise<RoutineWithTasks[]> {
     try {
-      const routines = await prisma.routine.findMany({
+      const routines = await db.query.routines.findMany({
         where: { userId, category },
-        include: {
+        with: {
           tasks: {
             orderBy: { order: "asc" },
           },
@@ -134,41 +136,58 @@ export class RoutineService {
     data: RoutineInput
   ): Promise<RoutineWithTasks> {
     try {
-      const routine = await prisma.routine.create({
-        data: {
-          userId,
-          name: data.name,
-          description: data.description,
-          icon: data.icon,
-          category: data.category,
-          startTime: data.startTime,
-          isActive: data.isActive ?? true,
-          order: data.order ?? 0,
+      const routineId = crypto.randomUUID();
+
+      // Create the routine first
+      const [routine] = await db.insert(routines).values({
+        id: routineId,
+        userId,
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        category: data.category,
+        startTime: data.startTime,
+        isActive: data.isActive ?? true,
+        order: data.order ?? 0,
+      }).returning();
+
+      // Create the routine tasks
+      if (data.tasks && data.tasks.length > 0) {
+        await db.insert(routineTasks).values(
+          data.tasks.map((task) => ({
+            id: crypto.randomUUID(),
+            routineId: routineId,
+            name: task.name,
+            icon: task.icon,
+            duration: task.duration,
+            order: task.order,
+            autoContinue: task.autoContinue ?? true,
+            notes: task.notes,
+          }))
+        );
+      }
+
+      // Fetch the complete routine with tasks
+      const routineWithTasks = await db.query.routines.findFirst({
+        where: eq(routines.id, routineId),
+        with: {
           tasks: {
-            create: data.tasks.map((task) => ({
-              name: task.name,
-              icon: task.icon,
-              duration: task.duration,
-              order: task.order,
-              autoContinue: task.autoContinue ?? true,
-              notes: task.notes,
-            })),
-          },
-        },
-        include: {
-          tasks: {
-            orderBy: { order: "asc" },
+            orderBy: (tasks, { asc }) => [asc(tasks.order)],
           },
         },
       });
 
+      if (!routineWithTasks) {
+        throw new Error("Failed to create routine");
+      }
+
       logger.info(
         "Created routine with tasks",
-        { routineId: routine.id, taskCount: routine.tasks.length },
+        { routineId: routine.id, taskCount: routineWithTasks.tasks.length },
         LOG_SOURCE
       );
 
-      return routine;
+      return routineWithTasks;
     } catch (error) {
       logger.error(
         "Failed to create routine",
@@ -189,7 +208,7 @@ export class RoutineService {
   ): Promise<RoutineWithTasks> {
     try {
       // Verify ownership
-      const existing = await prisma.routine.findFirst({
+      const existing = await db.query.routines.findFirst({
         where: { id: routineId, userId },
       });
 
@@ -222,7 +241,7 @@ export class RoutineService {
             },
           }),
         },
-        include: {
+        with: {
           tasks: {
             orderBy: { order: "asc" },
           },
@@ -252,7 +271,7 @@ export class RoutineService {
   async deleteRoutine(routineId: string, userId: string): Promise<void> {
     try {
       // Verify ownership
-      const existing = await prisma.routine.findFirst({
+      const existing = await db.query.routines.findFirst({
         where: { id: routineId, userId },
       });
 
@@ -287,7 +306,7 @@ export class RoutineService {
     userId: string
   ): Promise<RoutineWithTasks> {
     try {
-      const existing = await prisma.routine.findFirst({
+      const existing = await db.query.routines.findFirst({
         where: { id: routineId, userId },
       });
 
@@ -298,7 +317,7 @@ export class RoutineService {
       const routine = await prisma.routine.update({
         where: { id: routineId },
         data: { isActive: !existing.isActive },
-        include: {
+        with: {
           tasks: {
             orderBy: { order: "asc" },
           },

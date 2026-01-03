@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { db, routines, routineCompletions } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger";
 import { RoutineCompletion } from "@prisma/client";
 
@@ -28,9 +30,9 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion> {
     try {
       // Get routine with tasks to calculate total duration
-      const routine = await prisma.routine.findFirst({
+      const routine = await db.query.routines.findFirst({
         where: { id: input.routineId, userId },
-        include: { tasks: true },
+        with: { tasks: true },
       });
 
       if (!routine) {
@@ -43,7 +45,7 @@ export class RoutineTrackingService {
       );
 
       // Check if there's already an in-progress session for this routine
-      const existingSession = await prisma.routineCompletion.findFirst({
+      const existingSession = await db.query.routineCompletions.findFirst({
         where: {
           userId,
           routineId: input.routineId,
@@ -61,18 +63,17 @@ export class RoutineTrackingService {
       }
 
       // Create new session
-      const session = await prisma.routineCompletion.create({
-        data: {
-          userId,
-          routineId: input.routineId,
-          status: "in_progress",
-          completedTasks: 0,
-          totalTasks: routine.tasks.length,
-          totalDuration,
-          currentTaskIndex: 0,
-          currentTaskStatus: "active",
-        },
-      });
+      const [session] = await db.insert(routineCompletions).values({
+        id: crypto.randomUUID(),
+        userId,
+        routineId: input.routineId,
+        status: "in_progress",
+        completedTasks: 0,
+        totalTasks: routine.tasks.length,
+        totalDuration,
+        currentTaskIndex: 0,
+        currentTaskStatus: "active",
+      }).returning();
 
       logger.info(
         "Started routine session",
@@ -101,7 +102,7 @@ export class RoutineTrackingService {
   ): Promise<RoutineCompletion> {
     try {
       // Verify ownership
-      const existing = await prisma.routineCompletion.findFirst({
+      const existing = await db.query.routineCompletions.findFirst({
         where: { id: sessionId, userId },
       });
 
@@ -148,7 +149,7 @@ export class RoutineTrackingService {
     input: CompleteRoutineInput
   ): Promise<RoutineCompletion> {
     try {
-      const existing = await prisma.routineCompletion.findFirst({
+      const existing = await db.query.routineCompletions.findFirst({
         where: { id: sessionId, userId },
       });
 
@@ -198,7 +199,7 @@ export class RoutineTrackingService {
     reason?: string
   ): Promise<RoutineCompletion> {
     try {
-      const existing = await prisma.routineCompletion.findFirst({
+      const existing = await db.query.routineCompletions.findFirst({
         where: { id: sessionId, userId },
       });
 
@@ -242,7 +243,7 @@ export class RoutineTrackingService {
     routineId: string
   ): Promise<RoutineCompletion | null> {
     try {
-      const session = await prisma.routineCompletion.findFirst({
+      const session = await db.query.routineCompletions.findFirst({
         where: {
           userId,
           routineId,
@@ -271,7 +272,7 @@ export class RoutineTrackingService {
     limit: number = 10
   ): Promise<RoutineCompletion[]> {
     try {
-      const completions = await prisma.routineCompletion.findMany({
+      const completions = await db.query.routineCompletions.findMany({
         where: {
           userId,
           routineId,
@@ -297,7 +298,7 @@ export class RoutineTrackingService {
    */
   async getRoutineStats(userId: string, routineId: string) {
     try {
-      const completions = await prisma.routineCompletion.findMany({
+      const completions = await db.query.routineCompletions.findMany({
         where: {
           userId,
           routineId,
@@ -321,10 +322,16 @@ export class RoutineTrackingService {
         totalCompletions;
 
       // Calculate completion rate (completed vs all sessions)
-      const allSessions = await prisma.routineCompletion.count({
-        where: { userId, routineId },
-      });
-      const completionRate = (totalCompletions / allSessions) * 100;
+      const allSessionsResult = await db.select({ count: sql<number>`count(*)::int` })
+        .from(routineCompletions)
+        .where(
+          and(
+            eq(routineCompletions.userId, userId),
+            eq(routineCompletions.routineId, routineId)
+          )
+        );
+      const allSessions = allSessionsResult[0]?.count || 0;
+      const completionRate = allSessions > 0 ? (totalCompletions / allSessions) * 100 : 0;
 
       // Calculate streaks
       const sortedCompletions = completions.sort(

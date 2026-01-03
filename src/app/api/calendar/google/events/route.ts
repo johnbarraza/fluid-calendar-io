@@ -1,3 +1,5 @@
+import { db, calendarFeeds, calendarEvents } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { GaxiosError } from "gaxios";
@@ -16,7 +18,7 @@ import getGoogleEvent, {
   updateGoogleEvent,
 } from "@/lib/google-calendar";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "GoogleEventsAPI";
 
@@ -33,39 +35,38 @@ async function writeEventToDatabase(
 
   if (!isRecurring) {
     // Create the master event only if not recurring
-    const masterEvent = await prisma.calendarEvent.create({
-      data: {
-        feedId,
-        externalEventId: event.id,
-        title: event.summary || "Untitled Event",
-        description: event.description || "",
-        start: isAllDay
-          ? createAllDayDate(event.start?.date || "")
-          : newDate(event.start?.dateTime || event.start?.date || ""),
-        end: isAllDay
-          ? createAllDayDate(event.end?.date || "")
-          : newDate(event.end?.dateTime || event.end?.date || ""),
-        location: event.location,
-        isRecurring: isRecurring,
-        recurrenceRule: event.recurrence?.[0],
-        allDay: isAllDay,
-        status: event.status,
-        sequence: event.sequence,
-        created: event.created ? newDate(event.created) : undefined,
-        lastModified: event.updated ? newDate(event.updated) : undefined,
-        organizer: event.organizer
-          ? {
-              name: event.organizer.displayName,
-              email: event.organizer.email,
-            }
-          : undefined,
-        attendees: event.attendees?.map((a) => ({
-          name: a.displayName,
-          email: a.email,
-          status: a.responseStatus,
-        })),
-      },
-    });
+    const [masterEvent] = await db.insert(calendarEvents).values({
+      id: crypto.randomUUID(),
+      feedId,
+      externalEventId: event.id,
+      title: event.summary || "Untitled Event",
+      description: event.description || "",
+      start: isAllDay
+        ? createAllDayDate(event.start?.date || "")
+        : newDate(event.start?.dateTime || event.start?.date || ""),
+      end: isAllDay
+        ? createAllDayDate(event.end?.date || "")
+        : newDate(event.end?.dateTime || event.end?.date || ""),
+      location: event.location,
+      isRecurring: isRecurring,
+      recurrenceRule: event.recurrence?.[0],
+      allDay: isAllDay,
+      status: event.status,
+      sequence: event.sequence,
+      created: event.created ? newDate(event.created) : undefined,
+      lastModified: event.updated ? newDate(event.updated) : undefined,
+      organizer: event.organizer
+        ? {
+            name: event.organizer.displayName,
+            email: event.organizer.email,
+          }
+        : undefined,
+      attendees: event.attendees?.map((a) => ({
+        name: a.displayName,
+        email: a.email,
+        status: a.responseStatus,
+      })),
+    }).returning();
     return masterEvent;
   }
 
@@ -77,42 +78,41 @@ async function writeEventToDatabase(
         ? !instance.start.dateTime
         : false;
 
-      const createdInstance = await prisma.calendarEvent.create({
-        data: {
-          feedId,
-          externalEventId: instance.id,
-          title: instance.summary || "Untitled Event",
-          description: instance.description || "",
-          start: instanceIsAllDay
-            ? createAllDayDate(instance.start?.date || "")
-            : newDate(instance.start?.dateTime || instance.start?.date || ""),
-          end: instanceIsAllDay
-            ? createAllDayDate(instance.end?.date || "")
-            : newDate(instance.end?.dateTime || instance.end?.date || ""),
-          location: instance.location,
-          isRecurring: true,
-          recurrenceRule: event.recurrence?.[0],
-          recurringEventId: instance.recurringEventId,
-          allDay: instanceIsAllDay,
-          status: instance.status,
-          sequence: instance.sequence,
-          created: instance.created ? newDate(instance.created) : undefined,
-          lastModified: instance.updated
-            ? newDate(instance.updated)
-            : undefined,
-          organizer: instance.organizer
-            ? {
-                name: instance.organizer.displayName,
-                email: instance.organizer.email,
-              }
-            : undefined,
-          attendees: instance.attendees?.map((a) => ({
-            name: a.displayName,
-            email: a.email,
-            status: a.responseStatus,
-          })),
-        },
-      });
+      const [createdInstance] = await db.insert(calendarEvents).values({
+        id: crypto.randomUUID(),
+        feedId,
+        externalEventId: instance.id,
+        title: instance.summary || "Untitled Event",
+        description: instance.description || "",
+        start: instanceIsAllDay
+          ? createAllDayDate(instance.start?.date || "")
+          : newDate(instance.start?.dateTime || instance.start?.date || ""),
+        end: instanceIsAllDay
+          ? createAllDayDate(instance.end?.date || "")
+          : newDate(instance.end?.dateTime || instance.end?.date || ""),
+        location: instance.location,
+        isRecurring: true,
+        recurrenceRule: event.recurrence?.[0],
+        recurringEventId: instance.recurringEventId,
+        allDay: instanceIsAllDay,
+        status: instance.status,
+        sequence: instance.sequence,
+        created: instance.created ? newDate(instance.created) : undefined,
+        lastModified: instance.updated
+          ? newDate(instance.updated)
+          : undefined,
+        organizer: instance.organizer
+          ? {
+              name: instance.organizer.displayName,
+              email: instance.organizer.email,
+            }
+          : undefined,
+        attendees: instance.attendees?.map((a) => ({
+          name: a.displayName,
+          email: a.email,
+          status: a.responseStatus,
+        })),
+      }).returning();
       createdInstances.push(createdInstance);
     }
   }
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         id: feedId,
         userId,
       },
-      include: {
+      with: {
         account: true,
       },
     });

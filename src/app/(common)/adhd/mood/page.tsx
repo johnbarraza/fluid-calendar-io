@@ -10,51 +10,94 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+interface MoodPattern {
+  averageMood: number;
+  averageEnergy: number;
+  moodTrend: "improving" | "declining" | "stable";
+  energyTrend: "improving" | "declining" | "stable";
+}
+
+interface BestWorkTimes {
+  morning: { score: number; recommended: boolean };
+  afternoon: { score: number; recommended: boolean };
+  evening: { score: number; recommended: boolean };
+}
+
 export default function MoodPage() {
-  const { entries, fetchMoodEntries, fetchMoodPattern, fetchBestWorkTimes, loading } =
+  const { entries, fetchMoodEntries, fetchMoodPattern, fetchBestWorkTimes } =
     useMoodStore();
 
-  const [pattern, setPattern] = React.useState<any>(null);
-  const [bestTimes, setBestTimes] = React.useState<any>(null);
+  const [pattern, setPattern] = React.useState<MoodPattern | null>(null);
+  const [bestTimes, setBestTimes] = React.useState<BestWorkTimes | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = React.useState(false);
 
   React.useEffect(() => {
     fetchMoodEntries(7);
   }, [fetchMoodEntries]);
 
-  const loadAnalysis = async () => {
-    setLoadingAnalysis(true);
-    try {
-      const [patternData, timesData] = await Promise.all([
-        fetchMoodPattern(),
-        fetchBestWorkTimes(),
-      ]);
-      setPattern(patternData);
-      setBestTimes(timesData);
-    } catch (error) {
-      console.error("Failed to load analysis:", error);
-    } finally {
-      setLoadingAnalysis(false);
-    }
-  };
-
   React.useEffect(() => {
-    if (entries.length > 0) {
-      loadAnalysis();
-    }
-  }, [entries.length]);
+    if (entries.length === 0) return;
 
-  const getMoodEmoji = (mood: number) => {
-    if (mood >= 4.5) return "😄";
-    if (mood >= 3.5) return "🙂";
-    if (mood >= 2.5) return "😐";
-    if (mood >= 1.5) return "😟";
+    const loadAnalysis = async () => {
+      setLoadingAnalysis(true);
+      try {
+        const [patternData, timesData] = await Promise.all([
+          fetchMoodPattern(),
+          fetchBestWorkTimes(),
+        ]);
+        setPattern(patternData);
+        setBestTimes(timesData);
+      } catch (error) {
+        console.error("Failed to load analysis:", error);
+      } finally {
+        setLoadingAnalysis(false);
+      }
+    };
+
+    loadAnalysis();
+  }, [entries.length, fetchMoodPattern, fetchBestWorkTimes]);
+
+  const getMoodEmoji = (mood: string | number) => {
+    let moodValue: number;
+
+    if (typeof mood === "string") {
+      const moodMap: Record<string, number> = {
+        very_positive: 5,
+        positive: 4,
+        neutral: 3,
+        negative: 2,
+        very_negative: 1,
+      };
+      moodValue = moodMap[mood] || 3;
+    } else {
+      moodValue = mood;
+    }
+
+    if (moodValue >= 4.5) return "😄";
+    if (moodValue >= 3.5) return "🙂";
+    if (moodValue >= 2.5) return "😐";
+    if (moodValue >= 1.5) return "😟";
     return "😢";
   };
 
-  const getEnergyBadge = (energy: number) => {
-    if (energy >= 4) return { label: "Alta", color: "bg-green-500/10 text-green-500" };
-    if (energy >= 3) return { label: "Media", color: "bg-yellow-500/10 text-yellow-500" };
+  const getEnergyBadge = (energy: string | number) => {
+    let energyValue: number;
+
+    if (typeof energy === "string") {
+      const energyMap: Record<string, number> = {
+        very_high: 5,
+        high: 4,
+        medium: 3,
+        low: 2,
+        very_low: 1,
+      };
+      energyValue = energyMap[energy] || 3;
+    } else {
+      energyValue = energy;
+    }
+
+    if (energyValue >= 4) return { label: "Alta", color: "bg-green-500/10 text-green-500" };
+    if (energyValue >= 3) return { label: "Media", color: "bg-yellow-500/10 text-yellow-500" };
     return { label: "Baja", color: "bg-red-500/10 text-red-500" };
   };
 
@@ -247,17 +290,17 @@ export default function MoodPage() {
                             <p className="text-sm font-medium">
                               {format(new Date(entry.timestamp), "PPp", { locale: es })}
                             </p>
-                            {entry.notes && (
-                              <p className="text-xs text-muted-foreground">{entry.notes}</p>
+                            {entry.note && (
+                              <p className="text-xs text-muted-foreground">{entry.note}</p>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="secondary"
-                            className={getEnergyBadge(entry.energy).color}
+                            className={getEnergyBadge(entry.energyLevel).color}
                           >
-                            Energía: {entry.energy}/5
+                            Energía: {entry.energyLevel}/5
                           </Badge>
                         </div>
                       </div>

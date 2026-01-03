@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { Task } from "@prisma/client";
 import { RRule } from "rrule";
+import { eq, and } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, tasks, taskTags, taskListMappings } from "@/db";
 import {
   ChangeType,
   TaskChangeTracker,
@@ -16,6 +16,7 @@ import { normalizeRecurrenceRule } from "@/lib/utils/normalize-recurrence-rules"
 import { TaskStatus } from "@/types/task";
 
 const LOG_SOURCE = "task-route";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,13 +30,9 @@ export async function GET(
     const userId = auth.userId;
 
     const { id } = await params;
-    const task = await prisma.task.findUnique({
-      where: {
-        id,
-        // Ensure the task belongs to the current user
-        userId,
-      },
-      include: {
+    const task = await db.query.tasks.findFirst({
+      where: and(eq(tasks.id, id), eq(tasks.userId, userId)),
+      with: {
         tags: true,
         project: true,
       },
@@ -73,13 +70,9 @@ export async function PUT(
     const { id } = await params;
     logger.info(`Updating task ${id}`, { userId }, LOG_SOURCE);
 
-    const task = await prisma.task.findUnique({
-      where: {
-        id,
-        // Ensure the task belongs to the current user
-        userId,
-      },
-      include: {
+    const task = await db.query.tasks.findFirst({
+      where: and(eq(tasks.id, id), eq(tasks.userId, userId)),
+      with: {
         tags: true,
       },
     });
@@ -162,27 +155,31 @@ export async function PUT(
           }
 
           // Create a completed instance as a separate task
-          await prisma.task.create({
-            data: {
-              title: task.title,
-              description: task.description,
-              status: TaskStatus.COMPLETED,
-              dueDate: baseDate, // Use the original due date for the completed instance
-              startDate: task.startDate, // Use the original start date for the completed instance
-              duration: task.duration,
-              priority: task.priority,
-              energyLevel: task.energyLevel,
-              preferredTime: task.preferredTime,
-              projectId: task.projectId,
-              isRecurring: false,
-              completedAt: newDate(), // Set completedAt for the completed instance
-              // Associate the task with the current user
-              userId,
-              tags: {
-                connect: task.tags.map((tag) => ({ id: tag.id })),
-              },
-            },
-          });
+          const [completedInstance] = await db.insert(tasks).values({
+            title: task.title,
+            description: task.description,
+            status: TaskStatus.COMPLETED,
+            dueDate: baseDate, // Use the original due date for the completed instance
+            startDate: task.startDate, // Use the original start date for the completed instance
+            duration: task.duration,
+            priority: task.priority,
+            energyLevel: task.energyLevel,
+            preferredTime: task.preferredTime,
+            projectId: task.projectId,
+            isRecurring: false,
+            completedAt: newDate(), // Set completedAt for the completed instance
+            userId,
+          }).returning();
+
+          // Connect tags to the completed instance
+          if (task.tags.length > 0) {
+            await db.insert(taskTags).values(
+              task.tags.map((tag) => ({
+                taskId: completedInstance.id,
+                tagId: tag.id,
+              }))
+            );
+          }
 
           // Update the recurring task with new due date and reset status
           updates.dueDate = nextOccurrence;
@@ -214,10 +211,8 @@ export async function PUT(
     const targetProjectId = projectId || task.projectId;
 
     if (targetProjectId) {
-      const mapping = await prisma.taskListMapping.findFirst({
-        where: {
-          projectId: targetProjectId,
-        },
+      const mapping = await db.query.taskListMappings.findFirst({
+        where: eq(taskListMappings.projectId, targetProjectId),
       });
       if (mapping) {
         mappingId = mapping.id;
@@ -227,39 +222,45 @@ export async function PUT(
     // Save the old task for change tracking
     const oldTask = { ...task };
 
-    const updatedTask = await prisma.task.update({
-      where: {
-        id: id,
-        // Ensure the task belongs to the current user
-        userId,
-      },
-      data: {
+    // Update the task
+    await db.update(tasks)
+      .set({
         ...updates,
-        ...(tagIds && {
-          tags: {
-            set: [], // First disconnect all tags
-            connect: tagIds.map((id: string) => ({ id })), // Then connect new ones
-          },
-        }),
-        project:
-          projectId === null
-            ? { disconnect: true }
-            : projectId
-              ? { connect: { id: projectId } }
-              : undefined,
-      },
-      include: {
+        ...(projectId === null && { projectId: null }),
+        ...(projectId && { projectId }),
+      })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+
+    // Update tags if provided
+    if (tagIds) {
+      // Remove all existing tags
+      await db.delete(taskTags).where(eq(taskTags.taskId, id));
+      // Add new tags
+      if (tagIds.length > 0) {
+        await db.insert(taskTags).values(
+          tagIds.map((tagId: string) => ({
+            taskId: id,
+            tagId,
+          }))
+        );
+      }
+    }
+
+    // Fetch the updated task with relations
+    const updatedTask = await db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
+      with: {
         tags: true,
         project: true,
       },
     });
 
     // Track the update for sync purposes if the task is in a mapped project
-    if (mappingId) {
+    if (mappingId && updatedTask) {
       const changeTracker = new TaskChangeTracker();
       const changes = changeTracker.compareTaskObjects(
         oldTask,
-        updatedTask as Partial<Task>
+        updatedTask as any
       );
 
       await changeTracker.trackChange(
@@ -308,13 +309,9 @@ export async function DELETE(
     const userId = auth.userId;
 
     const { id } = await params;
-    const task = await prisma.task.findUnique({
-      where: {
-        id,
-        // Ensure the task belongs to the current user
-        userId,
-      },
-      include: {
+    const task = await db.query.tasks.findFirst({
+      where: and(eq(tasks.id, id), eq(tasks.userId, userId)),
+      with: {
         project: true,
       },
     });
@@ -326,10 +323,8 @@ export async function DELETE(
     // Check if the task belongs to a mapped project
     let mappingId = null;
     if (task.projectId) {
-      const mapping = await prisma.taskListMapping.findFirst({
-        where: {
-          projectId: task.projectId,
-        },
+      const mapping = await db.query.taskListMappings.findFirst({
+        where: eq(taskListMappings.projectId, task.projectId),
       });
       if (mapping) {
         mappingId = mapping.id;
@@ -368,13 +363,8 @@ export async function DELETE(
     }
 
     // Now delete the task AFTER tracking the change
-    await prisma.task.delete({
-      where: {
-        id,
-        // Ensure the task belongs to the current user
-        userId,
-      },
-    });
+    // Tags will be deleted automatically via cascade
+    await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

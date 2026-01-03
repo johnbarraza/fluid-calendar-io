@@ -3,11 +3,10 @@
 import * as React from "react";
 import {
   LuClock as Clock,
-  LuMoreVertical as MoreVertical,
+  LuEllipsisVertical as MoreVertical,
   LuPencil as Pencil,
   LuTrash2 as Trash,
   LuPower as Power,
-  LuCheckCircle2 as CheckCircle,
 } from "react-icons/lu";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -1,9 +1,11 @@
+import { db, calendarFeeds } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "FeedSyncAPI";
 
@@ -43,7 +45,7 @@ export async function POST(
     }
 
     // Start a transaction to ensure data consistency
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       // Delete existing events for this feed
       await tx.calendarEvent.deleteMany({
         where: { feedId },

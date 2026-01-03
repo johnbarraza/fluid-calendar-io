@@ -7,7 +7,7 @@ import AdminOnly from "@/components/auth/AdminOnly";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useLogViewStore } from "@/store/logview";
 

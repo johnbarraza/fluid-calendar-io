@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { eq, and } from "drizzle-orm";
+
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, projects, tasks } from "@/db";
 
 const LOG_SOURCE = "project-route";
 
@@ -19,17 +21,10 @@ export async function GET(
     const userId = auth.userId;
 
     const { id } = await params;
-    const project = await prisma.project.findUnique({
-      where: {
-        id,
-        // Ensure the project belongs to the current user
-        userId,
-      },
-      include: {
+    const project = await db.query.projects.findFirst({
+      where: and(eq(projects.id, id), eq(projects.userId, userId)),
+      with: {
         tasks: true,
-        _count: {
-          select: { tasks: true },
-        },
       },
     });
 
@@ -37,7 +32,15 @@ export async function GET(
       return new NextResponse("Project not found", { status: 404 });
     }
 
-    return NextResponse.json(project);
+    // Add _count field for backward compatibility
+    const projectWithCount = {
+      ...project,
+      _count: {
+        tasks: project.tasks.length,
+      },
+    };
+
+    return NextResponse.json(projectWithCount);
   } catch (error) {
     logger.error(
       "Error fetching project:",
@@ -65,26 +68,39 @@ export async function PUT(
     const { id } = await params;
     const json = await request.json();
 
-    const project = await prisma.project.update({
-      where: {
-        id,
-        // Ensure the project belongs to the current user
-        userId,
-      },
-      data: {
+    // Update the project
+    await db
+      .update(projects)
+      .set({
         name: json.name,
         description: json.description,
         color: json.color,
         status: json.status,
-      },
-      include: {
-        _count: {
-          select: { tasks: true },
-        },
+      })
+      .where(and(eq(projects.id, id), eq(projects.userId, userId)));
+
+    // Fetch the updated project with tasks to compute count
+    const project = await db.query.projects.findFirst({
+      where: and(eq(projects.id, id), eq(projects.userId, userId)),
+      with: {
+        tasks: true,
       },
     });
 
-    return NextResponse.json(project);
+    if (!project) {
+      return new NextResponse("Project not found", { status: 404 });
+    }
+
+    // Add _count field for backward compatibility
+    const projectWithCount = {
+      ...project,
+      _count: {
+        tasks: project.tasks.length,
+      },
+      tasks: undefined,
+    };
+
+    return NextResponse.json(projectWithCount);
   } catch (error) {
     logger.error(
       "Error updating project:",
@@ -112,16 +128,10 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if project exists and get task count
-    const project = await prisma.project.findUnique({
-      where: {
-        id,
-        // Ensure the project belongs to the current user
-        userId,
-      },
-      include: {
-        _count: {
-          select: { tasks: true },
-        },
+    const project = await db.query.projects.findFirst({
+      where: and(eq(projects.id, id), eq(projects.userId, userId)),
+      with: {
+        tasks: true,
       },
     });
 
@@ -129,30 +139,24 @@ export async function DELETE(
       return new NextResponse("Project not found", { status: 404 });
     }
 
+    const taskCount = project.tasks.length;
+
     // Use transaction to ensure atomic deletion
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       // Delete all tasks associated with the project
-      await tx.task.deleteMany({
-        where: {
-          projectId: id,
-          // Ensure we only delete tasks belonging to the current user
-          userId,
-        },
-      });
+      await tx.delete(tasks).where(
+        and(eq(tasks.projectId, id), eq(tasks.userId, userId))
+      );
 
       // Delete the project (this will cascade delete TaskListMappings due to onDelete: CASCADE)
-      await tx.project.delete({
-        where: {
-          id,
-          // Ensure the project belongs to the current user
-          userId,
-        },
-      });
+      await tx.delete(projects).where(
+        and(eq(projects.id, id), eq(projects.userId, userId))
+      );
     });
 
     return NextResponse.json({
       success: true,
-      deletedTasks: project._count.tasks,
+      deletedTasks: taskCount,
     });
   } catch (error) {
     logger.error(

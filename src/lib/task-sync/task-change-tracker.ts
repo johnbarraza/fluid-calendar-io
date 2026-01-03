@@ -1,3 +1,5 @@
+import { db, taskChanges } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 /**
  * TaskChangeTracker
  *
@@ -8,7 +10,7 @@ import { Task } from "@prisma/client";
 
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "TaskChangeTracker";
 
@@ -90,19 +92,18 @@ export class TaskChangeTracker {
       );
 
       // Create a record in the database
-      await prisma.taskChange.create({
-        data: {
-          taskId,
-          changeType,
-          // For Prisma JSON fields, we need to handle it as JSON
-          changeData: data ? JSON.parse(JSON.stringify(data)) : undefined,
-          providerId,
-          mappingId,
-          userId,
-          timestamp: newDate(),
-          synced: false,
-        },
-      });
+      await db.insert(taskChanges).values({
+        id: crypto.randomUUID(),
+        taskId,
+        changeType,
+        // For Prisma JSON fields, we need to handle it as JSON
+        changeData: data ? JSON.parse(JSON.stringify(data)) : undefined,
+        providerId,
+        mappingId,
+        userId,
+        timestamp: newDate(),
+        synced: false,
+      }).returning();
     } catch (error) {
       logger.error(
         `Failed to track task change`,
@@ -142,7 +143,7 @@ export class TaskChangeTracker {
       );
 
       // Query the database for changes
-      const changes = await prisma.taskChange.findMany({
+      const changes = await db.query.taskChanges.findMany({
         where: {
           mappingId,
           timestamp: {
@@ -186,7 +187,7 @@ export class TaskChangeTracker {
       );
 
       // Query the database for unsynced changes
-      const changes = await prisma.taskChange.findMany({
+      const changes = await db.query.taskChanges.findMany({
         where: {
           mappingId,
           synced: false,

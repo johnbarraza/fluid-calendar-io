@@ -8,7 +8,7 @@ const LOG_SOURCE = "SessionTrackingAPI";
 // PATCH /api/adhd/routines/tracking/[sessionId] - Update session progress
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -16,13 +16,14 @@ export async function PATCH(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const body = await request.json();
     const { currentTaskIndex, currentTaskStatus, completedTasks } = body;
 
     const trackingService = new RoutineTrackingService();
     const session = await trackingService.updateRoutineProgress(
       auth.userId,
-      params.sessionId,
+      resolvedParams.sessionId,
       {
         currentTaskIndex,
         currentTaskStatus,
@@ -32,7 +33,7 @@ export async function PATCH(
 
     logger.info(
       "Session progress updated",
-      { sessionId: params.sessionId },
+      { sessionId: resolvedParams.sessionId },
       LOG_SOURCE
     );
 
@@ -58,7 +59,7 @@ export async function PATCH(
 // DELETE /api/adhd/routines/tracking/[sessionId] - Abandon session
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -66,17 +67,18 @@ export async function DELETE(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const body = await request.json().catch(() => ({}));
     const { reason } = body;
 
     const trackingService = new RoutineTrackingService();
     const session = await trackingService.abandonRoutine(
       auth.userId,
-      params.sessionId,
+      resolvedParams.sessionId,
       reason
     );
 
-    logger.info("Session abandoned", { sessionId: params.sessionId }, LOG_SOURCE);
+    logger.info("Session abandoned", { sessionId: resolvedParams.sessionId }, LOG_SOURCE);
 
     return NextResponse.json(session);
   } catch (error) {

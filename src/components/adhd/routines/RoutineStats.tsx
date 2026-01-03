@@ -26,11 +26,7 @@ export function RoutineStats({ routineId }: RoutineStatsProps) {
   const [stats, setStats] = React.useState<Stats | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    fetchStats();
-  }, [routineId]);
-
-  const fetchStats = async () => {
+  const fetchStats = React.useCallback(async () => {
     try {
       const response = await fetch(
         `/api/adhd/routines/${routineId}/tracking?type=stats`
@@ -43,7 +39,11 @@ export function RoutineStats({ routineId }: RoutineStatsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [routineId]);
+
+  React.useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) {
     return (

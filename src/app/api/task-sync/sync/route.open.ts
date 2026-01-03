@@ -1,10 +1,12 @@
+import { db, taskProviders, taskListMappings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 import { TaskSyncManager } from "@/lib/task-sync/task-sync-manager";
 
 // Log source for this file
@@ -93,14 +95,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       if (mappingId) {
         // If mappingId is provided, sync that specific mapping
-        const mapping = await prisma.taskListMapping.findFirst({
+        const mapping = await db.query.taskListMappings.findFirst({
           where: {
             id: mappingId,
             provider: {
               userId,
             },
           },
-          include: { provider: true },
+          with: { provider: true },
         });
 
         if (!mapping) {
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         result = await syncManager.syncTaskList(mapping);
       } else if (providerId) {
         // If providerId is provided, sync all mappings for that provider
-        const provider = await prisma.taskProvider.findFirst({
+        const provider = await db.query.taskProviders.findFirst({
           where: {
             id: providerId,
             userId,
@@ -142,9 +144,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         // Get all mappings for this provider
-        const mappings = await prisma.taskListMapping.findMany({
+        const mappings = await db.query.taskListMappings.findMany({
           where: { providerId },
-          include: { provider: true },
+          with: { provider: true },
         });
 
         // Sync each mapping

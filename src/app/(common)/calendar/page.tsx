@@ -1,10 +1,12 @@
+import { db, calendarFeeds, calendarEvents } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 import { Calendar } from "@/components/calendar/Calendar";
 
-import { prisma } from "@/lib/prisma";
+
 
 import {
   AttendeeStatus,
@@ -31,13 +33,13 @@ export default async function HomePage() {
 
   if (userId) {
     // Fetch calendar feeds
-    const dbFeeds = await prisma.calendarFeed.findMany({
+    const dbFeeds = await db.query.calendarFeeds.findMany({
       where: {
         userId: userId,
       },
-      include: {
+      with: {
         account: {
-          select: {
+          columns: {
             id: true,
             provider: true,
             email: true,
@@ -73,15 +75,15 @@ export default async function HomePage() {
     }));
 
     // Fetch calendar events
-    const dbEvents = await prisma.calendarEvent.findMany({
+    const dbEvents = await db.query.calendarEvents.findMany({
       where: {
         feed: {
           userId: userId,
         },
       },
-      include: {
+      with: {
         feed: {
-          select: {
+          columns: {
             name: true,
             color: true,
           },

@@ -139,7 +139,7 @@ export async function createEvent(userId: string, params: z.infer<typeof CreateE
 
     logger.info(
       "Created event",
-      { userId, eventId: event.data.id },
+      { userId, eventId: event.data.id || "unknown" },
       LOG_SOURCE
     );
 

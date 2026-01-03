@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(wsl -d Ubuntu bash -c \"sed -n '52,69p' ~/fluid-calendar-io/src/components/calendar/Calendar.tsx\":*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(wsl -d Ubuntu bash -c \"pkill -9 -f ''next dev''; pkill -9 -f ''bun.*dev''\")",
+      "Bash(wsl -d Ubuntu bash -c \"cd ~/fluid-calendar-io && rm -rf .next && PORT=3002 ~/.bun/bin/bun run dev:next 2>&1\")",
+      "Bash(timeout /t 12 /nobreak)",
+      "Bash(wsl -d Ubuntu bash -c:*)",
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(timeout /t 15 /nobreak)",
+      "Bash(wsl -d Ubuntu bash -c \"cd ~/fluid-calendar-io && cp src/db/schema.ts src/db/schema.prisma-partial.ts.bak\":*)",
+      "Bash(wsl -d Ubuntu bash -c \"cd ~/fluid-calendar-io && npx drizzle-kit introspect 2>&1\")",
+      "Bash(wsl -d Ubuntu bash:*)",
+      "Bash(docker exec:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout 15 tail:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(rm:*)"
+    ]
+  }
+}

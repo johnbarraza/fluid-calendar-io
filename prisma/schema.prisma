@@ -94,6 +94,12 @@ model User {
   journalEntries       JournalEntry[]
   routines             Routine[]
   routineCompletions   RoutineCompletion[]
+  
+  // Fitbit integration
+  fitbitAccount        FitbitAccount?
+  fitbitActivities     FitbitActivity[]
+  fitbitSleep          FitbitSleep[]
+  fitbitHeartRate      FitbitHeartRate[]
 }
 
 model VerificationToken {
@@ -892,6 +898,83 @@ model JournalEntry {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+// Fitbit Integration Models
+model FitbitAccount {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fitbitUserId  String   @unique
+  accessToken   String
+  refreshToken  String
+  expiresAt     DateTime
+  scope         String   // Space-separated scopes
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model FitbitActivity {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime // Activity date
+  steps         Int      @default(0)
+  distance      Float    @default(0) // in km
+  calories      Int      @default(0)
+  activeMinutes Int      @default(0)
+  floors        Int?
+  elevation     Float? // in meters
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model FitbitSleep {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime // Sleep date
+  startTime      DateTime
+  endTime        DateTime
+  duration       Int // in minutes
+  efficiency     Int? // percentage
+  minutesAsleep  Int
+  minutesAwake   Int
+  timeInBed      Int
+  deepSleep      Int?
+  lightSleep     Int?
+  remSleep       Int?
+  awakeSleep     Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model FitbitHeartRate {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date             DateTime
+  restingHeartRate Int?
+  averageHeartRate Int?
+  maxHeartRate     Int?
+  minHeartRate     Int?
+  zones            Json? // Heart rate zones data
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([userId, date])
   @@index([userId])

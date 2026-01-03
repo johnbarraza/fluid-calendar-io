@@ -1,8 +1,10 @@
+import { db, tasks } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { AutoScheduleSettings, Task } from "@prisma/client";
 
 import { addDays, newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import { useSettingsStore } from "@/store/settings";
 
@@ -101,7 +103,13 @@ export class SchedulingService {
         userId: "store",
         createdAt: newDate(),
         updatedAt: newDate(),
-      };
+        // Provide defaults for break protection fields
+        enforceBreaks: true,
+        minBreakDuration: 15,
+        maxConsecutiveHours: 4,
+        enableSuggestions: true,
+        autoApplySuggestions: false,
+      } as AutoScheduleSettings;
     }
 
     const manager = new TimeSlotManagerImpl(settings, this.calendarService);
@@ -214,7 +222,7 @@ export class SchedulingService {
 
     // Get all tasks (including locked ones) to return
     const finalFetchStart = this.startMetric("fetchFinalTasks");
-    const allTasks = await prisma.task.findMany({
+    const allTasks = await db.query.tasks.findMany({
       where: {
         id: {
           in: tasks.map((t) => t.id),

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LuPlus as Plus, LuX as X } from "react-icons/lu";
+import { LuPlus as Plus } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

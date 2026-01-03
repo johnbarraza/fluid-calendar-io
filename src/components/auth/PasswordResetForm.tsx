@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 const LOG_SOURCE = "PasswordResetForm";
 

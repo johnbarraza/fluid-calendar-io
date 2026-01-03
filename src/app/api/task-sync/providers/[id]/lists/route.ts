@@ -1,9 +1,11 @@
+import { db, taskProviders, taskListMappings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
 import { getMsGraphClient } from "@/lib/outlook-utils";
-import { prisma } from "@/lib/prisma";
+
 import { OutlookTaskProvider } from "@/lib/task-sync/providers/outlook-provider";
 import { TaskProviderInterface } from "@/lib/task-sync/providers/task-provider.interface";
 
@@ -34,7 +36,7 @@ export async function GET(
         id,
         userId,
       },
-      include: {
+      with: {
         account: true,
       },
     });
@@ -54,13 +56,13 @@ export async function GET(
     }
 
     // Get task mappings for this provider
-    const mappings = await prisma.taskListMapping.findMany({
+    const mappings = await db.query.taskListMappings.findMany({
       where: {
         providerId: provider.id,
       },
-      include: {
+      with: {
         project: {
-          select: {
+          columns: {
             id: true,
             name: true,
           },

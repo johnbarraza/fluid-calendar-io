@@ -1,10 +1,12 @@
+import { db, projects, taskProviders, taskListMappings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "task-sync-mapping-api";
 
@@ -39,23 +41,23 @@ export async function GET(request: NextRequest) {
     const providerId = searchParams.get("providerId");
 
     // Get mappings with optional provider filter
-    const mappings = await prisma.taskListMapping.findMany({
+    const mappings = await db.query.taskListMappings.findMany({
       where: {
         provider: {
           userId,
           ...(providerId ? { id: providerId } : {}),
         },
       },
-      include: {
+      with: {
         provider: {
-          select: {
+          columns: {
             id: true,
             name: true,
             type: true,
           },
         },
         project: {
-          select: {
+          columns: {
             id: true,
             name: true,
             color: true,
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if a mapping already exists for this external list
-    const existingMapping = await prisma.taskListMapping.findFirst({
+    const existingMapping = await db.query.taskListMappings.findFirst({
       where: {
         providerId: validatedData.providerId,
         externalListId: validatedData.externalListId,
@@ -163,24 +165,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the mapping
-    const mapping = await prisma.taskListMapping.create({
-      data: {
-        providerId: validatedData.providerId,
-        externalListId: validatedData.externalListId,
-        externalListName: validatedData.externalListName,
-        projectId: validatedData.projectId,
-        syncEnabled: validatedData.syncEnabled,
-        direction: validatedData.direction,
-      },
-      include: {
+    const [insertedMapping] = await db.insert(taskListMappings).values({
+      id: crypto.randomUUID(),
+      providerId: validatedData.providerId,
+      externalListId: validatedData.externalListId,
+      externalListName: validatedData.externalListName,
+      projectId: validatedData.projectId,
+      syncEnabled: validatedData.syncEnabled,
+      direction: validatedData.direction,
+    }).returning();
+
+    // Fetch the mapping with relations
+    const mapping = await db.query.taskListMappings.findFirst({
+      where: (mappings, { eq }) => eq(mappings.id, insertedMapping.id),
+      with: {
         provider: {
-          select: {
+          columns: {
             name: true,
             type: true,
           },
         },
         project: {
-          select: {
+          columns: {
             name: true,
             color: true,
           },

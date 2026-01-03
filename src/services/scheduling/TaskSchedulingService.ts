@@ -1,5 +1,7 @@
+import { db, tasks, autoScheduleSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import { ProjectStatus } from "@/types/project";
 import {
@@ -103,8 +105,7 @@ export async function scheduleAllTasksForUser(
     logger.info("Starting task scheduling for user", { userId }, LOG_SOURCE);
 
     // If settings are not provided, fetch them from the database
-    const userSettings = await prisma.autoScheduleSettings.findUnique({
-      where: { userId },
+    const userSettings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     });
 
     if (!userSettings) {
@@ -112,7 +113,7 @@ export async function scheduleAllTasksForUser(
     }
 
     // Get all tasks marked for auto-scheduling that are not locked
-    const tasksToSchedule = await prisma.task.findMany({
+    const tasksToSchedule = await db.query.tasks.findMany({
       where: {
         isAutoScheduled: true,
         scheduleLocked: false,
@@ -123,14 +124,14 @@ export async function scheduleAllTasksForUser(
         },
         userId,
       },
-      include: {
+      with: {
         project: true,
         tags: true,
       },
     });
 
     // Get locked tasks (we'll keep their schedules)
-    const lockedTasks = await prisma.task.findMany({
+    const lockedTasks = await db.query.tasks.findMany({
       where: {
         isAutoScheduled: true,
         scheduleLocked: true,
@@ -141,7 +142,7 @@ export async function scheduleAllTasksForUser(
         },
         userId,
       },
-      include: {
+      with: {
         project: true,
         tags: true,
       },
@@ -193,14 +194,14 @@ export async function scheduleAllTasksForUser(
     });
 
     // Fetch the tasks again with their relations to return
-    const dbTasks = (await prisma.task.findMany({
+    const dbTasks = (await db.query.tasks.findMany({
       where: {
         id: {
           in: updatedTasks.map((task) => task.id),
         },
         userId,
       },
-      include: {
+      with: {
         tags: true,
         project: true,
       },

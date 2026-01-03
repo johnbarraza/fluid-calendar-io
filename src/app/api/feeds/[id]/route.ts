@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, calendarFeeds } from "@/db";
+import { eq, and } from "drizzle-orm";
 
 const LOG_SOURCE = "calendar-feed-route";
 
@@ -20,13 +21,9 @@ export async function GET(
     const userId = auth.userId;
 
     const { id } = await params;
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id,
-        // Ensure the feed belongs to the current user
-        userId,
-      },
-      include: { events: true },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: and(eq(calendarFeeds.id, id), eq(calendarFeeds.userId, userId)),
+      with: { events: true },
     });
 
     if (!feed) {
@@ -64,14 +61,11 @@ export async function PATCH(
 
     const { id } = await params;
     const updates = await request.json();
-    const updated = await prisma.calendarFeed.update({
-      where: {
-        id,
-        // Ensure the feed belongs to the current user
-        userId,
-      },
-      data: updates,
-    });
+    const [updated] = await db
+      .update(calendarFeeds)
+      .set(updates)
+      .where(and(eq(calendarFeeds.id, id), eq(calendarFeeds.userId, userId)))
+      .returning();
     return NextResponse.json(updated);
   } catch (error) {
     logger.error(
@@ -103,13 +97,9 @@ export async function DELETE(
 
     const { id } = await params;
     // The feed's events will be automatically deleted due to the cascade delete in the schema
-    await prisma.calendarFeed.delete({
-      where: {
-        id,
-        // Ensure the feed belongs to the current user
-        userId,
-      },
-    });
+    await db
+      .delete(calendarFeeds)
+      .where(and(eq(calendarFeeds.id, id), eq(calendarFeeds.userId, userId)));
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error(

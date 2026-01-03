@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import { AccountManager } from "@/components/settings/AccountManager";
 import { AutoScheduleSettings } from "@/components/settings/AutoScheduleSettings";
 import { CalendarSettings } from "@/components/settings/CalendarSettings";
+import { FitbitSettings } from "@/components/settings/FitbitSettings";
 import { ImportExportSettings } from "@/components/settings/ImportExportSettings";
 import { LogViewer } from "@/components/settings/LogViewer";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
@@ -52,7 +53,8 @@ type SettingsTab =
   | "waitlist"
   | "import-export"
   | "admin-dashboard"
-  | "notifications";
+  | "notifications"
+  | "fitbit";
 
 export default function SettingsPage() {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -71,6 +73,7 @@ export default function SettingsPage() {
       { id: "calendar", label: "Calendar" },
       { id: "auto-schedule", label: "Auto-Schedule" },
       { id: "task-sync", label: "Task Sync" },
+      { id: "fitbit", label: "Fitbit" },
       { id: "notifications", label: "Notifications" },
       { id: "import-export", label: "Import/Export" },
     ] as const;
@@ -113,6 +116,7 @@ export default function SettingsPage() {
         "calendar",
         "auto-schedule",
         "task-sync",
+        "fitbit",
         "system",
         "logs",
         "user-management",
@@ -189,6 +193,8 @@ export default function SettingsPage() {
         return <AutoScheduleSettings />;
       case "task-sync":
         return <TaskSyncSettings />;
+      case "fitbit":
+        return <FitbitSettings />;
       case "notifications":
         return <NotificationSettings />;
       case "system":

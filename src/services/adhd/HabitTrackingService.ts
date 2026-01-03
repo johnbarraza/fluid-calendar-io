@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma"
 import { logger } from "@/lib/logger"
 import { Habit, HabitLog } from "@prisma/client"
+import { db, habits, habitLogs } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 const LOG_SOURCE = "HabitTrackingService"
 
@@ -39,7 +40,7 @@ export class HabitTrackingService {
 
     try {
       // Use a transaction to ensure atomicity
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         // Create the habit log entry
         const habitLog = await tx.habitLog.create({
           data: {
@@ -53,7 +54,7 @@ export class HabitTrackingService {
         // Recalculate and update the streak
         const habit = await tx.habit.findUnique({
           where: { id: habitId },
-          include: {
+          with: {
             logs: {
               orderBy: { date: "desc" },
               take: 365, // Look back 1 year max
@@ -110,7 +111,7 @@ export class HabitTrackingService {
     )
 
     let streak = 0
-    let currentDate = new Date(today)
+    const currentDate = new Date(today)
 
     // Determine frequency requirements
     const { frequency, targetDaysPerWeek } = habit
@@ -178,7 +179,7 @@ export class HabitTrackingService {
 
     const habit = await prisma.habit.findUnique({
       where: { id: habitId },
-      include: {
+      with: {
         logs: {
           orderBy: { date: "desc" },
         },
@@ -272,12 +273,26 @@ export class HabitTrackingService {
   }
 
   /**
+   * Get a specific habit by ID for a user
+   */
+  async getHabitById(habitId: string, userId: string): Promise<Habit | null> {
+    logger.info("Fetching habit", { habitId, userId }, LOG_SOURCE)
+
+    return db.query.habits.findFirst({
+      where: {
+        id: habitId,
+        userId,
+      },
+    })
+  }
+
+  /**
    * Get all active habits for a user
    */
   async getActiveHabits(userId: string): Promise<Habit[]> {
     logger.info("Fetching active habits", { userId }, LOG_SOURCE)
 
-    return prisma.habit.findMany({
+    return db.query.habits.findMany({
       where: {
         userId,
         isActive: true,
@@ -295,13 +310,13 @@ export class HabitTrackingService {
   async checkStreakExpiration(userId: string): Promise<void> {
     logger.info("Checking for expired streaks", { userId }, LOG_SOURCE)
 
-    const habits = await prisma.habit.findMany({
+    const habits = await db.query.habits.findMany({
       where: {
         userId,
         isActive: true,
         currentStreak: { gt: 0 }, // Only check habits with active streaks
       },
-      include: {
+      with: {
         logs: {
           orderBy: { date: "desc" },
           take: 10, // Get recent logs
@@ -357,23 +372,24 @@ export class HabitTrackingService {
   ): Promise<Habit> {
     logger.info("Creating habit", { userId, name: data.name }, LOG_SOURCE)
 
-    return prisma.habit.create({
-      data: {
-        userId,
-        name: data.name,
-        description: data.description,
-        icon: data.icon,
-        color: data.color,
-        category: data.category,
-        frequency: data.frequency || "daily",
-        targetDaysPerWeek: data.targetDaysPerWeek || 7,
-        customSchedule: data.customSchedule
-          ? JSON.stringify(data.customSchedule)
-          : null,
-        reminderEnabled: data.reminderEnabled || false,
-        reminderTime: data.reminderTime,
-      },
-    })
+    const [habit] = await db.insert(habits).values({
+      id: crypto.randomUUID(),
+      userId,
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      color: data.color,
+      category: data.category,
+      frequency: data.frequency || "daily",
+      targetDaysPerWeek: data.targetDaysPerWeek || 7,
+      customSchedule: data.customSchedule
+        ? JSON.stringify(data.customSchedule)
+        : null,
+      reminderEnabled: data.reminderEnabled || false,
+      reminderTime: data.reminderTime,
+    }).returning();
+
+    return habit;
   }
 
   /**
@@ -399,7 +415,7 @@ export class HabitTrackingService {
     logger.info("Updating habit", { habitId, userId }, LOG_SOURCE)
 
     // Prepare custom schedule if provided
-    const updateData: any = { ...data }
+    const updateData: Record<string, unknown> = { ...data }
     if (data.customSchedule) {
       updateData.customSchedule = JSON.stringify(data.customSchedule)
     }
@@ -437,11 +453,11 @@ export class HabitTrackingService {
   ): Promise<HabitLog[]> {
     logger.info(
       "Fetching habit logs",
-      { habitId, startDate, endDate },
+      { habitId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
       LOG_SOURCE
     )
 
-    return prisma.habitLog.findMany({
+    return db.query.habitLogs.findMany({
       where: {
         habitId,
         date: {

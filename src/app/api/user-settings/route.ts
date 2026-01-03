@@ -1,8 +1,10 @@
+import { db, userSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "UserSettingsAPI";
 
@@ -17,14 +19,20 @@ export async function GET(request: NextRequest) {
     const userId = auth.userId;
 
     // Get the user settings or create default ones if they don't exist
-    const settings = await prisma.userSettings.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
+    let settings = await db.query.userSettings.findFirst({
+      where: (userSettings, { eq }) => eq(userSettings.userId, userId),
     });
+
+    if (!settings) {
+      [settings] = await db
+        .insert(userSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {
@@ -52,15 +60,27 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json();
 
-    const settings = await prisma.userSettings.upsert({
-      where: { userId },
-      update: updates,
-      create: {
-        userId,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        ...updates,
-      },
+    let settings = await db.query.userSettings.findFirst({
+      where: (userSettings, { eq }) => eq(userSettings.userId, userId),
     });
+
+    if (settings) {
+      [settings] = await db
+        .update(userSettings)
+        .set(updates)
+        .where(eq(userSettings.userId, userId))
+        .returning();
+    } else {
+      [settings] = await db
+        .insert(userSettings)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ...updates,
+        })
+        .returning();
+    }
 
     return NextResponse.json(settings);
   } catch (error) {

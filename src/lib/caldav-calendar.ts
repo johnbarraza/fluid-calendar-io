@@ -1,10 +1,12 @@
+import { db, calendarFeeds, calendarEvents } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { CalendarEvent, ConnectedAccount, Prisma } from "@prisma/client";
 import ICAL from "ical.js";
 import { DAVDepth, DAVResponse, createDAVClient } from "tsdav";
 
 import { newDate, newDateFromYMD } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import { CalendarEventWithFeed } from "@/types/calendar";
 
@@ -452,7 +454,7 @@ export class CalDAVCalendarService {
   ): Promise<SyncResult> {
     try {
       // Get the calendar feed from the database
-      const feed = await prisma.calendarFeed.findFirst({
+      const feed = await db.query.calendarFeeds.findFirst({
         where: {
           url: calendarPath,
           accountId: this.account.id,
@@ -632,7 +634,7 @@ export class CalDAVCalendarService {
       // If updating a single instance of a recurring event
       if (mode === "single" && event.isRecurring) {
         // Get the master event
-        const masterEvent = await prisma.calendarEvent.findFirst({
+        const masterEvent = await db.query.calendarEvents.findFirst({
           where: {
             externalEventId: externalEventId.split("_")[0],
             feedId: eventWithFeed.feedId,
@@ -829,7 +831,7 @@ export class CalDAVCalendarService {
       // If deleting a single instance, we need to handle it differently
       if (mode === "single" && event.isRecurring && event.masterEventId) {
         // Get the master event
-        const masterEvent = await prisma.calendarEvent.findFirst({
+        const masterEvent = await db.query.calendarEvents.findFirst({
           where: {
             id: event.masterEventId,
             feedId: event.feedId,
@@ -1116,7 +1118,7 @@ export class CalDAVCalendarService {
       }
 
       // Get the calendar feed from the database
-      const feed = await prisma.calendarFeed.findFirst({
+      const feed = await db.query.calendarFeeds.findFirst({
         where: {
           url: calendarPath,
           accountId: this.account.id,
@@ -1227,6 +1229,7 @@ export class CalDAVCalendarService {
       try {
         // Prepare event data for database
         const eventData = {
+          id: crypto.randomUUID(),
           feedId,
           externalEventId: event.externalEventId,
           title: event.title || "Untitled Event",
@@ -1241,15 +1244,12 @@ export class CalDAVCalendarService {
           isMaster: true,
           masterEventId: null,
           recurringEventId: null,
-          // Use Prisma.JsonNull for JSON fields
-          organizer: Prisma.JsonNull,
-          attendees: Prisma.JsonNull,
+          organizer: null,
+          attendees: null,
         };
 
         // Create the event
-        const createdEvent = await prisma.calendarEvent.create({
-          data: eventData,
-        });
+        const [createdEvent] = await db.insert(calendarEvents).values(eventData).returning();
 
         createdEvents.push(createdEvent);
       } catch (error) {
@@ -1289,6 +1289,7 @@ export class CalDAVCalendarService {
 
         // Prepare event data for database
         const eventData = {
+          id: crypto.randomUUID(),
           feedId,
           externalEventId: event.externalEventId,
           title: event.title || "Untitled Event",
@@ -1303,15 +1304,12 @@ export class CalDAVCalendarService {
           isMaster: false,
           masterEventId,
           recurringEventId: event.recurringEventId,
-          // Use Prisma.JsonNull for JSON fields
-          organizer: Prisma.JsonNull,
-          attendees: Prisma.JsonNull,
+          organizer: null,
+          attendees: null,
         };
 
         // Create the event
-        const createdEvent = await prisma.calendarEvent.create({
-          data: eventData,
-        });
+        const [createdEvent] = await db.insert(calendarEvents).values(eventData).returning();
 
         createdEvents.push(createdEvent);
       } catch (error) {

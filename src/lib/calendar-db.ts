@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
-import { prisma } from "@/lib/prisma";
+import { db, calendarEvents } from "@/db";
 
 import {
   AttendeeStatus,
@@ -12,9 +13,9 @@ import {
 export async function getEvent(
   eventId: string
 ): Promise<CalendarEventWithFeed | null> {
-  const event = await prisma.calendarEvent.findUnique({
-    where: { id: eventId },
-    include: { feed: true },
+  const event = await db.query.calendarEvents.findFirst({
+    where: (events, { eq }) => eq(events.id, eventId),
+    with: { feed: true },
   });
 
   if (!event) return null;
@@ -103,31 +104,21 @@ export async function deleteCalendarEvent(
     // Delete the event and any related instances from our database
     if (event.isMaster || !event.masterEventId) {
       //deleting the master event will cascade to all instances
-      await prisma.calendarEvent.delete({
-        where: {
-          id: event.id,
-        },
-      });
+      await db.delete(calendarEvents).where(eq(calendarEvents.id, event.id));
     } else {
-      const masterEvent = await prisma.calendarEvent.findFirst({
-        where: {
-          id: event.masterEventId,
-        },
+      const masterEvent = await db.query.calendarEvents.findFirst({
+        where: (events, { eq }) => eq(events.id, event.masterEventId!),
       });
       //deleting the master event will cascade to all instances
-      await prisma.calendarEvent.delete({
-        where: {
-          id: masterEvent?.id,
-        },
-      });
+      if (masterEvent?.id) {
+        await db
+          .delete(calendarEvents)
+          .where(eq(calendarEvents.id, masterEvent.id));
+      }
     }
   } else {
     //delete a single instance
-    await prisma.calendarEvent.delete({
-      where: {
-        id: event.id,
-      },
-    });
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, event.id));
   }
 
   return event;

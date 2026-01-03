@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import { db, calendarEvents, tasks, autoScheduleSettings, scheduleSuggestions } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger"
 import { Task, ScheduleSuggestion, AutoScheduleSettings } from "@prisma/client"
 
@@ -26,32 +28,31 @@ export class RescheduleSuggestionService {
 
     try {
       // Get user settings, create default if not exists
-      let settings = await prisma.autoScheduleSettings.findUnique({
-        where: { userId },
+      let settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
       })
 
       if (!settings) {
         // Create default settings
-        settings = await prisma.autoScheduleSettings.create({
-          data: {
-            userId,
-            workDays: "[1,2,3,4,5]", // Monday-Friday
-            workHourStart: 9,
-            workHourEnd: 17,
-            selectedCalendars: "[]",
-            bufferMinutes: 15,
-            enableSuggestions: true,
-            enforceBreaks: true,
-            minBreakDuration: 15,
-            maxConsecutiveHours: 3,
-            highEnergyStart: 9,
-            highEnergyEnd: 12,
-            mediumEnergyStart: 13,
-            mediumEnergyEnd: 16,
-            lowEnergyStart: 16,
-            lowEnergyEnd: 18,
-          },
-        })
+        const [newSettings] = await db.insert(autoScheduleSettings).values({
+          id: crypto.randomUUID(),
+          userId,
+          workDays: "[1,2,3,4,5]", // Monday-Friday
+          workHourStart: 9,
+          workHourEnd: 17,
+          selectedCalendars: "[]",
+          bufferMinutes: 15,
+          enableSuggestions: true,
+          enforceBreaks: true,
+          minBreakDuration: 15,
+          maxConsecutiveHours: 3,
+          highEnergyStart: 9,
+          highEnergyEnd: 12,
+          mediumEnergyStart: 13,
+          mediumEnergyEnd: 16,
+          lowEnergyStart: 16,
+          lowEnergyEnd: 18,
+        }).returning();
+        settings = newSettings;
         logger.info("Created default auto-schedule settings", { userId }, LOG_SOURCE)
       }
 
@@ -65,7 +66,7 @@ export class RescheduleSuggestionService {
       }
 
       // Get all tasks that are scheduled or should be scheduled
-      const tasks = await prisma.task.findMany({
+      const tasks = await db.query.tasks.findMany({
         where: {
           userId,
           status: {
@@ -101,14 +102,16 @@ export class RescheduleSuggestionService {
       }
 
       // Limit to 5 active suggestions per user
-      const existingSuggestions = await prisma.scheduleSuggestion.count({
-        where: {
-          userId,
-          status: "pending",
-        },
-      })
+      const existingSuggestions = await db.select({ count: sql<number>`count(*)::int` })
+        .from(scheduleSuggestions)
+        .where(
+          and(
+            eq(scheduleSuggestions.userId, userId),
+            eq(scheduleSuggestions.status, "pending")
+          )
+        );
 
-      const suggestionLimit = 5 - existingSuggestions
+      const suggestionLimit = 5 - (existingSuggestions[0]?.count || 0)
       const limitedSuggestions = suggestions.slice(0, Math.max(0, suggestionLimit))
 
       logger.info(
@@ -133,10 +136,10 @@ export class RescheduleSuggestionService {
    */
   async evaluateTaskSchedule(
     task: Task,
-    userId: string,
+    _userId: string,
     settings: AutoScheduleSettings,
     allTasks: Task[],
-    calendarEvents: any[]
+    calendarEvents: Array<Record<string, unknown>>
   ): Promise<SuggestionReason[]> {
     const suggestions: SuggestionReason[] = []
 
@@ -278,12 +281,14 @@ export class RescheduleSuggestionService {
   private detectConflict(
     start: Date,
     end: Date,
-    calendarEvents: any[],
+    calendarEvents: Array<Record<string, unknown>>,
     otherTasks: Task[]
   ): boolean {
     // Check calendar events
     for (const event of calendarEvents) {
-      if (this.timesOverlap(start, end, event.start, event.end)) {
+      const eventStart = event.start instanceof Date ? event.start : new Date(String(event.start)).returning();
+      const eventEnd = event.end instanceof Date ? event.end : new Date(String(event.end));
+      if (this.timesOverlap(start, end, eventStart, eventEnd)) {
         return true
       }
     }
@@ -462,7 +467,7 @@ export class RescheduleSuggestionService {
     task: Task,
     settings: AutoScheduleSettings,
     allTasks: Task[],
-    calendarEvents: any[]
+    calendarEvents: Array<Record<string, unknown>>
   ): Promise<{ start: Date; end: Date } | null> {
     // Generate potential slots for next 7 days
     const slots = this.generateSimpleSlots(7, settings, task.duration || 60)
@@ -484,7 +489,7 @@ export class RescheduleSuggestionService {
     task: Task,
     settings: AutoScheduleSettings,
     allTasks: Task[],
-    calendarEvents: any[]
+    calendarEvents: Array<Record<string, unknown>>
   ): Promise<{ start: Date; end: Date } | null> {
     // Look ahead 3 days for urgent tasks
     const slots = this.generateSimpleSlots(3, settings, task.duration || 60)
@@ -505,7 +510,7 @@ export class RescheduleSuggestionService {
     task: Task,
     settings: AutoScheduleSettings,
     allTasks: Task[],
-    calendarEvents: any[]
+    calendarEvents: Array<Record<string, unknown>>
   ): Promise<{ start: Date; end: Date } | null> {
     // Generate slots for next 7 days
     const slots = this.generateSimpleSlots(7, settings, task.duration || 60)
@@ -528,16 +533,16 @@ export class RescheduleSuggestionService {
    * Get calendar events for conflict detection
    */
   private async getCalendarEvents(
-    userId: string,
+    _userId: string,
     calendarIds: string[]
-  ): Promise<any[]> {
+  ): Promise<Array<Record<string, unknown>>> {
     if (calendarIds.length === 0) return []
 
     const now = new Date()
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 30)
 
-    return prisma.calendarEvent.findMany({
+    return db.query.calendarEvents.findMany({
       where: {
         feedId: {
           in: calendarIds,
@@ -560,20 +565,21 @@ export class RescheduleSuggestionService {
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24) // Expire after 24 hours
 
-    return prisma.scheduleSuggestion.create({
-      data: {
-        userId: task.userId!,
-        taskId: task.id,
-        suggestionType: suggestion.type,
-        reason: suggestion.reason,
-        confidence: suggestion.confidence,
-        currentStart: task.scheduledStart,
-        currentEnd: task.scheduledEnd,
-        suggestedStart: suggestion.suggestedStart,
-        suggestedEnd: suggestion.suggestedEnd,
-        expiresAt,
-      },
-    })
+    const [newSuggestion] = await db.insert(scheduleSuggestions).values({
+      id: crypto.randomUUID(),
+      userId: task.userId!,
+      taskId: task.id,
+      suggestionType: suggestion.type,
+      reason: suggestion.reason,
+      confidence: suggestion.confidence,
+      currentStart: task.scheduledStart,
+      currentEnd: task.scheduledEnd,
+      suggestedStart: suggestion.suggestedStart,
+      suggestedEnd: suggestion.suggestedEnd,
+      expiresAt,
+    }).returning();
+
+    return newSuggestion;
   }
 
   /**
@@ -588,7 +594,7 @@ export class RescheduleSuggestionService {
     try {
       const suggestion = await prisma.scheduleSuggestion.findUnique({
         where: { id: suggestionId },
-        include: { task: true },
+        with: { task: true },
       })
 
       if (!suggestion || suggestion.userId !== userId) {
@@ -600,7 +606,7 @@ export class RescheduleSuggestionService {
       }
 
       // Update task with suggested times
-      const updatedTask = await prisma.$transaction(async (tx) => {
+      const updatedTask = await db.transaction(async (tx) => {
         await tx.scheduleSuggestion.update({
           where: { id: suggestionId },
           data: {
@@ -684,7 +690,7 @@ export class RescheduleSuggestionService {
     userId: string,
     status: "pending" | "accepted" | "rejected"
   ): Promise<ScheduleSuggestion[]> {
-    const where: any = {
+    const where: Record<string, unknown> = {
       userId,
       status,
     }
@@ -696,9 +702,9 @@ export class RescheduleSuggestionService {
       }
     }
 
-    return prisma.scheduleSuggestion.findMany({
+    return db.query.scheduleSuggestions.findMany({
       where,
-      include: {
+      with: {
         task: true,
       },
       orderBy: {

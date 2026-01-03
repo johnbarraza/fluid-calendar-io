@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, calendarEvents, calendarFeeds } from "@/db";
 
 const LOG_SOURCE = "events-route";
 
@@ -20,15 +21,18 @@ export async function GET(request: NextRequest) {
     logger.debug("Fetching events from database...", {}, LOG_SOURCE);
 
     // Get events from feeds that belong to the current user
-    const events = await prisma.calendarEvent.findMany({
-      where: {
+    const events = await db.query.calendarEvents.findMany({
+      where: (calendarEvents, { inArray }) =>
+        inArray(
+          calendarEvents.feedId,
+          db
+            .select({ id: calendarFeeds.id })
+            .from(calendarFeeds)
+            .where(eq(calendarFeeds.userId, userId))
+        ),
+      with: {
         feed: {
-          userId,
-        },
-      },
-      include: {
-        feed: {
-          select: {
+          columns: {
             name: true,
             color: true,
           },
@@ -83,12 +87,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the feed belongs to the current user
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id: feedId,
-        userId,
-      },
-      include: {
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { and, eq }) =>
+        and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+      with: {
         account: true,
       },
     });
@@ -104,8 +106,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create event in database
-    const event = await prisma.calendarEvent.create({
-      data: {
+    const [event] = await db
+      .insert(calendarEvents)
+      .values({
+        id: crypto.randomUUID(),
         feedId,
         title,
         description,
@@ -115,8 +119,8 @@ export async function POST(request: NextRequest) {
         isRecurring: isRecurring || false,
         recurrenceRule,
         allDay: allDay || false,
-      },
-    });
+      })
+      .returning();
 
     return NextResponse.json(event);
   } catch (error) {
@@ -164,9 +168,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Check if the event belongs to a feed owned by the current user
-    const existingEvent = await prisma.calendarEvent.findUnique({
-      where: { id },
-      include: {
+    const existingEvent = await db.query.calendarEvents.findFirst({
+      where: (events, { eq }) => eq(events.id, id),
+      with: {
         feed: true,
       },
     });
@@ -178,19 +182,21 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const event = await prisma.calendarEvent.update({
-      where: { id },
-      data: {
-        title,
-        description,
-        start: start ? newDate(start) : undefined,
-        end: end ? newDate(end) : undefined,
-        location,
-        isRecurring,
-        recurrenceRule,
-        allDay,
-      },
-    });
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (start !== undefined) updateData.start = newDate(start);
+    if (end !== undefined) updateData.end = newDate(end);
+    if (location !== undefined) updateData.location = location;
+    if (isRecurring !== undefined) updateData.isRecurring = isRecurring;
+    if (recurrenceRule !== undefined) updateData.recurrenceRule = recurrenceRule;
+    if (allDay !== undefined) updateData.allDay = allDay;
+
+    const [event] = await db
+      .update(calendarEvents)
+      .set(updateData)
+      .where(eq(calendarEvents.id, id))
+      .returning();
 
     return NextResponse.json(event);
   } catch (error) {
@@ -228,9 +234,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if the event belongs to a feed owned by the current user
-    const existingEvent = await prisma.calendarEvent.findUnique({
-      where: { id },
-      include: {
+    const existingEvent = await db.query.calendarEvents.findFirst({
+      where: (events, { eq }) => eq(events.id, id),
+      with: {
         feed: true,
       },
     });
@@ -242,9 +248,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.calendarEvent.delete({
-      where: { id },
-    });
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

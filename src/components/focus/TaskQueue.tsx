@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { format, isBefore, newDate } from "@/lib/date-utils";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 import { cn } from "@/lib/utils";
 
 import { useFocusModeStore } from "@/store/focusMode";

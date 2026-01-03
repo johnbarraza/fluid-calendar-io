@@ -1,3 +1,5 @@
+import { db, calendarFeeds, connectedAccounts } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
@@ -5,7 +7,7 @@ import { newDate } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 import { getOutlookClient } from "@/lib/outlook-calendar";
 import { syncOutlookCalendar } from "@/lib/outlook-sync";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "OutlookCalendarSyncAPI";
 
@@ -38,11 +40,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the account and ensure it belongs to the current user
-    const account = await prisma.connectedAccount.findUnique({
-      where: {
-        id: accountId,
-        userId,
-      },
+    const account = await db.query.connectedAccounts.findFirst({
+      where: (accounts, { eq, and }) =>
+        and(eq(accounts.id, accountId), eq(accounts.userId, userId)),
     });
 
     if (!account || account.provider !== "OUTLOOK") {
@@ -53,13 +53,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if calendar already exists
-    const existingFeed = await prisma.calendarFeed.findFirst({
-      where: {
-        type: "OUTLOOK",
-        url: calendarId,
-        accountId,
-        userId,
-      },
+    const existingFeed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) =>
+        and(
+          eq(feeds.type, "OUTLOOK"),
+          eq(feeds.url, calendarId),
+          eq(feeds.accountId, accountId),
+          eq(feeds.userId, userId)
+        ),
     });
 
     if (existingFeed) {
@@ -67,17 +68,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Create calendar feed
-    const feed = await prisma.calendarFeed.create({
-      data: {
-        name,
-        type: "OUTLOOK",
-        url: calendarId,
-        color: color || "#3b82f6",
-        enabled: true,
-        accountId: account.id,
-        userId,
-      },
-    });
+    const [feed] = await db.insert(calendarFeeds).values({
+      id: crypto.randomUUID(),
+      name,
+      type: "OUTLOOK",
+      url: calendarId,
+      color: color || "#3b82f6",
+      enabled: true,
+      accountId: account.id,
+      userId,
+    }).returning();
 
     // Sync events for this calendar
     const client = await getOutlookClient(accountId, userId);
@@ -130,12 +130,10 @@ export async function PUT(req: NextRequest) {
     }
 
     // Get the feed and ensure it belongs to the current user
-    const feed = await prisma.calendarFeed.findUnique({
-      where: {
-        id: feedId,
-        userId,
-      },
-      include: { account: true },
+    const feed = await db.query.calendarFeeds.findFirst({
+      where: (feeds, { eq, and }) =>
+        and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+      with: { account: true },
     });
 
     if (!feed || !feed.account) {
@@ -168,21 +166,25 @@ export async function PUT(req: NextRequest) {
 
     // Update the feed's sync token
     if (nextSyncToken) {
-      await prisma.calendarFeed.update({
-        where: { id: feed.id, userId },
-        data: {
+      await db
+        .update(calendarFeeds)
+        .set({
           syncToken: nextSyncToken,
-        },
-      });
+        })
+        .where(
+          and(eq(calendarFeeds.id, feed.id), eq(calendarFeeds.userId, userId))
+        );
     }
 
     // Update the feed's sync status
-    await prisma.calendarFeed.update({
-      where: { id: feed.id, userId },
-      data: {
+    await db
+      .update(calendarFeeds)
+      .set({
         lastSync: newDate(),
-      },
-    });
+      })
+      .where(
+        and(eq(calendarFeeds.id, feed.id), eq(calendarFeeds.userId, userId))
+      );
 
     logger.debug(
       "Completed Outlook calendar sync",

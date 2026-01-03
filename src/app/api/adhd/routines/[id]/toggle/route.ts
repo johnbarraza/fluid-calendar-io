@@ -8,7 +8,7 @@ const LOG_SOURCE = "RoutineToggleAPI";
 // POST /api/adhd/routines/[id]/toggle - Toggle routine active status
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -16,9 +16,10 @@ export async function POST(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const routineService = new RoutineService();
     const routine = await routineService.toggleRoutineActive(
-      params.id,
+      resolvedParams.id,
       auth.userId
     );
 

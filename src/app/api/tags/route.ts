@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and, asc } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, tags } from "@/db";
 
 const LOG_SOURCE = "tags-route";
 
@@ -15,17 +16,12 @@ export async function GET(request: NextRequest) {
 
     const userId = auth.userId;
 
-    const tags = await prisma.tag.findMany({
-      where: {
-        // Filter by the current user's ID
-        userId,
-      },
-      orderBy: {
-        name: "asc",
-      },
+    const userTags = await db.query.tags.findMany({
+      where: eq(tags.userId, userId),
+      orderBy: [asc(tags.name)],
     });
 
-    return NextResponse.json(tags);
+    return NextResponse.json(userTags);
   } catch (error) {
     logger.error(
       "Error fetching tags:",
@@ -80,11 +76,8 @@ export async function POST(request: NextRequest) {
     const color = body.color;
 
     // Check if tag with same name already exists for this user
-    const existingTag = await prisma.tag.findFirst({
-      where: {
-        name,
-        userId,
-      },
+    const existingTag = await db.query.tags.findFirst({
+      where: and(eq(tags.name, name), eq(tags.userId, userId)),
     });
 
     if (existingTag) {
@@ -94,16 +87,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tag = await prisma.tag.create({
-      data: {
+    const [newTag] = await db
+      .insert(tags)
+      .values({
+        id: crypto.randomUUID(),
         name,
         color,
-        // Associate the tag with the current user
         userId,
-      },
-    });
+      })
+      .returning();
 
-    return NextResponse.json(tag);
+    return NextResponse.json(newTag);
   } catch (error) {
     logger.error(
       "Error creating tag:",

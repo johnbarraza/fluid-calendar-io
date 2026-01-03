@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, calendarFeeds, accounts } from "@/db";
+import { eq, and, asc } from "drizzle-orm";
 
 const LOG_SOURCE = "calendar-feeds-route";
 
@@ -22,23 +23,9 @@ export async function GET(request: NextRequest) {
 
     const userId = auth.userId;
 
-    const feeds = await prisma.calendarFeed.findMany({
-      where: {
-        // Filter by the current user's ID
-        userId,
-      },
-      include: {
-        account: {
-          select: {
-            id: true,
-            provider: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+    const feeds = await db.query.calendarFeeds.findMany({
+      where: eq(calendarFeeds.userId, userId),
+      orderBy: asc(calendarFeeds.createdAt),
     });
 
     return NextResponse.json(feeds);
@@ -68,13 +55,14 @@ export async function POST(request: NextRequest) {
     const userId = auth.userId;
 
     const feedData = await request.json();
-    const created = await prisma.calendarFeed.create({
-      data: {
+    const [created] = await db
+      .insert(calendarFeeds)
+      .values({
         ...feedData,
         // Associate the feed with the current user
         userId,
-      },
-    });
+      })
+      .returning();
     return NextResponse.json(created);
   } catch (error) {
     logger.error(
@@ -104,18 +92,16 @@ export async function PUT(request: NextRequest) {
     const { feeds } = await request.json();
 
     // Use transaction to ensure all updates succeed or none do
-    await prisma.$transaction(
-      feeds.map((feed: CalendarFeedUpdate) =>
-        prisma.calendarFeed.update({
-          where: {
-            id: feed.id,
-            // Ensure the feed belongs to the current user
-            userId,
-          },
-          data: feed,
-        })
-      )
-    );
+    await db.transaction(async (tx) => {
+      for (const feed of feeds as CalendarFeedUpdate[]) {
+        await tx
+          .update(calendarFeeds)
+          .set(feed)
+          .where(
+            and(eq(calendarFeeds.id, feed.id), eq(calendarFeeds.userId, userId))
+          );
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -152,17 +138,15 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const feed = await prisma.calendarFeed.update({
-      where: {
-        id,
-        // Ensure the feed belongs to the current user
-        userId,
-      },
-      data: {
-        enabled: enabled !== undefined ? enabled : undefined,
-        color: color !== undefined ? color : undefined,
-      },
-    });
+    const updateData: Partial<typeof calendarFeeds.$inferInsert> = {};
+    if (enabled !== undefined) updateData.enabled = enabled;
+    if (color !== undefined) updateData.color = color;
+
+    const [feed] = await db
+      .update(calendarFeeds)
+      .set(updateData)
+      .where(and(eq(calendarFeeds.id, id), eq(calendarFeeds.userId, userId)))
+      .returning();
 
     return NextResponse.json(feed);
   } catch (error) {
@@ -199,13 +183,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.calendarFeed.delete({
-      where: {
-        id,
-        // Ensure the feed belongs to the current user
-        userId,
-      },
-    });
+    await db
+      .delete(calendarFeeds)
+      .where(and(eq(calendarFeeds.id, id), eq(calendarFeeds.userId, userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

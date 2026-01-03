@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import { db, pomodoroSessions } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger"
 import { PomodoroSession } from "@prisma/client"
 
@@ -30,7 +32,7 @@ export class PomodoroService {
     taskId?: string,
     config?: PomodoroConfig
   ): Promise<PomodoroSession> {
-    logger.info("Starting Pomodoro session", { userId, taskId, config }, LOG_SOURCE)
+    logger.info("Starting Pomodoro session", { userId, taskId: taskId || null, config: config ? JSON.stringify(config) : null }, LOG_SOURCE)
 
     try {
       // Check if user already has an active session
@@ -57,15 +59,14 @@ export class PomodoroService {
         type: config?.type || "work"
       }, LOG_SOURCE)
 
-      const session = await prisma.pomodoroSession.create({
-        data: {
-          userId,
-          taskId: taskId || null,
-          workDuration: config?.workDuration || 25,
-          breakDuration: config?.breakDuration || 5,
-          type: config?.type || "work",
-        },
-      })
+      const [session] = await db.insert(pomodoroSessions).values({
+        id: crypto.randomUUID(),
+        userId,
+        taskId: taskId || null,
+        workDuration: config?.workDuration || 25,
+        breakDuration: config?.breakDuration || 5,
+        type: config?.type || "work",
+      }).returning();
 
       logger.info(
         "Pomodoro session started successfully",
@@ -97,7 +98,7 @@ export class PomodoroService {
     try {
       const session = await prisma.pomodoroSession.findUnique({
         where: { id: sessionId },
-        include: { task: true },
+        with: { task: true },
       })
 
       if (!session) {
@@ -112,7 +113,7 @@ export class PomodoroService {
         throw new Error("Session was interrupted and cannot be completed")
       }
 
-      const updatedSession = await prisma.$transaction(async (tx) => {
+      const updatedSession = await db.transaction(async (tx) => {
         // Update session
         const updated = await tx.pomodoroSession.update({
           where: { id: sessionId },
@@ -120,7 +121,7 @@ export class PomodoroService {
             completed: true,
             endedAt: new Date(),
           },
-          include: { task: true },
+          with: { task: true },
         })
 
         // If this was a work session linked to a task, increment actualPomodoros
@@ -213,7 +214,7 @@ export class PomodoroService {
   async getActiveSession(userId: string): Promise<PomodoroSession | null> {
     logger.info("Fetching active Pomodoro session", { userId }, LOG_SOURCE)
 
-    return prisma.pomodoroSession.findFirst({
+    return db.query.pomodoroSessions.findFirst({
       where: {
         userId,
         completed: false,
@@ -222,7 +223,7 @@ export class PomodoroService {
       orderBy: {
         startedAt: "desc",
       },
-      include: {
+      with: {
         task: true,
       },
     })
@@ -244,7 +245,7 @@ export class PomodoroService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    return prisma.pomodoroSession.findMany({
+    return db.query.pomodoroSessions.findMany({
       where: {
         userId,
         startedAt: {
@@ -254,7 +255,7 @@ export class PomodoroService {
       orderBy: {
         startedAt: "desc",
       },
-      include: {
+      with: {
         task: true,
       },
     })
@@ -276,7 +277,7 @@ export class PomodoroService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    const sessions = await prisma.pomodoroSession.findMany({
+    const sessions = await db.query.pomodoroSessions.findMany({
       where: {
         userId,
         startedAt: {
@@ -358,7 +359,7 @@ export class PomodoroService {
   async getTaskSessions(taskId: string): Promise<PomodoroSession[]> {
     logger.info("Fetching sessions for task", { taskId }, LOG_SOURCE)
 
-    return prisma.pomodoroSession.findMany({
+    return db.query.pomodoroSessions.findMany({
       where: {
         taskId,
       },
@@ -393,7 +394,7 @@ export class PomodoroService {
     const cutoffTime = new Date()
     cutoffTime.setMinutes(cutoffTime.getMinutes() - maxSessionDuration)
 
-    const staleSessions = await prisma.pomodoroSession.findMany({
+    const staleSessions = await db.query.pomodoroSessions.findMany({
       where: {
         completed: false,
         interrupted: false,

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 import { requireAdmin } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, systemSettings } from "@/db";
 
 const LOG_SOURCE = "SystemSettingsAPI";
 
@@ -13,21 +14,23 @@ export async function GET(request: NextRequest) {
 
   try {
     // Get the first system settings record, or create it if it doesn't exist
-    const settings = await prisma.$transaction(async (tx) => {
+    const settings = await db.transaction(async (tx) => {
       // Check if any SystemSettings record exists
-      const existingSettings = await tx.systemSettings.findFirst();
+      const existingSettings = await tx.query.systemSettings.findFirst();
 
       if (existingSettings) {
         return existingSettings;
       } else {
         // Create a new record with default ID
-        return tx.systemSettings.create({
-          data: {
+        const [newSettings] = await tx
+          .insert(systemSettings)
+          .values({
             id: "default",
             logLevel: "none",
             disableHomepage: false,
-          },
-        });
+          })
+          .returning();
+        return newSettings;
       }
     });
 
@@ -53,24 +56,28 @@ export async function PATCH(request: NextRequest) {
   try {
     const updates = await request.json();
 
-    const settings = await prisma.$transaction(async (tx) => {
+    const settings = await db.transaction(async (tx) => {
       // Check if any SystemSettings record exists
-      const existingSettings = await tx.systemSettings.findFirst();
+      const existingSettings = await tx.query.systemSettings.findFirst();
 
       if (existingSettings) {
         // Update the existing record
-        return tx.systemSettings.update({
-          where: { id: existingSettings.id },
-          data: updates,
-        });
+        const [updatedSettings] = await tx
+          .update(systemSettings)
+          .set(updates)
+          .where(eq(systemSettings.id, existingSettings.id))
+          .returning();
+        return updatedSettings;
       } else {
         // Create a new record with default ID
-        return tx.systemSettings.create({
-          data: {
+        const [newSettings] = await tx
+          .insert(systemSettings)
+          .values({
             id: "default",
             ...updates,
-          },
-        });
+          })
+          .returning();
+        return newSettings;
       }
     });
 

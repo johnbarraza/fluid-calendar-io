@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface SuggestionPanelProps {
   autoGenerate?: boolean;
@@ -45,7 +46,7 @@ export function SuggestionPanel({ autoGenerate = false }: SuggestionPanelProps) 
         // Silently fail auto-generation
       });
     }
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, autoGenerate, generateSuggestions, suggestions.length]);
 
   const handleGenerate = async () => {
     try {

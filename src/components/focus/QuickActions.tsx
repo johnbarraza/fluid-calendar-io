@@ -7,7 +7,7 @@ import { HiClock, HiPencil, HiTrash } from "react-icons/hi";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { Button } from "@/components/ui/button";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 import { useFocusModeStore } from "@/store/focusMode";
 import { useTaskStore } from "@/store/task";

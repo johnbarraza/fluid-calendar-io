@@ -5,8 +5,8 @@ import { Habit, HabitLog } from "@prisma/client";
 /**
  * Extended Habit type with computed properties
  */
-export interface HabitWithStats extends Habit {
-  currentStreak?: number;
+export interface HabitWithStats extends Omit<Habit, 'currentStreak'> {
+  currentStreak?: number | undefined;
   completedToday?: boolean;
   logs?: HabitLog[];
 }
@@ -145,12 +145,14 @@ export const useHabitStore = create<HabitState>()(
       // Log habit completion with optimistic update
       logHabit: async (habitId: string, date?: Date) => {
         // Optimistic update: mark as completed immediately
+        const now = date || new Date();
         const optimisticLog = {
           id: `temp-${Date.now()}`,
           habitId,
-          completedAt: date || new Date(),
-          createdAt: new Date(),
-          notes: null,
+          completedAt: now,
+          date: now,
+          note: null,
+          mood: null,
         } as HabitLog;
 
         set((state) => ({

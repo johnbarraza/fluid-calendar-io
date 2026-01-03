@@ -8,7 +8,7 @@ const LOG_SOURCE = "RoutineTrackingAPI";
 // POST /api/adhd/routines/[id]/tracking - Start a new routine session
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -16,14 +16,15 @@ export async function POST(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const trackingService = new RoutineTrackingService();
     const session = await trackingService.startRoutine(auth.userId, {
-      routineId: params.id,
+      routineId: resolvedParams.id,
     });
 
     logger.info(
       "Routine session started",
-      { sessionId: session.id, routineId: params.id },
+      { sessionId: session.id, routineId: resolvedParams.id },
       LOG_SOURCE
     );
 
@@ -49,7 +50,7 @@ export async function POST(
 // GET /api/adhd/routines/[id]/tracking - Get active session or recent completions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -57,6 +58,7 @@ export async function GET(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "active";
 
@@ -65,7 +67,7 @@ export async function GET(
     if (type === "active") {
       const session = await trackingService.getActiveSession(
         auth.userId,
-        params.id
+        resolvedParams.id
       );
       return NextResponse.json(session);
     }
@@ -74,7 +76,7 @@ export async function GET(
       const limit = parseInt(searchParams.get("limit") || "10", 10);
       const completions = await trackingService.getRecentCompletions(
         auth.userId,
-        params.id,
+        resolvedParams.id,
         limit
       );
       return NextResponse.json(completions);
@@ -83,7 +85,7 @@ export async function GET(
     if (type === "stats") {
       const stats = await trackingService.getRoutineStats(
         auth.userId,
-        params.id
+        resolvedParams.id
       );
       return NextResponse.json(stats);
     }

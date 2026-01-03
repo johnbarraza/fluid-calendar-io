@@ -1,7 +1,9 @@
 "use server";
 
+import { db, users } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "SetupActions";
 
@@ -11,7 +13,7 @@ const LOG_SOURCE = "SetupActions";
  */
 export async function checkSetupStatus() {
   try {
-    const userCount = await prisma.user.count();
+    const userCount = await // TODO: Manually migrate count - db.select({ count: sql`count(*)` }).from(users));
 
     logger.info("Checked if users exist", { userCount }, LOG_SOURCE);
 

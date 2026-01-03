@@ -7,7 +7,7 @@ import { RoutineExecutor } from "@/components/adhd/routines";
 import { useRoutineStore } from "@/store/adhd/routineStore";
 
 interface ExecutePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function ExecutePage({ params }: ExecutePageProps) {
@@ -15,8 +15,15 @@ export default function ExecutePage({ params }: ExecutePageProps) {
   const { routines, fetchRoutines } = useRoutineStore();
   const [sessionId, setSessionId] = React.useState<string | null>(null);
   const [isStarting, setIsStarting] = React.useState(true);
+  const [routineId, setRoutineId] = React.useState<string | null>(null);
 
-  const routine = routines.find((r) => r.id === params.id);
+  React.useEffect(() => {
+    params.then((resolvedParams) => {
+      setRoutineId(resolvedParams.id);
+    });
+  }, [params]);
+
+  const routine = routineId ? routines.find((r) => r.id === routineId) : null;
 
   React.useEffect(() => {
     if (routines.length === 0) {
@@ -24,16 +31,12 @@ export default function ExecutePage({ params }: ExecutePageProps) {
     }
   }, [routines.length, fetchRoutines]);
 
-  React.useEffect(() => {
-    if (routine && !sessionId && isStarting) {
-      startSession();
-    }
-  }, [routine, sessionId, isStarting]);
+  const startSession = React.useCallback(async () => {
+    if (!routineId) return;
 
-  const startSession = async () => {
     try {
       const response = await fetch(
-        `/api/adhd/routines/${params.id}/tracking`,
+        `/api/adhd/routines/${routineId}/tracking`,
         {
           method: "POST",
         }
@@ -49,7 +52,13 @@ export default function ExecutePage({ params }: ExecutePageProps) {
       console.error("Failed to start session:", error);
       router.push("/adhd/routines");
     }
-  };
+  }, [routineId, router]);
+
+  React.useEffect(() => {
+    if (routine && !sessionId && isStarting) {
+      startSession();
+    }
+  }, [routine, sessionId, isStarting, startSession]);
 
   const handleComplete = async (notes?: string) => {
     if (!sessionId) return;

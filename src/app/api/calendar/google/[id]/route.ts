@@ -1,9 +1,11 @@
+import { db, calendarFeeds } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { GaxiosError } from "gaxios";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "GoogleCalendarIdAPI";
 
@@ -31,7 +33,7 @@ export async function PATCH(
         id,
         userId,
       },
-      include: { account: true },
+      with: { account: true },
     });
 
     if (!feed || feed.type !== "GOOGLE" || !feed.url || !feed.accountId) {

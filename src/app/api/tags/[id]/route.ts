@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and, ne } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, tags } from "@/db";
 
 const LOG_SOURCE = "tag-route";
 
@@ -19,12 +20,8 @@ export async function GET(
     const userId = auth.userId;
 
     const { id } = await params;
-    const tag = await prisma.tag.findUnique({
-      where: {
-        id,
-        // Ensure the tag belongs to the current user
-        userId,
-      },
+    const tag = await db.query.tags.findFirst({
+      where: and(eq(tags.id, id), eq(tags.userId, userId)),
     });
 
     if (!tag) {
@@ -57,12 +54,8 @@ export async function PUT(
     const userId = auth.userId;
 
     const { id } = await params;
-    const tag = await prisma.tag.findUnique({
-      where: {
-        id,
-        // Ensure the tag belongs to the current user
-        userId,
-      },
+    const tag = await db.query.tags.findFirst({
+      where: and(eq(tags.id, id), eq(tags.userId, userId)),
     });
 
     if (!tag) {
@@ -74,12 +67,12 @@ export async function PUT(
 
     // Check if another tag with the same name exists for this user
     if (name && name !== tag.name) {
-      const existingTag = await prisma.tag.findFirst({
-        where: {
-          name,
-          id: { not: id }, // Exclude current tag
-          userId, // Only check tags belonging to the current user
-        },
+      const existingTag = await db.query.tags.findFirst({
+        where: and(
+          eq(tags.name, name),
+          ne(tags.id, id),
+          eq(tags.userId, userId)
+        ),
       });
 
       if (existingTag) {
@@ -89,17 +82,14 @@ export async function PUT(
       }
     }
 
-    const updatedTag = await prisma.tag.update({
-      where: {
-        id,
-        // Ensure the tag belongs to the current user
-        userId,
-      },
-      data: {
+    const [updatedTag] = await db
+      .update(tags)
+      .set({
         ...(name && { name }),
         ...(color && { color }),
-      },
-    });
+      })
+      .where(and(eq(tags.id, id), eq(tags.userId, userId)))
+      .returning();
 
     return NextResponse.json(updatedTag);
   } catch (error) {
@@ -127,25 +117,15 @@ export async function DELETE(
     const userId = auth.userId;
 
     const { id } = await params;
-    const tag = await prisma.tag.findUnique({
-      where: {
-        id,
-        // Ensure the tag belongs to the current user
-        userId,
-      },
+    const tag = await db.query.tags.findFirst({
+      where: and(eq(tags.id, id), eq(tags.userId, userId)),
     });
 
     if (!tag) {
       return new NextResponse("Tag not found", { status: 404 });
     }
 
-    await prisma.tag.delete({
-      where: {
-        id,
-        // Ensure the tag belongs to the current user
-        userId,
-      },
-    });
+    await db.delete(tags).where(and(eq(tags.id, id), eq(tags.userId, userId)));
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

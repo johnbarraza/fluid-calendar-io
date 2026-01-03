@@ -1,5 +1,7 @@
+import { db, calendarFeeds, tasks, projects, tags, connectedAccounts, autoScheduleSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "SetupMigration";
 
@@ -17,7 +19,7 @@ export async function migrateExistingData(adminUserId: string) {
 
   try {
     // Migrate CalendarFeeds - this table has a userId field
-    const calendarFeeds = await prisma.calendarFeed.findMany({
+    const calendarFeeds = await db.query.calendarFeeds.findMany({
       where: {
         userId: null,
       },
@@ -47,7 +49,7 @@ export async function migrateExistingData(adminUserId: string) {
     }
 
     // Migrate ConnectedAccounts - now has a userId field
-    const connectedAccounts = await prisma.connectedAccount.findMany({
+    const connectedAccounts = await db.query.connectedAccounts.findMany({
       where: {
         userId: null,
       },
@@ -77,7 +79,7 @@ export async function migrateExistingData(adminUserId: string) {
     }
 
     // Migrate Tags - now has a userId field
-    const tags = await prisma.tag.findMany({
+    const tags = await db.query.tags.findMany({
       where: {
         userId: null,
       },
@@ -99,7 +101,7 @@ export async function migrateExistingData(adminUserId: string) {
     }
 
     // Migrate Tasks - now has a userId field
-    const tasks = await prisma.task.findMany({
+    const tasks = await db.query.tasks.findMany({
       where: {
         userId: null,
       },
@@ -121,7 +123,7 @@ export async function migrateExistingData(adminUserId: string) {
     }
 
     // Migrate Projects - now has a userId field
-    const projects = await prisma.project.findMany({
+    const projects = await db.query.projects.findMany({
       where: {
         userId: null,
       },
@@ -159,15 +161,14 @@ export async function migrateExistingData(adminUserId: string) {
       });
 
     if (!existingAutoScheduleSettings) {
-      await prisma.autoScheduleSettings.create({
-        data: {
-          userId: adminUserId,
-          workDays: "[1,2,3,4,5]", // Monday to Friday
-          workHourStart: 9,
-          workHourEnd: 17,
-          bufferMinutes: 15,
-        },
-      });
+      await db.insert(autoScheduleSettings).values({
+        id: crypto.randomUUID(),
+        userId: adminUserId,
+        workDays: "[1,2,3,4,5]", // Monday to Friday
+        workHourStart: 9,
+        workHourEnd: 17,
+        bufferMinutes: 15,
+      }).returning();
       logger.info(
         "Created auto schedule settings for admin user",
         {},

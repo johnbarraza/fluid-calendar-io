@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Habit } from "@prisma/client";
 import { LuCircleCheck as CheckCircle2, LuCircle as Circle, LuFlame as Flame } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +17,7 @@ import { toast } from "sonner";
 
 interface HabitCardProps {
   habit: HabitWithStats;
-  onEdit?: (habit: Habit) => void;
+  onEdit?: (habit: HabitWithStats) => void;
   onDelete?: (habitId: string) => void;
 }
 
@@ -87,9 +86,9 @@ export function HabitCard({ habit, onEdit, onDelete }: HabitCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            {habit.emoji && (
+            {habit.icon && (
               <span className="text-2xl" role="img" aria-label="habit-emoji">
-                {habit.emoji}
+                {habit.icon}
               </span>
             )}
             <div>

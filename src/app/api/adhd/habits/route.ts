@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     logger.error(
       "Failed to create habit",
-      { error: errorMessage, stack: errorStack },
+      { error: errorMessage, ...(errorStack && { stack: errorStack }) },
       LOG_SOURCE
     );
     console.error("[HabitsAPI] Create habit error:", errorMessage, errorStack);

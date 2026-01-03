@@ -1,8 +1,10 @@
+import { db, tasks, projects, tags } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "export-tasks-api";
 
@@ -20,13 +22,13 @@ export async function GET(request: NextRequest) {
       request.nextUrl.searchParams.get("includeCompleted") === "true";
 
     // Fetch all tasks for the user
-    const tasks = await prisma.task.findMany({
+    const tasks = await db.query.tasks.findMany({
       where: {
         userId,
         // Filter out completed tasks if includeCompleted is false
         ...(includeCompleted ? {} : { status: { not: "completed" } }),
       },
-      include: {
+      with: {
         tags: true,
         project: true,
       },
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch all projects for the user
-    const projects = await prisma.project.findMany({
+    const projects = await db.query.projects.findMany({
       where: {
         userId,
       },
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch all tags for the user
-    const tags = await prisma.tag.findMany({
+    const tags = await db.query.tags.findMany({
       where: {
         userId,
       },

@@ -1,10 +1,12 @@
+import { db, accounts, passwordResets } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { hash } from "bcrypt";
 import { z } from "zod";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "ResetPasswordAPI";
 
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
     const { token, password } = result.data;
 
     // Find the reset token
-    const resetRequest = await prisma.passwordReset.findFirst({
+    const resetRequest = await db.query.passwordResets.findFirst({
       where: {
         token,
         expiresAt: {
@@ -57,9 +59,9 @@ export async function POST(request: NextRequest) {
         },
         usedAt: null,
       },
-      include: {
+      with: {
         user: {
-          include: {
+          with: {
             accounts: {
               where: {
                 provider: "credentials",
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(password, 10);
 
     // Update the password and mark token as used
-    await prisma.$transaction([
+    await db.transaction([
       prisma.account.update({
         where: {
           id: resetRequest.user.accounts[0].id,

@@ -1,7 +1,9 @@
+import { db, users } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { compare } from "bcrypt";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 import { isPublicSignupEnabled } from "./public-signup";
 
@@ -16,9 +18,8 @@ const LOG_SOURCE = "CredentialsProvider";
 export async function authenticateUser(email: string, password: string) {
   try {
     // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
+    const user = await db.query.users.findFirst({ where: (users, { eq }) => eq(users.email, email),
+      with: {
         accounts: {
           where: {
             provider: "credentials",

@@ -8,7 +8,7 @@ const LOG_SOURCE = "RoutineAPI";
 // GET /api/adhd/routines/[id] - Get a specific routine
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -16,8 +16,9 @@ export async function GET(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const routineService = new RoutineService();
-    const routine = await routineService.getRoutineById(params.id, auth.userId);
+    const routine = await routineService.getRoutineById(resolvedParams.id, auth.userId);
 
     if (!routine) {
       return NextResponse.json(
@@ -43,7 +44,7 @@ export async function GET(
 // PATCH /api/adhd/routines/[id] - Update a routine
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -51,11 +52,12 @@ export async function PATCH(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const body = await request.json();
     const routineService = new RoutineService();
 
     const routine = await routineService.updateRoutine(
-      params.id,
+      resolvedParams.id,
       auth.userId,
       body
     );
@@ -87,7 +89,7 @@ export async function PATCH(
 // DELETE /api/adhd/routines/[id] - Delete a routine
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticateRequest(request, LOG_SOURCE);
@@ -95,10 +97,11 @@ export async function DELETE(
       return auth.response;
     }
 
+    const resolvedParams = await params;
     const routineService = new RoutineService();
-    await routineService.deleteRoutine(params.id, auth.userId);
+    await routineService.deleteRoutine(resolvedParams.id, auth.userId);
 
-    logger.info("Routine deleted", { routineId: params.id }, LOG_SOURCE);
+    logger.info("Routine deleted", { routineId: resolvedParams.id }, LOG_SOURCE);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RoutineWithTasks } from "@/store/adhd/routineStore";
-import { RoutineCompletion } from "@prisma/client";
 
 interface RoutineExecutorProps {
   routine: RoutineWithTasks;
@@ -38,6 +37,31 @@ export function RoutineExecutor({
   const totalTasks = routine.tasks.length;
   const overallProgress = (completedTasks / totalTasks) * 100;
 
+  const handleTaskComplete = React.useCallback(() => {
+    setCompletedTasks((prev) => {
+      const newCompletedTasks = prev + 1;
+
+      if (currentTaskIndex < totalTasks - 1) {
+        // Move to next task
+        const nextIndex = currentTaskIndex + 1;
+        const nextTask = routine.tasks[nextIndex];
+
+        setCurrentTaskIndex(nextIndex);
+        setTimeLeft(nextTask.duration * 60);
+
+        // Auto-continue if enabled
+        if (!currentTask?.autoContinue) {
+          setIsPlaying(false);
+        }
+      } else {
+        // All tasks completed
+        onComplete();
+      }
+
+      return newCompletedTasks;
+    });
+  }, [currentTaskIndex, totalTasks, currentTask?.autoContinue, onComplete, routine.tasks]);
+
   // Timer effect
   React.useEffect(() => {
     if (!isPlaying || timeLeft <= 0) return;
@@ -54,29 +78,7 @@ export function RoutineExecutor({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, timeLeft]);
-
-  const handleTaskComplete = () => {
-    const newCompletedTasks = completedTasks + 1;
-    setCompletedTasks(newCompletedTasks);
-
-    if (currentTaskIndex < totalTasks - 1) {
-      // Move to next task
-      const nextIndex = currentTaskIndex + 1;
-      const nextTask = routine.tasks[nextIndex];
-
-      setCurrentTaskIndex(nextIndex);
-      setTimeLeft(nextTask.duration * 60);
-
-      // Auto-continue if enabled
-      if (!currentTask?.autoContinue) {
-        setIsPlaying(false);
-      }
-    } else {
-      // All tasks completed
-      onComplete();
-    }
-  };
+  }, [isPlaying, timeLeft, handleTaskComplete]);
 
   const handleSkipTask = () => {
     if (currentTaskIndex < totalTasks - 1) {

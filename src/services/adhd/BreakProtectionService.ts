@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import { db, tasks, autoScheduleSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
+
 import { logger } from "@/lib/logger"
 import { Task, AutoScheduleSettings } from "@prisma/client"
 
@@ -190,13 +192,12 @@ export class BreakProtectionService {
     userId: string,
     date: Date
   ): Promise<BreakSuggestion[]> {
-    logger.info("Suggesting breaks", { userId, date }, LOG_SOURCE)
+    logger.info("Suggesting breaks", { userId, date: date.toISOString() }, LOG_SOURCE)
 
     const suggestions: BreakSuggestion[] = []
 
     // Get settings
-    const settings = await prisma.autoScheduleSettings.findUnique({
-      where: { userId },
+    const settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     })
 
     if (!settings || !settings.enforceBreaks) {
@@ -209,7 +210,7 @@ export class BreakProtectionService {
     const dayEnd = new Date(date)
     dayEnd.setHours(23, 59, 59, 999)
 
-    const tasks = await prisma.task.findMany({
+    const tasks = await db.query.tasks.findMany({
       where: {
         userId,
         scheduledStart: {
@@ -416,8 +417,7 @@ export class BreakProtectionService {
       LOG_SOURCE
     )
 
-    const settings = await prisma.autoScheduleSettings.findUnique({
-      where: { userId },
+    const settings = await db.query.autoScheduleSettings.findFirst({ where: (autoScheduleSettings, { eq }) => eq(autoScheduleSettings.userId, userId),
     })
 
     if (!settings || !settings.enforceBreaks) {
@@ -427,7 +427,7 @@ export class BreakProtectionService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    const tasks = await prisma.task.findMany({
+    const tasks = await db.query.tasks.findMany({
       where: {
         userId,
         scheduledStart: {

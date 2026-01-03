@@ -1,16 +1,18 @@
+import { db, logs } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "LogSourcesAPI";
 
 export async function GET() {
   try {
     // Get all unique sources
-    const sources = await prisma.log.findMany({
+    const sources = await db.query.logs.findMany({
       distinct: ["source"],
-      select: { source: true },
+      columns: { source: true },
       where: {
         source: {
           not: null,

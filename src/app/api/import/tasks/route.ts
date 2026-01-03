@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and } from "drizzle-orm";
 
 import { authenticateRequest } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { db, tasks, tags, projects, taskTags } from "@/db";
 
 import { Project } from "@/types/project";
 import { Tag, Task } from "@/types/task";
@@ -65,18 +66,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Start a transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // Import tags first (if any)
       const tagMap = new Map<string, string>(); // Map old tag IDs to new tag IDs
 
       if (Array.isArray(data.tags)) {
         for (const tag of data.tags) {
           // Check if a tag with the same name already exists for this user
-          const existingTag = await tx.tag.findFirst({
-            where: {
-              userId,
-              name: tag.name,
-            },
+          const existingTag = await tx.query.tags.findFirst({
+            where: (tags, { and, eq }) =>
+              and(eq(tags.userId, userId), eq(tags.name, tag.name)),
           });
 
           if (existingTag) {
@@ -84,13 +83,15 @@ export async function POST(request: NextRequest) {
             tagMap.set(tag.id, existingTag.id);
           } else {
             // Create a new tag
-            const newTag = await tx.tag.create({
-              data: {
+            const [newTag] = await tx
+              .insert(tags)
+              .values({
+                id: crypto.randomUUID(),
                 name: tag.name,
                 color: tag.color,
                 userId,
-              },
-            });
+              })
+              .returning();
             tagMap.set(tag.id, newTag.id);
           }
         }
@@ -102,11 +103,9 @@ export async function POST(request: NextRequest) {
       if (Array.isArray(data.projects)) {
         for (const project of data.projects) {
           // Check if a project with the same name already exists for this user
-          const existingProject = await tx.project.findFirst({
-            where: {
-              userId,
-              name: project.name,
-            },
+          const existingProject = await tx.query.projects.findFirst({
+            where: (projects, { and, eq }) =>
+              and(eq(projects.userId, userId), eq(projects.name, project.name)),
           });
 
           if (existingProject) {
@@ -114,15 +113,17 @@ export async function POST(request: NextRequest) {
             projectMap.set(project.id, existingProject.id);
           } else {
             // Create a new project
-            const newProject = await tx.project.create({
-              data: {
+            const [newProject] = await tx
+              .insert(projects)
+              .values({
+                id: crypto.randomUUID(),
                 name: project.name,
                 description: project.description,
                 color: project.color,
                 status: project.status || "active",
                 userId,
-              },
-            });
+              })
+              .returning();
             projectMap.set(project.id, newProject.id);
           }
         }
@@ -172,33 +173,25 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           };
 
-          // Add project connection if needed
-          if (projectId) {
-            await tx.task.create({
-              data: {
-                ...taskData,
-                user: { connect: { id: userId } },
-                project: { connect: { id: projectId } },
-                ...(tagIds.length > 0
-                  ? {
-                      tags: { connect: tagIds.map((id) => ({ id })) },
-                    }
-                  : {}),
-              },
-            });
-          } else {
-            // Create without project connection
-            await tx.task.create({
-              data: {
-                ...taskData,
-                user: { connect: { id: userId } },
-                ...(tagIds.length > 0
-                  ? {
-                      tags: { connect: tagIds.map((id) => ({ id })) },
-                    }
-                  : {}),
-              },
-            });
+          // Create the task
+          const [newTask] = await tx
+            .insert(tasks)
+            .values({
+              id: crypto.randomUUID(),
+              ...taskData,
+              userId,
+              projectId: projectId || null,
+            })
+            .returning();
+
+          // Create tag connections if needed
+          if (tagIds.length > 0) {
+            for (const tagId of tagIds) {
+              await tx.insert(taskTags).values({
+                taskId: newTask.id,
+                tagId,
+              });
+            }
           }
 
           importedCount++;

@@ -43,6 +43,30 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
     fetchActiveSession();
   }, [fetchActiveSession]);
 
+  const handleComplete = React.useCallback(async () => {
+    if (!activeSession) return;
+
+    try {
+      await completeSession(activeSession.id);
+      toast.success("¡Sesión completada! 🎉");
+
+      if (onSessionComplete) {
+        onSessionComplete();
+      }
+
+      // Optional: Show notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("Pomodoro Completado", {
+          body: "¡Buen trabajo! Toma un descanso.",
+          icon: "/logo.svg",
+        });
+      }
+    } catch (error) {
+      toast.error("Error al completar sesión");
+      console.error("Failed to complete session:", error);
+    }
+  }, [activeSession, completeSession, onSessionComplete]);
+
   // Calculate time remaining
   React.useEffect(() => {
     if (!activeSession) {
@@ -76,9 +100,9 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
         clearInterval(timerRef.current);
       }
     };
-  }, [activeSession, isPaused]);
+  }, [activeSession, isPaused, handleComplete]);
 
-  const handleStart = async () => {
+  const handleStart = React.useCallback(async () => {
     try {
       await startSession({
         taskId: taskId || undefined,
@@ -87,36 +111,12 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
         type: "work",
       });
       toast.success("Sesión Pomodoro iniciada");
-    } catch (error: any) {
-      const errorMessage = error.message || "Error al iniciar sesión";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al iniciar sesión";
       toast.error(errorMessage);
       console.error("Failed to start session:", error);
     }
-  };
-
-  const handleComplete = async () => {
-    if (!activeSession) return;
-
-    try {
-      await completeSession(activeSession.id);
-      toast.success("¡Sesión completada! 🎉");
-
-      if (onSessionComplete) {
-        onSessionComplete();
-      }
-
-      // Optional: Show notification
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("Pomodoro Completado", {
-          body: "¡Buen trabajo! Toma un descanso.",
-          icon: "/logo.svg",
-        });
-      }
-    } catch (error) {
-      toast.error("Error al completar sesión");
-      console.error("Failed to complete session:", error);
-    }
-  };
+  }, [taskId, startSession]);
 
   const handleStop = async () => {
     if (!activeSession) return;

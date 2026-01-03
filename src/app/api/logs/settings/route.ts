@@ -1,8 +1,10 @@
+import { db, systemSettings } from "@/db";
+import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/api-auth";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+
 
 const LOG_SOURCE = "LogSettingsAPI";
 
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
     const authResponse = await requireAdmin(request);
     if (authResponse) return authResponse;
 
-    const settings = await prisma.systemSettings.findFirst();
+    const settings = await db.query.systemSettings.findFirst();
 
     // If no settings exist, create default settings
     if (!settings) {
@@ -22,19 +24,18 @@ export async function GET(request: NextRequest) {
         LOG_SOURCE
       );
 
-      const defaultSettings = await prisma.systemSettings.create({
-        data: {
-          logLevel: "error",
-          logDestination: "db",
-          logRetention: {
-            error: 30,
-            warn: 14,
-            info: 7,
-            debug: 3,
-          },
-          publicSignup: false,
+      const [defaultSettings] = await db.insert(systemSettings).values({
+        id: crypto.randomUUID(),
+        logLevel: "error",
+        logDestination: "db",
+        logRetention: {
+          error: 30,
+          warn: 14,
+          info: 7,
+          debug: 3,
         },
-      });
+        publicSignup: false,
+      }).returning();
 
       return NextResponse.json({
         logLevel: defaultSettings.logLevel,
@@ -107,17 +108,24 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const settingsInDb = await prisma.systemSettings.findFirst();
+    let settingsInDb = await db.query.systemSettings.findFirst();
 
-    // Update or create settings
-    const settings = await prisma.systemSettings.upsert({
-      where: { id: settingsInDb?.id ?? "NEW" },
-      update: {
-        ...(logLevel && { logLevel }),
-        ...(logDestination && { logDestination }),
-        ...(logRetention && { logRetention }),
-      },
-      create: {
+    // Update or create settings (upsert pattern)
+    const updateData = {
+      ...(logLevel && { logLevel }),
+      ...(logDestination && { logDestination }),
+      ...(logRetention && { logRetention }),
+    };
+
+    if (settingsInDb) {
+      [settingsInDb] = await db
+        .update(systemSettings)
+        .set(updateData)
+        .where(eq(systemSettings.id, settingsInDb.id))
+        .returning();
+    } else {
+      [settingsInDb] = await db.insert(systemSettings).values({
+        id: crypto.randomUUID(),
         logLevel: logLevel || "none",
         logDestination: logDestination || "db",
         logRetention: logRetention || {
@@ -126,8 +134,11 @@ export async function PUT(request: NextRequest) {
           info: 7,
           debug: 3,
         },
-      },
-    });
+        publicSignup: false,
+      }).returning();
+    }
+
+    const settings = settingsInDb;
 
     return NextResponse.json(settings);
   } catch (error) {

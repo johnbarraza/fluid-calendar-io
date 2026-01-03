@@ -16,7 +16,6 @@ import { useMoodStore } from "@/store/adhd/moodStore";
 import { usePomodoroStore } from "@/store/adhd/pomodoroStore";
 import { useSuggestionStore } from "@/store/adhd/suggestionStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -65,7 +64,7 @@ export default function ADHDDashboardPage() {
   React.useEffect(() => {
     if (habits.length > 0) {
       const completedToday = habits.filter((h) => h.completedToday).length;
-      const maxStreak = Math.max(...habits.map((h) => h.currentStreak), 0);
+      const maxStreak = Math.max(...habits.map((h) => h.currentStreak ?? 0), 0);
 
       setHabitStats({
         total: habits.length,
@@ -78,10 +77,25 @@ export default function ADHDDashboardPage() {
   // Calculate mood stats
   React.useEffect(() => {
     if (moodEntries.length > 0) {
+      const moodMap: Record<string, number> = {
+        very_positive: 5,
+        positive: 4,
+        neutral: 3,
+        negative: 2,
+        very_negative: 1,
+      };
+      const energyMap: Record<string, number> = {
+        high: 4,
+        medium: 3,
+        low: 2,
+      };
+
       const avgMood =
-        moodEntries.reduce((sum, entry) => sum + entry.mood, 0) / moodEntries.length;
+        moodEntries.reduce((sum, entry) => sum + (moodMap[entry.mood] || 3), 0) /
+        moodEntries.length;
       const avgEnergy =
-        moodEntries.reduce((sum, entry) => sum + entry.energy, 0) / moodEntries.length;
+        moodEntries.reduce((sum, entry) => sum + (energyMap[entry.energyLevel] || 3), 0) /
+        moodEntries.length;
 
       setMoodStats({
         averageMood: avgMood,
@@ -98,14 +112,14 @@ export default function ADHDDashboardPage() {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       const todaySessions = recentSessions.filter(
-        (s) => new Date(s.startTime) >= today && s.completed
+        (s) => new Date(s.startedAt) >= today && s.completed
       );
 
       const focusTime = recentSessions
         .filter((s) => s.type === "work" && s.completed)
         .reduce((acc, s) => {
-          const start = new Date(s.startTime);
-          const end = s.endTime ? new Date(s.endTime) : new Date();
+          const start = new Date(s.startedAt);
+          const end = s.endedAt ? new Date(s.endedAt) : new Date();
           return acc + (end.getTime() - start.getTime()) / 1000 / 60;
         }, 0);
 

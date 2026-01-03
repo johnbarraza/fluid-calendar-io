@@ -1,11 +1,10 @@
 import { ClientLogger } from "./client";
-import { ServerLogger } from "./server";
 import { LogLevel, LogMetadata, LogStorageConfig } from "./types";
 
 class Logger {
   private static instance: Logger;
   private clientLogger: ClientLogger | null = null;
-  private serverLogger: ServerLogger | null = null;
+  private serverLogger: any | null = null; // Type as 'any' to avoid importing server-only code
   private isClient: boolean;
 
   private constructor(config?: Partial<LogStorageConfig>) {
@@ -14,11 +13,12 @@ class Logger {
     // Only create client logger if we're in a browser context
     if (this.isClient) {
       this.clientLogger = new ClientLogger(config);
-    }
-
-    // Only create server logger if we're in a server context
-    if (!this.isClient) {
-      this.serverLogger = new ServerLogger();
+    } else {
+      // Dynamically import ServerLogger only on server
+      // This prevents it from being bundled in client code
+      import("./server").then(({ ServerLogger }) => {
+        this.serverLogger = new ServerLogger();
+      });
     }
   }
 

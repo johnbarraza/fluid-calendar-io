@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import confetti from "canvas-confetti";
 
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger/client-safe";
 
 export type ActionType = "loading" | "celebration" | "error";
 
