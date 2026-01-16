@@ -1,0 +1,14 @@
+﻿node.exe : error: unknown option 
+'--no-turbopack'
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified 
+   : (error: unknown option '--no-turbopa  
+  ck':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComman 
+   dError
+ 
+(Did you mean --turbopack?)

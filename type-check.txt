@@ -2,7 +2,6 @@
 > fluid-calendar@0.1.0 type-check
 > tsc --noEmit
 
-src/app/api/calendar/google/available/route.ts(75,30): error TS2339: Property 'some' does not exist on type 'never'.
-src/app/api/calendar/google/available/route.ts(75,36): error TS7006: Parameter 'f' implicitly has an 'any' type.
-src/app/api/calendar/outlook/available/route.ts(75,45): error TS2339: Property 'some' does not exist on type 'never'.
-src/app/api/calendar/outlook/available/route.ts(75,51): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/api/fitbit/data/route.ts(192,37): error TS2322: Type '{ activity: number; sleep: number; heartRate: number; }' is not assignable to type 'string | number | boolean | string[] | LogMetadata[] | { [key: string]: LogMetadata; } | null'.
+  Types of property 'activity' are incompatible.
+    Type 'number' is not assignable to type 'LogMetadata'.

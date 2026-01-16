@@ -370,3 +370,108 @@
   font-weight: 500 !important;
   opacity: 1 !important;
 }
+
+/* ============================================================================
+   THEME STYLES - Pixel, Glass, Neumorphism
+   ============================================================================ */
+
+/* Modern Style (default) - already applied */
+.style-modern {
+  --theme-radius: 0.5rem;
+}
+
+/* Pixel Style - Retro 8-bit look */
+.style-pixel {
+  --theme-radius: 0;
+  --radius: 0;
+}
+
+.style-pixel * {
+  border-radius: 0 !important;
+}
+
+.style-pixel button,
+.style-pixel .card,
+.style-pixel input,
+.style-pixel select,
+.style-pixel textarea {
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 0 hsl(var(--border)) !important;
+}
+
+.style-pixel button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 hsl(var(--border)) !important;
+}
+
+.style-pixel .progress {
+  border-radius: 0 !important;
+}
+
+.style-pixel .progress > div {
+  border-radius: 0 !important;
+}
+
+/* Glass Style - Glassmorphism effect */
+.style-glass {
+  --theme-radius: 1rem;
+}
+
+.style-glass .card {
+  background: hsl(var(--card) / 0.7) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.3) !important;
+}
+
+.style-glass button:not([data-state]) {
+  background: hsl(var(--background) / 0.6) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dark .style-glass .card {
+  background: hsl(var(--card) / 0.5) !important;
+}
+
+/* Neumorphism Style - Soft 3D effect */
+.style-neumorphism {
+  --theme-radius: 1rem;
+}
+
+.style-neumorphism .card {
+  box-shadow: 
+    8px 8px 16px hsl(var(--foreground) / 0.1),
+    -8px -8px 16px hsl(var(--background) / 0.8) !important;
+  border: none !important;
+}
+
+.dark .style-neumorphism .card {
+  box-shadow: 
+    8px 8px 16px hsl(0 0% 0% / 0.3),
+    -8px -8px 16px hsl(var(--muted) / 0.1) !important;
+}
+
+.style-neumorphism button {
+  box-shadow: 
+    4px 4px 8px hsl(var(--foreground) / 0.1),
+    -4px -4px 8px hsl(var(--background) / 0.8) !important;
+}
+
+.style-neumorphism button:hover {
+  box-shadow: 
+    2px 2px 4px hsl(var(--foreground) / 0.1),
+    -2px -2px 4px hsl(var(--background) / 0.8) !important;
+}
+
+.style-neumorphism button:active {
+  box-shadow: 
+    inset 2px 2px 4px hsl(var(--foreground) / 0.1),
+    inset -2px -2px 4px hsl(var(--background) / 0.8) !important;
+}
+
+.style-neumorphism .progress {
+  box-shadow: 
+    inset 2px 2px 4px hsl(var(--foreground) / 0.1),
+    inset -2px -2px 4px hsl(var(--background) / 0.8) !important;
+}

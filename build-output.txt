@@ -1,0 +1,40 @@
+﻿
+> fluid-calendar@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 10.3s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/87) ...
+  Generating static pages using 11 workers (21/87) 
+  Generating static pages using 11 workers (43/87) 
+node.exe : Error occurred prerendering page 
+"/favicon.ico". Read more: https://nextjs.org
+/docs/messages/prerender-error
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   (Error occurred ...prerender-error:Strin  
+  g) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+Error: No response is returned from route 
+handler 
+'[project]/src/app/favicon--route-entry.js'. 
+Ensure you return a `Response` or a 
+`NextResponse` in all branches of your 
+handler.
+    at ignore-listed frames
+Export encountered an error on 
+/favicon.ico/route: /favicon.ico, exiting 
+the build.
+Ô¿» Next.js build worker exited with code: 1 
+and signal: null

@@ -1,8 +1,7 @@
 import { db, fitbitAccounts } from "@/db";
-import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { getAuthOptions } from "@/lib/auth/auth-options";
+import { eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 
 import { logger } from "@/lib/logger";
 
@@ -12,20 +11,20 @@ const LOG_SOURCE = "FitbitStatusRoute";
  * Get Fitbit connection status
  * GET /api/fitbit/status
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
+    const auth = await authenticateRequest(request, LOG_SOURCE);
 
-    if (!session || !session.user?.id) {
+    if ("response" in auth && auth.response) {
       logger.warn("Unauthenticated Fitbit status request", {}, LOG_SOURCE);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = auth.userId;
 
     // Get Fitbit account
-    const account = await db.query.fitbitAccounts.findFirst({ where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
+    const account = await db.query.fitbitAccounts.findFirst({
+      where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
       columns: {
         id: true,
         fitbitUserId: true,

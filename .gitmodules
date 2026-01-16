@@ -1,6 +1,6 @@
 [submodule "google-calendar-mcp"]
-	path = google-calendar-mcp
+	path = mcp_submodules/google-calendar-mcp
 	url = https://github.com/nspady/google-calendar-mcp.git
 [submodule "mcp-fitbit"]
-	path = mcp-fitbit
+	path = mcp_submodules/mcp-fitbit
 	url = https://github.com/TheDigitalNinja/mcp-fitbit.git

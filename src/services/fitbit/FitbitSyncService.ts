@@ -1,4 +1,4 @@
-import { db, fitbitAccounts, fitbitActivities, fitbitSleep, fitbitHeartRate } from "@/db";
+import { db, fitbitAccounts, fitbitActivities, fitbitSleep, fitbitHeartRate, fitbitHRV } from "@/db";
 import { eq, and, or, inArray, like, gte, lte, isNull, desc, asc, sql } from "drizzle-orm";
 
 import { FitbitClient } from "@/lib/fitbit-client";
@@ -15,7 +15,8 @@ export class FitbitSyncService {
    * Get authenticated Fitbit client for user
    */
   private async getFitbitClient(userId: string): Promise<FitbitClient> {
-    const account = await db.query.fitbitAccounts.findFirst({ where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
+    const account = await db.query.fitbitAccounts.findFirst({
+      where: (fitbitAccounts, { eq }) => eq(fitbitAccounts.userId, userId),
     });
 
     if (!account) {
@@ -206,6 +207,93 @@ export class FitbitSyncService {
   }
 
   /**
+   * Sync sleep data for a date range (more efficient - single API call)
+   * Max range: 100 days
+   */
+  async syncSleepRange(userId: string, startDate: Date, endDate: Date): Promise<void> {
+    try {
+      const client = await this.getFitbitClient(userId);
+      const startStr = startDate.toISOString().split("T")[0];
+      const endStr = endDate.toISOString().split("T")[0];
+
+      logger.info(
+        "Syncing Fitbit sleep data (range)",
+        { userId, startDate: startStr, endDate: endStr },
+        LOG_SOURCE
+      );
+
+      const data = await client.getSleepRange(startStr, endStr);
+
+      // Process all sleep sessions from the range
+      for (const sleepSession of data.sleep) {
+        const sleepDate = new Date(sleepSession.dateOfSleep);
+
+        // Try to find existing sleep record
+        const existingSleep = await db.query.fitbitSleep.findFirst({
+          where: (sleep, { eq, and }) =>
+            and(
+              eq(sleep.userId, userId),
+              eq(sleep.date, sleepDate)
+            ),
+        });
+
+        const sleepData = {
+          startTime: new Date(sleepSession.startTime),
+          endTime: new Date(sleepSession.endTime),
+          duration: sleepSession.duration,
+          efficiency: sleepSession.efficiency,
+          minutesAsleep: sleepSession.minutesAsleep,
+          minutesAwake: sleepSession.minutesAwake,
+          timeInBed: sleepSession.timeInBed,
+          deepSleep: sleepSession.levels?.summary?.deep?.minutes,
+          lightSleep: sleepSession.levels?.summary?.light?.minutes,
+          remSleep: sleepSession.levels?.summary?.rem?.minutes,
+          awakeSleep: sleepSession.levels?.summary?.wake?.minutes,
+        };
+
+        if (existingSleep) {
+          await db.update(fitbitSleep)
+            .set({
+              ...sleepData,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(fitbitSleep.userId, userId),
+                eq(fitbitSleep.date, sleepDate)
+              )
+            );
+        } else {
+          await db.insert(fitbitSleep).values({
+            id: crypto.randomUUID(),
+            userId,
+            date: sleepDate,
+            ...sleepData,
+          });
+        }
+      }
+
+      logger.info(
+        "Successfully synced Fitbit sleep range",
+        { userId, startDate: startStr, endDate: endStr, sessions: data.sleep.length },
+        LOG_SOURCE
+      );
+    } catch (error) {
+      logger.error(
+        "Failed to sync Fitbit sleep range",
+        {
+          userId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          error: error instanceof Error ? error.message : "Unknown",
+        },
+        LOG_SOURCE
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Sync heart rate data for a specific date
    */
   async syncHeartRate(userId: string, date: Date): Promise<void> {
@@ -315,6 +403,94 @@ export class FitbitSyncService {
   }
 
   /**
+   * Sync Heart Rate Variability (HRV) data for a specific date
+   */
+  async syncHRV(userId: string, date: Date): Promise<void> {
+    try {
+      const client = await this.getFitbitClient(userId);
+      const dateStr = date.toISOString().split("T")[0];
+
+      logger.info(
+        "Syncing Fitbit HRV",
+        { userId, date: dateStr },
+        LOG_SOURCE
+      );
+
+      const data = await client.getHRV(dateStr);
+
+      if (!data.hrv || data.hrv.length === 0) {
+        logger.warn(
+          "No HRV data available",
+          { userId, date: dateStr },
+          LOG_SOURCE
+        );
+        return;
+      }
+
+      const hrvData = data.hrv[0].value;
+
+      // Try to find existing HRV record
+      const existingHRV = await db.query.fitbitHRV.findFirst({
+        where: (hrv, { eq, and }) =>
+          and(
+            eq(hrv.userId, userId),
+            eq(hrv.date, date)
+          ),
+      });
+
+      const hrvRecord = {
+        dailyRmssd: hrvData.dailyRmssd,
+        deepRmssd: hrvData.deepRmssd,
+      };
+
+      if (existingHRV) {
+        // Update existing record
+        await db.update(fitbitHRV)
+          .set({
+            ...hrvRecord,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(fitbitHRV.userId, userId),
+              eq(fitbitHRV.date, date)
+            )
+          );
+      } else {
+        // Create new record
+        await db.insert(fitbitHRV).values({
+          id: crypto.randomUUID(),
+          userId,
+          date,
+          ...hrvRecord,
+        });
+      }
+
+      logger.info(
+        "Successfully synced Fitbit HRV",
+        {
+          userId,
+          date: dateStr,
+          dailyRmssd: hrvData.dailyRmssd,
+        },
+        LOG_SOURCE
+      );
+    } catch (error) {
+      // HRV may not be available for all users/dates, so just log and continue
+      logger.warn(
+        "Failed to sync Fitbit HRV (may not be available)",
+        {
+          userId,
+          date: date.toISOString(),
+          error: error instanceof Error ? error.message : "Unknown",
+        },
+        LOG_SOURCE
+      );
+      // Don't throw - HRV is optional and may not be available
+    }
+  }
+
+  /**
    * Sync all data types for a date range
    */
   async syncAll(userId: string, startDate: Date, endDate: Date): Promise<void> {
@@ -328,6 +504,17 @@ export class FitbitSyncService {
       LOG_SOURCE
     );
 
+    // Sync sleep data in bulk (single API call - more efficient)
+    try {
+      await this.syncSleepRange(userId, startDate, endDate);
+    } catch (error) {
+      logger.error(
+        "Failed to sync sleep range, will try individual days",
+        { userId, error: error instanceof Error ? error.message : "Unknown" },
+        LOG_SOURCE
+      );
+    }
+
     const dates: Date[] = [];
     const currentDate = new Date(startDate);
 
@@ -339,11 +526,11 @@ export class FitbitSyncService {
     for (const date of dates) {
       try {
         await this.syncDailyActivity(userId, date);
-        await this.syncSleep(userId, date);
         await this.syncHeartRate(userId, date);
+        await this.syncHRV(userId, date);
 
         // Respect API rate limits (150 requests/hour = ~2.5/minute)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 800));
       } catch (error) {
         logger.error(
           "Failed to sync date",

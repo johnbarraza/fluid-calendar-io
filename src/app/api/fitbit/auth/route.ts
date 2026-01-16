@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { getAuthOptions } from "@/lib/auth/auth-options";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 import { getFitbitAuthUrl, generateState } from "@/lib/fitbit-auth";
 import { logger } from "@/lib/logger";
 
@@ -12,24 +11,26 @@ const LOG_SOURCE = "FitbitAuthRoute";
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is authenticated
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
+    // Check if user is authenticated using the same helper as other routes
+    const auth = await authenticateRequest(request, LOG_SOURCE);
 
-    if (!session || !session.user?.id) {
+    if ("response" in auth && auth.response) {
+      // User is not authenticated, redirect to signin
       logger.warn("Unauthenticated Fitbit auth attempt", {}, LOG_SOURCE);
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
 
+    const userId = auth.userId;
+
     // Generate state parameter with user ID
-    const state = generateState(session.user.id);
+    const state = generateState(userId);
 
     // Generate Fitbit authorization URL
     const authUrl = getFitbitAuthUrl(state);
 
     logger.info(
       "Redirecting to Fitbit OAuth",
-      { userId: session.user.id },
+      { userId },
       LOG_SOURCE
     );
 
@@ -47,3 +48,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

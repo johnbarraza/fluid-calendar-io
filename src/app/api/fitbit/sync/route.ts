@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { getAuthOptions } from "@/lib/auth/auth-options";
+import { authenticateRequest } from "@/lib/auth/api-auth";
 import { FitbitSyncService } from "@/services/fitbit/FitbitSyncService";
 import { logger } from "@/lib/logger";
 
@@ -12,15 +11,14 @@ const LOG_SOURCE = "FitbitSyncRoute";
  */
 export async function POST(request: NextRequest) {
   try {
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
+    const auth = await authenticateRequest(request, LOG_SOURCE);
 
-    if (!session || !session.user?.id) {
+    if ("response" in auth && auth.response) {
       logger.warn("Unauthenticated Fitbit sync request", {}, LOG_SOURCE);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = auth.userId;
 
     // Parse optional date range from request body
     const body = await request.json().catch(() => ({}));

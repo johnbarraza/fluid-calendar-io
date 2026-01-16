@@ -347,15 +347,21 @@ export const useSettingsStore = create<SettingsStore>()(
       refreshAccounts: async () => {
         try {
           const response = await fetch("/api/accounts");
-          const accounts = await response.json();
-          set({ accounts });
+          const data = await response.json();
+          // Validate that data is an array before setting
+          if (Array.isArray(data)) {
+            set({ accounts: data });
+          } else {
+            // If not an array (e.g., error response), set empty array
+            set({ accounts: [] });
+          }
         } catch (error) {
           logger.error(
             "Failed to refresh accounts",
             { error: error instanceof Error ? error.message : "Unknown error" },
             LOG_SOURCE
           );
-          throw error;
+          set({ accounts: [] });
         }
       },
       initializeSettings: async () => {
@@ -381,8 +387,8 @@ export const useSettingsStore = create<SettingsStore>()(
             fetch("/api/accounts").then((res) => res.json()),
           ]);
 
-          // Set initialized flag
-          set({ initialized: true, accounts });
+          // Set initialized flag, validate accounts is array
+          set({ initialized: true, accounts: Array.isArray(accounts) ? accounts : [] });
 
           // Update all settings
           get().updateUserSettings({

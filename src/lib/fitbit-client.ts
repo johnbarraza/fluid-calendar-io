@@ -66,11 +66,21 @@ export interface FitbitHeartRateData {
   };
 }
 
+export interface FitbitHRVData {
+  hrv: Array<{
+    dateTime: string;
+    value: {
+      dailyRmssd: number;
+      deepRmssd: number;
+    };
+  }>;
+}
+
 /**
  * Fitbit API Client
  */
 export class FitbitClient {
-  constructor(private accessToken: string) {}
+  constructor(private accessToken: string) { }
 
   /**
    * Make authenticated request to Fitbit API
@@ -118,11 +128,22 @@ export class FitbitClient {
   }
 
   /**
-   * Get sleep data
-   * https://dev.fitbit.com/build/reference/web-api/sleep/get-sleep-log-by-date-range/
+   * Get sleep data for a single date
+   * https://dev.fitbit.com/build/reference/web-api/sleep/get-sleep-log-by-date/
    */
   async getSleep(date: string): Promise<FitbitSleepData> {
     return this.request<FitbitSleepData>(`/1.2/user/-/sleep/date/${date}.json`);
+  }
+
+  /**
+   * Get sleep data for a date range (more efficient for bulk sync)
+   * https://dev.fitbit.com/build/reference/web-api/sleep/get-sleep-log-by-date-range/
+   * Max range: 100 days
+   */
+  async getSleepRange(startDate: string, endDate: string): Promise<FitbitSleepData> {
+    return this.request<FitbitSleepData>(
+      `/1.2/user/-/sleep/date/${startDate}/${endDate}.json`
+    );
   }
 
   /**
@@ -132,6 +153,23 @@ export class FitbitClient {
   async getHeartRate(date: string): Promise<FitbitHeartRateData> {
     return this.request<FitbitHeartRateData>(
       `/user/-/activities/heart/date/${date}/1d.json`
+    );
+  }
+
+  /**
+   * Get Heart Rate Variability (HRV) data for a single date
+   * https://dev.fitbit.com/build/reference/web-api/heart-rate-variability/
+   */
+  async getHRV(date: string): Promise<FitbitHRVData> {
+    return this.request<FitbitHRVData>(`/user/-/hrv/date/${date}.json`);
+  }
+
+  /**
+   * Get Heart Rate Variability (HRV) data for a date range
+   */
+  async getHRVRange(startDate: string, endDate: string): Promise<FitbitHRVData> {
+    return this.request<FitbitHRVData>(
+      `/user/-/hrv/date/${startDate}/${endDate}.json`
     );
   }
 

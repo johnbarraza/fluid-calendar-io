@@ -14,6 +14,7 @@ import {
   varchar,
   json,
   uuid,
+  real,
 } from "drizzle-orm/pg-core";
 
 // ============================================================================
@@ -315,6 +316,86 @@ export const fitbitHeartRate = pgTable("FitbitHeartRate", {
   date: timestamp("date", { mode: "date" }).notNull(),
   restingHeartRate: integer("restingHeartRate"),
   heartRateZones: json("heartRateZones"), // out of range, fat burn, cardio, peak
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const fitbitHRV = pgTable("FitbitHRV", {
+  id: text("id").primaryKey().notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: timestamp("date", { mode: "date" }).notNull(),
+  dailyRmssd: real("dailyRmssd"), // Daily heart rate variability (Root Mean Square of Successive Differences)
+  deepRmssd: real("deepRmssd"), // HRV during deep sleep
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
+});
+
+// ============================================================================
+// FITBIT GAMIFICATION - QUESTS, ACHIEVEMENTS, STATS
+// ============================================================================
+
+// Quest types: STEPS, SLEEP, HEART_RATE, CALORIES, ACTIVE_MINUTES
+export const fitbitQuestTypeEnum = pgEnum("FitbitQuestType", [
+  "STEPS",
+  "SLEEP_HOURS",
+  "HEART_RATE",
+  "CALORIES",
+  "ACTIVE_MINUTES",
+]);
+
+export const fitbitUserQuests = pgTable("FitbitUserQuest", {
+  id: text("id").primaryKey().notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: timestamp("date", { mode: "date" }).notNull(),
+  questType: fitbitQuestTypeEnum("questType").notNull(),
+  targetValue: integer("targetValue").notNull(),
+  currentValue: integer("currentValue").default(0).notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completedAt", { mode: "date" }),
+  xpEarned: integer("xpEarned").default(0).notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
+});
+
+// Achievement types
+export const fitbitAchievementTypeEnum = pgEnum("FitbitAchievementType", [
+  "STREAK_3",      // 3 day streak
+  "STREAK_7",      // 7 day streak
+  "STREAK_30",     // 30 day streak
+  "STREAK_100",    // 100 day streak
+  "WEEKLY_STEPS",  // 100k steps in a week
+  "WEEKLY_SLEEP",  // 8h avg sleep for a week
+  "PERFECT_DAY",   // All quests completed in a day
+  "PERFECT_WEEK",  // All quests completed for 7 days
+]);
+
+export const fitbitUserAchievements = pgTable("FitbitUserAchievement", {
+  id: text("id").primaryKey().notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  achievementType: fitbitAchievementTypeEnum("achievementType").notNull(),
+  unlockedAt: timestamp("unlockedAt", { mode: "date" }).defaultNow().notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const fitbitUserStats = pgTable("FitbitUserStats", {
+  id: text("id").primaryKey().notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .unique(),
+  totalXp: integer("totalXp").default(0).notNull(),
+  level: integer("level").default(1).notNull(),
+  currentStreak: integer("currentStreak").default(0).notNull(),
+  longestStreak: integer("longestStreak").default(0).notNull(),
+  lastActiveDate: timestamp("lastActiveDate", { mode: "date" }),
+  totalQuestsCompleted: integer("totalQuestsCompleted").default(0).notNull(),
+  totalAchievements: integer("totalAchievements").default(0).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
 });
