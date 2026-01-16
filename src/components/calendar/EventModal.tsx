@@ -220,7 +220,9 @@ export function EventModal({
     try {
       const feed = feeds.find((f) => f.id === selectedFeedId);
       if (!feed) {
+        alert("Please select a valid calendar before saving.");
         console.error("Selected calendar not found");
+        setIsSubmitting(false);
         return;
       }
 
@@ -235,10 +237,10 @@ export function EventModal({
         isRecurring,
         recurrenceRule: isRecurring
           ? buildRecurrenceRule(
-              recurrenceFreq,
-              recurrenceInterval,
-              recurrenceByDay
-            )
+            recurrenceFreq,
+            recurrenceInterval,
+            recurrenceByDay
+          )
           : undefined,
         isMaster: false,
       };
